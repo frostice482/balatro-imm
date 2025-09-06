@@ -11,8 +11,12 @@ I recommend that you name your tag based on your mod version, with some conversi
 - Mod version `~` is converted to `-` (e.g. `1.0.0~alpha-1` -> `1.0.0-alpha-5`)
 - Tag version with leading `v` is ignored (e.g. `v1.0.0` -> `1.0.0`)
 
+## Caches
+
+All requests are cached, including thumbnail, releases, and downloaded files.
+If you want to clear cache, simply delete `%AppData%\Balatro\immcache` (on windows).
+
 ## Todo
 
-- Add support for downloading older versions
 - Add dependencies, conflicts
 - Fix & Improve UI
