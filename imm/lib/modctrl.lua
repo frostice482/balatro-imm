@@ -10,18 +10,31 @@ function IModCtrl:init()
     self.mods = getmods()
 end
 
+--- @protected
+--- @param entry imm.ModList.Entry
+function IModCtrl:_disableEntry(entry)
+    if not entry.active then return end
+    entry.active = nil
+end
+
+--- @protected
+--- @param entry imm.ModList.Entry
+--- @param info imm.ModVersion.Entry
+function IModCtrl:_enableEntry(entry, info)
+    if entry.active then self:_disableEntry(entry) end
+    entry.active = info
+end
+
 --- @param mod string
 function IModCtrl:disableMod(mod)
     local modinfo = self.mods[mod]
     if not modinfo then return false, string.format('Mod not found %s', mod) end
     if not modinfo.active then return true end
 
-    local enableInfo = modinfo.versions[modinfo.active]
-    if enableInfo then
-        local ok, err = NFS.write(enableInfo.path .. '/.lovelyignore', '')
-        if not ok then return false, err end
-    end
-    modinfo.active = nil
+    local ok, err = NFS.write(modinfo.active.path .. '/.lovelyignore', '')
+    if not ok then return false, err end
+
+    self:_disableEntry(modinfo)
 
     return true
 end
@@ -31,15 +44,12 @@ end
 function IModCtrl:enableMod(mod, version)
     local modinfo = self.mods[mod]
     if not modinfo then return false, string.format('Mod not found %s', mod) end
-
-    self:disableMod(mod)
-
     local info = modinfo.versions[version]
-    modinfo.active = version
     if not info then return false, string.format('Mod %s with version not found %s', mod, version) end
-
     local ok,err = NFS.remove(info.path .. '/.lovelyignore')
     if not ok then return false, err end
+
+    self:_enableEntry(modinfo, info)
 
     return true
 end
@@ -49,21 +59,22 @@ end
 function IModCtrl:deleteMod(mod, version)
     local modinfo = self.mods[mod]
     if not modinfo then return false, string.format('Mod not found %s', mod) end
-
     local info = modinfo.versions[version]
     if not info then return false, string.format('Mod %s with version not found %s', mod, version) end
 
-    util.rmdir(info.path, true)
+    if modinfo.active and modinfo.active.version == version then
+        self:_disableEntry(modinfo)
+    end
 
+    util.rmdir(info.path, true)
     modinfo.versions[version] = nil
-    if modinfo.active == version then modinfo.active = nil end
 
     return true
 end
 
 --- @param mod string
 --- @param ver string
---- @param info imm.ModListVersion
+--- @param info imm.ModVersion.Entry
 --- @param sourceNfs boolean
 function IModCtrl:installMod(mod, ver, info, sourceNfs)
     if not self.mods[mod] then self.mods[mod] = { versions = {} } end
@@ -94,7 +105,8 @@ function IModCtrl:installModFromDir(dir, sourceNfs)
     local list = getmods({ base = dir, isNfs = sourceNfs })
     for mod, modvers in pairs(list) do
         for ver, info in pairs(modvers.versions) do
-            assert(self:installMod(mod, ver, info, sourceNfs))
+            local ok, err = self:installMod(mod, ver, info, sourceNfs)
+            if not ok then sendWarnMessage(err, "imm") end
         end
     end
     return list
@@ -105,7 +117,7 @@ function IModCtrl:installModFromZip(zipData)
     local tmpdir = 'mnt-' .. love.data.encode('string', 'hex', love.data.hash('md5', ''..love.timer.getTime()))
     assert(love.filesystem.mount(zipData, tmpdir), 'mount failed')
     local r = self:installModFromDir(tmpdir, false)
-    assert(love.filesystem.unmount(zipData), 'unmount failed')
+    assert(love.filesystem.unmount(zipData), 'unmount failed') --- @diagnostic disable-line
     return r
 end
 

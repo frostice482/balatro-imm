@@ -351,7 +351,7 @@ function UISes:uiVersionEntry(opts)
             opts.installed = not not l.versions[opts.version]
         end
         if opts.enabled == nil then
-            opts.enabled = l.active == opts.version
+            opts.enabled = (l.active and l.active.version) == opts.version
         end
     end
 
@@ -403,7 +403,7 @@ function UISes:uiModSelectTabInstalled(mod)
     local list = {}
     local l = modctrl.mods[mod.id]
     if l then
-        --- @type [string, imm.ModListVersion][]
+        --- @type [string, imm.ModVersion.Entry][]
         local version = {}
         for ver, info in pairs(l.versions) do table.insert(version, {ver, info}) end
         table.sort(version, function (a, b) return V(a[1]) < V(b[1]) end)
@@ -415,7 +415,7 @@ function UISes:uiModSelectTabInstalled(mod)
                 version = ver,
                 sub = info.path:sub(SMODS.MODS_DIR:len() + 2),
                 installed = true,
-                enabled = ver == l.active
+                enabled = ver == (l.active and l.active.version)
             }))
         end
     end
@@ -801,7 +801,7 @@ end
 function UISes:getImage(key, cb)
     if self.noThumbnail then return cb(nil, nil) end
     if self.imageCache[key] then return cb(nil, self.imageCache[key]) end
-    repo.thumbnails:fetch(key, function (err, res, headers)
+    repo.thumbnails:fetch(key, function (err, res)
         if not res then return cb(err, res) end
 
         local ok, img = pcall(love.graphics.newImage, love.filesystem.newFileData(res, key))
@@ -876,7 +876,7 @@ function UISes:update()
 end
 
 function UISes:prepare()
-    repo.list:fetch(nil, function (err, res, headers)
+    repo.list:fetch(nil, function (err, res)
         if not res then
             self.errorText = err
             return

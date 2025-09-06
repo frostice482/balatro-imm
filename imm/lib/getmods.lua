@@ -1,26 +1,27 @@
 local util = require("imm.lib.util")
 
---- @alias imm.ModInfoFormat 'thunderstore' | 'smods' | 'smods-header'
+--- @alias imm.ModMetaFormat 'thunderstore' | 'smods' | 'smods-header'
 
---- @class imm.ModListVersion
---- @field format imm.ModInfoFormat
+--- @class imm.ModVersion.Entry
+--- @field format imm.ModMetaFormat
 --- @field path string
 --- @field info table
+--- @field mod string
+--- @field version string
 
---- @class imm.ModListEntry
---- @field versions table<string, imm.ModListVersion>
---- @field active? string
+--- @class imm.ModList.Entry
+--- @field versions table<string, imm.ModVersion.Entry>
+--- @field active? imm.ModVersion.Entry
 
 --- List of mods, mapped by mod id, then version.
---- @class imm.ModList: {[string]: imm.ModListEntry}
+--- @class imm.ModList: {[string]: imm.ModList.Entry}
 
 local metaFields = {
     id = "string",
     name = "string",
     description = "string",
     prefix = "string",
-    author = "table",
-    version = "string", -- optional in steamodded
+    author = "table"
 }
 
 local tsManifestFields = {
@@ -32,11 +33,16 @@ local tsManifestFields = {
 }
 
 local headerFields = {
-    MOD_ID = "id",
-    MOD_NAME = "name",
-    MOD_DESCRIPTION = "description",
-    PREFIX = "prefix",
-    VERSION = "version",
+    MOD_ID = { field = "id" },
+    MOD_NAME = { field = "name" },
+    MOD_DESCRIPTION = { field = "description" },
+    PREFIX = { field = "prefix" },
+    VERSION = { field = "version" },
+    MOD_AUTHOR = { field = "author", array = true },
+    DEPENDENCIES = { field = "dependencies", array = true },
+    DEPENDS = { field = "dependencies", array = true },
+    DEPS = { field = "dependencies", array = true },
+    CONFLICTS = { field = "conflicts", array = true },
 }
 
 local function isSmodsMod(meta)
@@ -67,6 +73,26 @@ local function processJson(file, isNfs)
     return res
 end
 
+local function parseHeader(content)
+    local values = {}
+    local lines = util.strsplit(content, '\r?\n', false)
+    for i, line in ipairs(lines), lines, 1 do
+        local s, e, attr = line:find('^--- *([%w_]+): *')
+        if not s then break end
+        if headerFields[attr] then
+            local info = headerFields[attr]
+            local val = line:sub(e+1)
+
+            if info.array then
+                values[info.field] = util.strsplit(util.trim(val:sub(2, -2)), '%s*,%s*')
+            else
+                values[info.field] = val
+            end
+        end
+    end
+    return values
+end
+
 local function processHeader(file, isNfs)
     local prov = isNfs and NFS or love.filesystem
     --- @type string?
@@ -74,17 +100,12 @@ local function processHeader(file, isNfs)
     if not content then return end
     if not util.startswith(content, "--- STEAMODDED HEADER") then return end
 
-    local values = {}
-    local lines = util.strsplit(content, '\r?\n', false)
-    for i, line in ipairs(lines), lines, 1 do
-        local s, e, attr = line:find('^--- *([%w_]+): *')
-        if not s then break end
-        if headerFields[attr] then
-            values[headerFields[attr]] = line:sub(e+1)
-        end
-    end
+    return parseHeader(content)
+end
 
-    return values
+local function transformVersion(version)
+    version = version:gsub('~', '-')
+    return version
 end
 
 --- @param ctx imm.GetModsContext
@@ -95,7 +116,7 @@ local function processFile(ctx, base, file)
     local path = base..'/'..file
     local ifile = file:lower()
     local mod
-    --- @type imm.ModInfoFormat
+    --- @type imm.ModMetaFormat
     local fmt
 
     if util.endswith(ifile, ".json") then
@@ -113,9 +134,14 @@ local function processFile(ctx, base, file)
     end
     if not mod then return end
 
-    local id = fmt == 'thunderstore' and mod.name or mod.id
-    local version = fmt == 'thunderstore' and mod.version_number or mod.version
+    local id, version
     local ignored = prov.getInfo(base..'/.lovelyignore')
+
+    if fmt == 'thunderstore' then
+        id, version = mod.name, mod.version_number
+    else
+        id, version = mod.id, mod.version
+    end
 
     if id == "Steamodded" then
         local vercode = prov.read(base..'/version.lua') or ''
@@ -124,13 +150,15 @@ local function processFile(ctx, base, file)
         if newver then version = newver end
         version = version:gsub('BETA', 'beta')
     end
-    version = version:gsub('~', '-')
+    version = transformVersion(version)
 
+    --- @type imm.ModVersion.Entry
+    local info = { format = fmt, info = mod, path = base, mod = id, version = version }
     if not ctx.list[id] then ctx.list[id] = { versions = {} } end
     local versionList = ctx.list[id]
-    versionList.versions[version] = { format = fmt, info = mod, path = base }
+    versionList.versions[version] = info
 
-    if not ignored then versionList.active = version end
+    if not ignored then versionList.active = info end
 end
 
 local excludedDirs = {

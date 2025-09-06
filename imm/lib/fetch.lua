@@ -3,7 +3,7 @@ local https = require("SMODS.https")
 local util = require("imm.lib.util")
 
 --- @class imm.Fetch<A, T>: balatro.Object, {
----     fetch: fun(self, arg: A, cb: fun(err?: string, res?: T, headers: table), refreshCache?: boolean, useCache?: boolean);
+---     fetch: fun(self, arg: A, cb: fun(err?: string, res?: T), refreshCache?: boolean, useCache?: boolean);
 --- }
 local IFetch = {}
 
@@ -49,16 +49,10 @@ function IFetch:getCacheFileName(arg)
     return type(arg) == 'string' and self.cacheFile:format(util.sanitizename(arg)) or self.cacheFile
 end
 
---- @param code number
 --- @param body string
---- @param headers table
 --- @return string? error
 --- @return any? list
-function IFetch:handleRes(code, body, headers)
-    if code ~= 200 then
-        return string.format('HTTP Error %d', code)
-    end
-
+function IFetch:handleRes(body)
     local ok, res
     if self.isResJson then
         --- @type boolean, ghapi.Contents[]
@@ -74,7 +68,7 @@ function IFetch:handleRes(code, body, headers)
 end
 
 --- @param cachefile string
---- @param cb fun(err?: string, data?: any, headers: table)
+--- @param cb fun(err?: string, data?: any)
 --- @param useCache? boolean
 --- @param url string
 --- @param n number
@@ -91,9 +85,14 @@ function IFetch:runreq(cachefile, cb, useCache, url, n)
                 self:runreq(cachefile, cb, useCache, url, n - 1)
                 return
             end
+            if code ~= 200 then
+                sendWarnMessage(string.format("%s: HTTP %d\n%s", url, code, body), "imm")
+                cb(string.format('%s: HTTP Error %d', url, code))
+                return
+            end
 
-            local err, res = self:handleRes(code, body or '', headers)
-            cb(err, res, headers)
+            local err, res = self:handleRes(body or '')
+            cb(err, res)
             if res and useCache ~= false then
                 love.filesystem.createDirectory(util.dirname(cachefile))
                 love.filesystem.write(cachefile, self:stringifyDataToCache(res))

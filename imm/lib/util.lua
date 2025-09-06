@@ -86,6 +86,11 @@ local function rmdir(path, isNfs)
     assert(prov.remove(path))
 end
 
+--- @param str string
+local function trim(str)
+    return str:match("^%s*(.-)%s*$")
+end
+
 return {
     strsplit = strsplit,
     sanitizename = sanitizename,
@@ -93,5 +98,6 @@ return {
     startswith = startswith,
     dirname = dirname,
     rmdir = rmdir,
-    cpdir = cpdir
+    cpdir = cpdir,
+    trim = trim
 }
