@@ -1,10 +1,12 @@
+local util = {}
+
 --- Splits string with specified pattern
 --- @param string string String
 --- @param pattern string Split pattern
 --- @param plain? boolean
 --- @param max? number
 --- @return string[] list
-local function strsplit(string, pattern, plain, max)
+function util.strsplit(string, pattern, plain, max)
     max = max or 0x7fffffff
     max = max - 1
     local list = {}
@@ -24,24 +26,24 @@ local function strsplit(string, pattern, plain, max)
 end
 
 --- @param arg string
-local function sanitizename(arg)
+function util.sanitizename(arg)
     return arg:gsub('[<>:"/\\|?*]', function(f) return string.format('_%x', f:byte(1)) end)
 end
 
 --- @param str string
 --- @param check string
-local function endswith(str, check)
+function util.endswith(str, check)
     return str:sub(-check:len(), -1) == check
 end
 
 --- @param str string
 --- @param check string
-local function startswith(str, check)
+function util.startswith(str, check)
     return str:sub(1, check:len()) == check
 end
 
 --- @param str string
-local function dirname(str)
+function util.dirname(str)
     local prev
     while true do
         local a, b = str:find('/', (prev or 0) + 1, true)
@@ -55,7 +57,7 @@ end
 --- @param target string
 --- @param sourceNfs boolean
 --- @param targetNfs boolean
-local function cpdir(source, target, sourceNfs, targetNfs)
+function util.cpdir(source, target, sourceNfs, targetNfs)
     local sourceProv = sourceNfs and NFS or love.filesystem
     local targetProv = targetNfs and NFS or love.filesystem
 
@@ -70,34 +72,25 @@ local function cpdir(source, target, sourceNfs, targetNfs)
         assert(targetProv.createDirectory(target))
         local items = sourceProv.getDirectoryItems(source)
         for i, item in ipairs(items) do
-            cpdir(source..'/'..item, target..'/'..item, sourceNfs, targetNfs)
+            util.cpdir(source..'/'..item, target..'/'..item, sourceNfs, targetNfs)
         end
     end
 end
 
 --- @param path string
 --- @param isNfs boolean
-local function rmdir(path, isNfs)
+function util.rmdir(path, isNfs)
     local prov = isNfs and NFS or love.filesystem
     local items = prov.getDirectoryItems(path)
     for i, item in ipairs(items) do
-        rmdir(path .. '/' .. item, isNfs)
+        util.rmdir(path .. '/' .. item, isNfs)
     end
     assert(prov.remove(path))
 end
 
 --- @param str string
-local function trim(str)
+function util.trim(str)
     return str:match("^%s*(.-)%s*$") or str
 end
 
-return {
-    strsplit = strsplit,
-    sanitizename = sanitizename,
-    endswith = endswith,
-    startswith = startswith,
-    dirname = dirname,
-    rmdir = rmdir,
-    cpdir = cpdir,
-    trim = trim
-}
+return util

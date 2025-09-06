@@ -5,6 +5,7 @@ local ILoveMoveable = Moveable:extend()
 function ILoveMoveable:init(drawable, X, Y, W, H)
     Moveable.init(self, X, Y, W, H)
     self.drawable = drawable
+    self.color = G.C.WHITE
 
     table.insert(G.I.MOVEABLE, self)
 end
@@ -12,6 +13,7 @@ end
 function ILoveMoveable:draw()
     local w, h = self.drawable:getDimensions()
     prep_draw(self, 1)
+    love.graphics.setColor(self.color)
     love.graphics.draw(self.drawable, 0, 0, 0, self.T.w/w, self.T.h/h)
     love.graphics.pop()
 

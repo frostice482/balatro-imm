@@ -7,7 +7,7 @@ require('imm.ui')
 
 _G.imm = {
     repo = require('imm.repo'),
-    uises = require('imm.uises'),
+    browser = require('imm.browser'),
     mods = require('imm.lib.getmods'),
     modctrl = require('imm.modctrl')
 }
