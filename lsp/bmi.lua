@@ -2,9 +2,8 @@
 --- @alias bmi.Meta.Format 'smods' | 'smods-header' | 'thunderstore'
 
 --- @class bmi.MetaInject
---- @field pathname string
+--- @field pathname? string May be undefined in case of locally installed mods
 --- @field id string
---- @field version string
 --- @field metafmt bmi.Meta.Format
 --- @field deps? string[]
 --- @field conflicts? string[]
@@ -13,5 +12,5 @@
 --- @field title string
 --- @field categories bmi.Meta.Category[]
 --- @field author string
---- @field repo string
---- @field downloadURL string
+--- @field repo? string May be undefined in case of locally installed mods
+--- @field downloadURL? string May be undefined in case of locally installed mods

@@ -47,16 +47,17 @@ G.FUNCS[funcs.releasesInit] = function(elm)
                 if latest then break end
             end
 
-            if pre then
-                uibox:add_child(modses:uiVersionEntry({
-                    version = transformTagVersion(pre.tag_name),
-                    downloadUrl = pre.zipball_url
-                }), elm)
-            end
             if latest then
                 uibox:add_child(modses:uiVersionEntry({
                     version = transformTagVersion(latest.tag_name),
                     downloadUrl = latest.zipball_url
+                }), elm)
+            end
+            if pre then
+                uibox:add_child(modses:uiVersionEntry({
+                    version = transformTagVersion(pre.tag_name),
+                    sub = 'Prerelease',
+                    downloadUrl = pre.zipball_url
                 }), elm)
             end
         end
@@ -202,8 +203,7 @@ G.FUNCS[funcs.v_deleteConfirm] = function(elm)
         modctrl:deleteMod(modses.mod.id, r.ver)
     end
 
-    G.FUNCS.overlay_menu({ definition = ses:container() })
-    ses.uibox = G.OVERLAY_MENU
+    ses:showOverlay()
     ses:update()
 end
 
@@ -246,15 +246,7 @@ function UIModSes:queueTaskDownload(url, cb, extra)
                 ses.taskText = string.format('Failed downloading %s: %s', name, err)
                 if cb then cb(err) end
             else
-                local data = love.filesystem.newFileData(res, 'swap')
-                local modlist, list, errlist = modctrl:installModFromZip(data)
-
-                local strlist = {}
-                for i,v in ipairs(list) do table.insert(strlist, table.concat({v.mod, v.version}, ' ')) end
-
-                ses.errorText = table.concat(errlist, '\n')
-                ses.taskText = 'Installed '..table.concat(strlist, ', ')
-
+                ses:installModFromZip(love.filesystem.newFileData(res, 'swap'))
                 if cb then cb(err) end
             end
             self.ses:nextTask()
@@ -263,7 +255,7 @@ function UIModSes:queueTaskDownload(url, cb, extra)
 end
 
 --- @class imm.ModSession.VersionParam
---- @field version? string
+--- @field version string
 --- @field sub? string
 --- @field installed? boolean
 --- @field enabled? boolean
@@ -273,7 +265,6 @@ end
 
 --- @param opts imm.ModSession.VersionParam
 function UIModSes:uiVersionEntry(opts)
-    opts.version = opts.version or self.mod.version
     local l = modctrl.mods[self.mod.id]
     if l then
         if opts.installed == nil then
@@ -285,45 +276,73 @@ function UIModSes:uiVersionEntry(opts)
     end
 
     --- @type balatro.UIElement.Definition
+    local title = {
+        n = G.UIT.C,
+        config = { minw = self.ses.fontscale * 8 },
+        nodes = {{
+            n = G.UIT.R,
+            nodes = {{
+                n = G.UIT.T, config = { text = opts.version, colour = G.C.UI.TEXT_LIGHT, scale = self.ses.fontscale }
+            }}
+        }, opts.sub and {
+            n = G.UIT.R,
+            nodes = {{
+                n = G.UIT.T, config = { text = opts.sub, colour = G.C.UI.TEXT_LIGHT, scale = self.ses.fontscale * 0.5 }
+            }}
+        }},
+    }
+
+    --- @type balatro.UIElement.Definition
+    local btnSwitch
+    if opts.installed then btnSwitch = {
+        n = G.UIT.O,
+        config = {
+            object = Sprite(0, 0, self.ses.fontscale * 15/9, self.ses.fontscale, G.ASSET_ATLAS.imm_toggle, opts.enabled and { x = 1, y = 0 } or { x = 0, y = 0 }),
+            button = funcs.v_toggle,
+            button_dist = 0.4,
+            ref_table = { ses = self, ver = opts.version, toggle = opts.enabled }
+        }
+    } else btnSwitch = {
+        n = G.UIT.C
+    } end
+
+    --- @type balatro.UIElement.Definition
+    local btnAction
+    if opts.installed or opts.downloadUrl then btnAction = {
+        n = G.UIT.O,
+        config = {
+            object = Sprite(0, 0, self.ses.fontscale, self.ses.fontscale, G.ASSET_ATLAS.imm_icons, opts.installed and { x = 0, y = 0 } or { x = 1, y = 0 }),
+            button = opts.installed and funcs.v_delete or funcs.v_download,
+            button_dist = 0.4,
+            ref_table = { ses = self, ver = opts.version, durl = opts.downloadUrl, dsize = opts.downloadSize }
+        }
+    } end
+
+    --- @type balatro.UIElement.Definition
+    local actions = {
+        n = G.UIT.C,
+        config = { minw = self.ses.fontscale * (15/9 + 1 + 1/5), align = 'cr' },
+        nodes = {{
+            n = G.UIT.R,
+            config = { align = 'c' },
+            nodes = {
+                btnSwitch,
+                { n = G.UIT.C, config = { minw = self.ses.fontscale / 5 } },
+                btnAction
+            }
+        }}
+    }
+
+    --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
         config = {
             colour = opts.color or opts.enabled and G.C.GREEN or G.C.BLUE,
-            minw = 5,
             padding = 0.1,
             r = true,
             shadow = true,
         },
-        nodes = {{
-            n = G.UIT.C,
-            nodes = {{
-                n = G.UIT.R,
-                nodes = {{
-                    n = G.UIT.T, config = { text = opts.version, colour = G.C.UI.TEXT_LIGHT, scale = self.ses.fontscale }
-                }}
-            }, opts.sub and {
-                n = G.UIT.R,
-                nodes = {{
-                    n = G.UIT.T, config = { text = opts.sub, colour = G.C.UI.TEXT_LIGHT, scale = self.ses.fontscale * 0.5 }
-                }}
-            }},
-        }, opts.installed and {
-            n = G.UIT.O,
-            config = {
-                object = Sprite(0, 0, self.ses.fontscale * 15/9, self.ses.fontscale, G.ASSET_ATLAS.imm_toggle, opts.enabled and { x = 1, y = 0 } or { x = 0, y = 0 }),
-                button = funcs.v_toggle,
-                button_dist = 0.4,
-                ref_table = { ses = self, ver = opts.version, toggle = opts.enabled }
-            }
-        } or { n = G.UIT.C}, {
-            n = G.UIT.O,
-            config = {
-                object = Sprite(0, 0, self.ses.fontscale, self.ses.fontscale, G.ASSET_ATLAS.imm_icons, opts.installed and { x = 0, y = 0 } or { x = 1, y = 0 }),
-                button = opts.installed and funcs.v_delete or funcs.v_download,
-                button_dist = 0.4,
-                ref_table = { ses = self, ver = opts.version, durl = opts.downloadUrl, dsize = opts.downloadSize }
-            }
-        }}
+        nodes = {title, actions}
     }
 end
 
@@ -352,13 +371,12 @@ end
 
 --- @param func string
 function UIModSes:uiModReleasesContainer(func)
-    if self.releasesBusy then
-        --- @type balatro.UIElement.Definition
-        return {
-            n = G.UIT.T,
-            config = { text = 'Busy', scale = self.ses.fontscale * 1.25, colour = G.C.ORANGE }
-        }
-    end
+    local err
+    if not self.mod.repo then err = 'Repo info\nunavailable' end
+    if self.releasesBusy then err = 'Bust' end
+
+    --- @type balatro.UIElement.Definition
+    if err then return { n = G.UIT.T, config = { text = err, scale = self.ses.fontscale * 1.25, colour = G.C.ORANGE } } end
 
     --- @type balatro.UIElement.Definition
     return {

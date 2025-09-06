@@ -1,10 +1,10 @@
 local Fetch = require("imm.lib.fetch")
 
---- @type imm.Fetch<nil, table<string, bmi.Meta>[]>
+--- @type imm.Fetch<nil, bmi.Meta>
 local fetch_list = Fetch('https://github.com/frostice482/balatro-mod-index-tiny/raw/master/out.json.gz', 'immcache/list', false, true)
 
 --- @param data string
---- @return table<string, bmi.Meta[]>
+--- @return bmi.Meta[]
 function fetch_list:interpretRes(data)
     return JSON.decode(love.data.decompress("string", 'gzip', data)) --- @diagnostic disable-line
 end

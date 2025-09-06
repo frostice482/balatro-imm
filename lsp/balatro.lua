@@ -1,0 +1,2 @@
+--- @class balatro.UIBox.Config
+--- @field imm? imm.Browser

@@ -3,6 +3,7 @@ local LoveMoveable = require("imm.lib.love_moveable")
 local ModBrowser = require("imm.modbrowser")
 local repo = require("imm.repo")
 local ui = require("imm.lib.ui")
+local util = require("imm.lib.util")
 local modctrl = require("imm.modctrl")
 
 local funcs = {
@@ -61,7 +62,7 @@ end
 --- @field uibox balatro.UIBox
 --- @field tags table<string, boolean>
 --- @field filteredList bmi.Meta[]
---- @field list table<string, bmi.Meta>
+--- @field list bmi.Meta[]
 --- @field imageCache table<string, love.Image>
 --- @field releasesCache table<string, ghapi.Releases>
 --- @field selectedMod? imm.ModBrowser
@@ -204,7 +205,7 @@ function UISes:uiHeaderInput()
         ref_table = self,
         ref_value = 'search',
         w = 16 * .6,
-        prompt_text = 'Mod name (@author, #installed)',
+        prompt_text = 'Mod name (@author, #installed, $id)',
         text_scale = self.fontscale,
         extended_corpus = true
     })
@@ -455,30 +456,17 @@ function UISes:queueUpdateNext()
     return true
 end
 
+--- @class imm.Filter
+--- @field author? boolean
+--- @field installed? boolean
+--- @field id? boolean
+--- @field search? string
+
 --- @param mod bmi.Meta
-function UISes:matchFilter(mod)
-    local search = self.search:lower()
-    local isAuthor, isInstalled
-    local hasFilter = true
-    while hasFilter do
-        local c = search:sub(1, 1)
-        if c == '#' then isInstalled = true
-        elseif c == '@' then isAuthor = true
-        else hasFilter = false
-        end
-
-        if hasFilter then
-            search = search:sub(2)
-        end
-    end
-
-    if isInstalled and not (modctrl.mods[mod.id] and next(modctrl.mods[mod.id].versions)) then
-        return false
-    end
-
-    if not (isAuthor and mod.author or mod.title):lower():find(search) then
-        return false
-    end
+--- @param filter imm.Filter
+function UISes:matchFilter(mod, filter)
+    if filter.installed and not (modctrl.mods[mod.id] and next(modctrl.mods[mod.id].versions)) then return false end
+    if not (filter.id and mod.id or filter.author and mod.author or mod.title):lower():find(filter.search) then return false end
 
     local hasCatFilt = false
     local hasCatMatch = false
@@ -527,6 +515,7 @@ end
 --- @param mod bmi.Meta
 --- @param id string
 function UISes:updateModImage(mod, id)
+    if not mod.pathname then return end
     local aid = self.updateId
     self:getImage(mod.pathname, function (err, data)
         if not data or self.updateId ~= aid then
@@ -555,21 +544,64 @@ function UISes:updateMods()
     end
 end
 
-function UISes:update()
-    self.updateId = self.updateId + 1
+function UISes:createFilter()
+    local search = self.search:lower()
+    local isAuthor, isInstalled, isId
+    local hasFilter = true
+    while hasFilter do
+        local c = search:sub(1, 1)
+        if c == '#' then isInstalled = true
+        elseif c == '@' then isAuthor = true
+        elseif c == '$' then isId = true
+        else hasFilter = false
+        end
 
+        if hasFilter then
+            search = search:sub(2)
+        end
+    end
+
+    --- @type imm.Filter
+    return {
+        author = isAuthor,
+        id = isId,
+        installed = isInstalled,
+        search = search
+    }
+end
+
+function UISes:updateFilter()
     self.filteredList = {}
-    for k, meta in pairs(self.list) do
-        if self:matchFilter(meta) then
+
+    local ids = {}
+    local filter = self:createFilter()
+    for k, meta in ipairs(self.list) do
+        ids[meta.id or ''] = true
+        if self:matchFilter(meta, filter) then
             table.insert(self.filteredList, meta)
         end
     end
+    if filter.installed then
+        for mod, entry in pairs(modctrl.mods) do
+            if not ids[mod] then
+                local meta = util.createMetaFromEntry(entry)
+                if meta and self:matchFilter(meta, filter) then
+                    table.insert(self.filteredList, meta)
+                end
+            end
+        end
+    end
+end
+
+function UISes:update()
+    self.updateId = self.updateId + 1
 
     self.uibox:remove_group(nil, self.idCycle)
 
     local cyclecont = self.uibox:get_UIE_by_ID(self.idCycleCont)
     if cyclecont then self.uibox:add_child(self:uiCycle(), cyclecont) end
 
+    self:updateFilter()
     self:updateMods()
     self:updateSelectedMod()
 end
@@ -591,6 +623,24 @@ function UISes:container()
         no_back = true,
         contents = { self:uiBrowse() }
     })
+end
+
+function UISes:showOverlay()
+    G.FUNCS.overlay_menu({ definition = self:container() })
+    self.uibox = G.OVERLAY_MENU
+    self.uibox.config.imm = self
+end
+
+function UISes:installModFromZip(data)
+    local modlist, list, errlist = modctrl:installModFromZip(data)
+
+    local strlist = {}
+    for i,v in ipairs(list) do table.insert(strlist, table.concat({v.mod, v.version}, ' ')) end
+
+    self.errorText = table.concat(errlist, '\n')
+    self.taskText = #strlist ~= 0 and 'Installed '..table.concat(strlist, ', ') or ''
+
+    return modlist, list, errlist
 end
 
 --- @alias imm.Browser.C p.Constructor<imm.Browser, nil> | fun(): imm.Browser

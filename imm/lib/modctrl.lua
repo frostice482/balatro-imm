@@ -167,11 +167,11 @@ end
 --- @return string[] errors
 function IModCtrl:installModFromZip(zipData)
     local tmpdir = 'mnt-' .. love.data.encode('string', 'hex', love.data.hash('md5', ''..love.timer.getTime()))
-    assert(love.filesystem.mount(zipData, tmpdir), 'mount failed')
+    local ok = love.filesystem.mount(zipData, tmpdir)
+    if not ok then return {}, {}, { 'Mount failed - is the file a zip?' } end
 
     local a, b, c = self:installModFromDir(tmpdir, false)
-
-    assert(love.filesystem.unmount(zipData), 'unmount failed') --- @diagnostic disable-line
+    love.filesystem.unmount(zipData) --- @diagnostic disable-line
 
     return a, b, c
 end

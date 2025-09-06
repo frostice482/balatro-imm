@@ -11,8 +11,7 @@ end
 function G.FUNCS.imm_browse()
     G.SETTINGS.paused = true
     local state = Browser()
-    G.FUNCS.overlay_menu({ definition = state:container() })
-    state.uibox = G.OVERLAY_MENU
+    state:showOverlay()
     state:prepare()
 end
 
