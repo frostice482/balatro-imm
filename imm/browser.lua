@@ -422,8 +422,10 @@ function UISes:selectMod(mod)
     local cnt = self.uibox:get_UIE_by_ID(self.idModSelectCnt)
     if not mod or not cnt then return end
 
-    self.selectedMod = ModBrowser(self, mod)
-    self.uibox:add_child(self.selectedMod:container(), cnt)
+    local modses = ModBrowser(self, mod)
+    self.selectedMod = modses
+    self.uibox:add_child(modses:container(), cnt)
+    modses:update()
 end
 
 --- @param ifMod? bmi.Meta

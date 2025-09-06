@@ -63,7 +63,7 @@ function IModCtrl:_enableEntry(entry, info)
     local ok,err = NFS.remove(info.path .. '/.lovelyignore')
     if not ok then return ok, err end
 
-    sendInfoMessage(string.format('Enabled %s %s', entry.mod, entry.active.version), 'imm')
+    sendInfoMessage(string.format('Enabled %s %s', entry.mod, info.version), 'imm')
 
     entry.active = info
     return true
@@ -137,24 +137,43 @@ end
 
 --- @param dir string
 --- @param sourceNfs boolean
+--- @return imm.ModList modList
+--- @return imm.ModVersion[] flatList
+--- @return string[] errors
 function IModCtrl:installModFromDir(dir, sourceNfs)
-    local list = getmods({ base = dir, isNfs = sourceNfs })
-    for mod, modvers in pairs(list) do
+    local modslist = getmods({ base = dir, isNfs = sourceNfs })
+    --- @type imm.ModVersion[]
+    local flatlist = {}
+    --- @type string[]
+    local errors = {}
+
+    for mod, modvers in pairs(modslist) do
         for ver, info in pairs(modvers.versions) do
             local ok, err = self:installMod(mod, ver, info, sourceNfs)
-            if not ok then sendWarnMessage(err, "imm") end
+            if not ok then
+                sendWarnMessage(err, "imm")
+                table.insert(errors, string.format('%s %s: %s', mod, ver, err))
+            else
+                table.insert(flatlist, { mod = mod, version = ver })
+            end
         end
     end
-    return list
+    return modslist, flatlist, errors
 end
 
 --- @param zipData love.FileData
+--- @return imm.ModList modList
+--- @return imm.ModVersion[] flatList
+--- @return string[] errors
 function IModCtrl:installModFromZip(zipData)
     local tmpdir = 'mnt-' .. love.data.encode('string', 'hex', love.data.hash('md5', ''..love.timer.getTime()))
     assert(love.filesystem.mount(zipData, tmpdir), 'mount failed')
-    local r = self:installModFromDir(tmpdir, false)
+
+    local a, b, c = self:installModFromDir(tmpdir, false)
+
     assert(love.filesystem.unmount(zipData), 'unmount failed') --- @diagnostic disable-line
-    return r
+
+    return a, b, c
 end
 
 --- @alias imm.ModController.C p.Constructor<imm.ModController, nil> | fun(): imm.ModController

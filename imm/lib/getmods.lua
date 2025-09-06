@@ -2,6 +2,10 @@ local util = require("imm.lib.util")
 
 --- @alias imm.ModMetaFormat 'thunderstore' | 'smods' | 'smods-header'
 
+--- @class imm.ModVersion
+--- @field mod string
+--- @field version string
+
 --- @class imm.DependencyRule
 --- @field id string
 --- @field version string

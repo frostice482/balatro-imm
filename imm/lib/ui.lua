@@ -73,13 +73,17 @@ function ui.confirm(contentColumns, button, ref_table, yesButton, noButton)
     })
 end
 
-function ui.container(id, row)
+--- @param id string
+--- @param row? boolean
+--- @param nodes? balatro.UIElement.Definition[]
+function ui.container(id, row, nodes)
     --- @type balatro.UIElement.Definition
     return {
         n = row and G.UIT.R or G.UIT.C,
         nodes = {{
             n = row and G.UIT.C or G.UIT.R,
-            config = { id = id }
+            config = { id = id },
+            nodes = nodes
         }}
     }
 end
