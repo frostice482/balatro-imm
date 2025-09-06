@@ -52,6 +52,12 @@ G.FUNCS[funcs.releasesInit] = function(elm)
                 downloadUrl = latest.zipball_url
             }), elm)
         end
+
+        elm.UIBox:add_child(modses:uiVersionEntry({
+            version = 'Source',
+            sub = 'May be unstable!',
+            downloadUrl = mod.downloadURL
+        }), elm)
     end)
 end
 
