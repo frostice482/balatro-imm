@@ -13,7 +13,7 @@ end
 --- @protected
 --- @param entry imm.ModList.Entry
 function IModCtrl:_disableEntry(entry)
-    if not entry.active then return end
+    if entry.native or not entry.active then return end
     entry.active = nil
 end
 
@@ -21,7 +21,7 @@ end
 --- @param entry imm.ModList.Entry
 --- @param info imm.ModVersion.Entry
 function IModCtrl:_enableEntry(entry, info)
-    if entry.active then self:_disableEntry(entry) end
+    if entry.native or entry.active then self:_disableEntry(entry) end
     entry.active = info
 end
 
@@ -30,7 +30,6 @@ function IModCtrl:disableMod(mod)
     local modinfo = self.mods[mod]
     if not modinfo then return false, string.format('Mod not found %s', mod) end
     if not modinfo.active then return true end
-
     local ok, err = NFS.write(modinfo.active.path .. '/.lovelyignore', '')
     if not ok then return false, err end
 
@@ -44,6 +43,7 @@ end
 function IModCtrl:enableMod(mod, version)
     local modinfo = self.mods[mod]
     if not modinfo then return false, string.format('Mod not found %s', mod) end
+    if modinfo.active and modinfo.active.version == version then return true end
     local info = modinfo.versions[version]
     if not info then return false, string.format('Mod %s with version not found %s', mod, version) end
     local ok,err = NFS.remove(info.path .. '/.lovelyignore')

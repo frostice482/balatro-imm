@@ -2,16 +2,23 @@ local util = require("imm.lib.util")
 
 --- @alias imm.ModMetaFormat 'thunderstore' | 'smods' | 'smods-header'
 
+--- @class imm.DependencyRule
+--- @field id string
+--- @field version string
+--- @field op string
+
 --- @class imm.ModVersion.Entry
 --- @field format imm.ModMetaFormat
 --- @field path string
 --- @field info table
---- @field mod string
 --- @field version string
+--- @field deps imm.DependencyRule[][]
+--- @field conflicts imm.DependencyRule[][]
 
 --- @class imm.ModList.Entry
 --- @field versions table<string, imm.ModVersion.Entry>
 --- @field active? imm.ModVersion.Entry
+--- @field native? boolean
 
 --- List of mods, mapped by mod id, then version.
 --- @class imm.ModList: {[string]: imm.ModList.Entry}
@@ -61,6 +68,8 @@ local function isTsmod(meta)
     return true
 end
 
+--- @param file string
+--- @param isNfs? boolean
 local function processJson(file, isNfs)
     local prov = isNfs and NFS or love.filesystem
     --- @type string?
@@ -73,6 +82,7 @@ local function processJson(file, isNfs)
     return res
 end
 
+--- @param content string
 local function parseHeader(content)
     local values = {}
     local lines = util.strsplit(content, '\r?\n', false)
@@ -93,6 +103,8 @@ local function parseHeader(content)
     return values
 end
 
+--- @param file string
+--- @param isNfs? boolean
 local function processHeader(file, isNfs)
     local prov = isNfs and NFS or love.filesystem
     --- @type string?
@@ -103,9 +115,42 @@ local function processHeader(file, isNfs)
     return parseHeader(content)
 end
 
-local function transformVersion(version)
+--- @param id string
+--- @param version string
+local function transformVersion(id, version)
     version = version:gsub('~', '-')
+    if id == "Steamodded" then
+        if util.endswith(version, "-STEAMODDED") then version = version:sub(1, -12) end
+        version = version:gsub('BETA', 'beta')
+    end
     return version
+end
+
+--- @param entry string
+--- @return imm.DependencyRule[][]
+local function parseTsDep(entry)
+    local author, package, version = entry:match('^([^-]+)-([^-]+)-(.+)')
+    if not author then return {} end
+    --- @type imm.DependencyRule[][]
+    return {{{ id = package, op = '==', version = version }}}
+end
+
+--- @param entryStr string
+--- @return imm.DependencyRule[][]
+local function parseSmodsDep(entryStr)
+    local entries = {}
+    local entriesStr = util.strsplit(entryStr, '|', true)
+    for i, entry in ipairs(entriesStr) do
+        local s, e, id = entry:find('^%s*([^%s<>=()]+)')
+        if not id then break end
+
+        local list = {}
+        for op, version in entry:sub(e+1):gmatch("([<>=]+)%s*([%w_%.%-~]+)") do
+            table.insert(list, { id = id, version = version, op = op })
+        end
+        table.insert(entries, list)
+    end
+    return entries
 end
 
 --- @param ctx imm.GetModsContext
@@ -135,25 +180,45 @@ local function processFile(ctx, base, file)
     if not mod then return end
 
     local id, version
+    local deps, conflicts = {}, {}
     local ignored = prov.getInfo(base..'/.lovelyignore')
 
     if fmt == 'thunderstore' then
         id, version = mod.name, mod.version_number
+
+        for i, entry in ipairs(mod.dependencies) do
+            for j, list in ipairs(parseTsDep(entry)) do
+                table.insert(deps, list)
+            end
+        end
     else
         id, version = mod.id, mod.version
+
+        if mod.dependencies then
+            for i, entry in ipairs(mod.dependencies) do
+                for j, list in ipairs(parseSmodsDep(entry)) do
+                    table.insert(deps, list)
+                end
+            end
+        end
+        if mod.conflicts then
+            for i, entry in ipairs(mod.conflicts) do
+                for j, list in ipairs(parseSmodsDep(entry)) do
+                    table.insert(conflicts, list)
+                end
+            end
+        end
     end
 
     if id == "Steamodded" then
         local vercode = prov.read(base..'/version.lua') or ''
         local newver = vercode:match('"(.+)"')
-        if newver and util.endswith(newver, "-STEAMODDED") then newver = newver:sub(1, -12) end
         if newver then version = newver end
-        version = version:gsub('BETA', 'beta')
     end
-    version = transformVersion(version)
+    version = transformVersion(id, version)
 
     --- @type imm.ModVersion.Entry
-    local info = { format = fmt, info = mod, path = base, mod = id, version = version }
+    local info = { format = fmt, info = mod, path = base, version = version, deps = deps, conflicts = conflicts }
     if not ctx.list[id] then ctx.list[id] = { versions = {} } end
     local versionList = ctx.list[id]
     versionList.versions[version] = info

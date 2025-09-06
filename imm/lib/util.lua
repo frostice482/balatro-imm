@@ -88,7 +88,7 @@ end
 
 --- @param str string
 local function trim(str)
-    return str:match("^%s*(.-)%s*$")
+    return str:match("^%s*(.-)%s*$") or str
 end
 
 return {
