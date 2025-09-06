@@ -1,0 +1,9 @@
+{
+    "id": "imm",
+    "name": "IMM",
+    "version": "1.0.0",
+    "author": [ "frostice482" ],
+    "description": "Ingame Mod Manager",
+    "prefix": "imm",
+    "main_file": "main.lua"
+}

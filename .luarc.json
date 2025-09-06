@@ -1,0 +1,14 @@
+{
+    "workspace.library": [
+        "${addons}/love2d/module/library",
+        "${addons}/lua-enet/module/library",
+        "${addons}/luasocket/module/library",
+        "../smods",
+        "../balatro-lsp"
+    ],
+    "workspace.ignoreDir": [
+        "../smods/lsp-def/vanilla.lua"
+    ],
+    "runtime.version": "LuaJIT",
+    "workspace.checkThirdParty": false
+}

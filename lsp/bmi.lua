@@ -1,0 +1,11 @@
+--- @alias bmi.Meta.Category 'Content' | 'Joker' | 'Quality of Life' | 'Technical' | 'Miscellaneous' | 'Resource Packs' | 'API'
+
+--- @class bmi.Meta
+--- @field pathname string This is injected
+--- @field id string This is injected
+--- @field version string This is injected
+--- @field title string
+--- @field categories bmi.Meta.Category[]
+--- @field author string
+--- @field repo string
+--- @field downloadURL string
