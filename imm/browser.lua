@@ -3,6 +3,7 @@ local LoveMoveable = require("imm.lib.love_moveable")
 local ModBrowser = require("imm.modbrowser")
 local repo = require("imm.repo")
 local ui = require("imm.lib.ui")
+local modctrl = require("imm.modctrl")
 
 local funcs = {
     setCategory = 'imm_ses_setcat',
@@ -68,7 +69,7 @@ end
 local UISes = {
     search = '',
     prevSearch = '',
-    queueTimer = 0.5,
+    queueTimer = 0.3,
     queueCount = 0,
 
     listPage = 1,
@@ -203,8 +204,9 @@ function UISes:uiHeaderInput()
         ref_table = self,
         ref_value = 'search',
         w = 16 * .6,
-        prompt_text = 'Mod name',
-        text_scale = self.fontscale
+        prompt_text = 'Mod name (@author, #installed)',
+        text_scale = self.fontscale,
+        extended_corpus = true
     })
 end
 
@@ -455,7 +457,28 @@ end
 
 --- @param mod bmi.Meta
 function UISes:matchFilter(mod)
-    if self.search and not mod.title:lower():find(self.search:lower()) then return false end
+    local search = self.search:lower()
+    local isAuthor, isInstalled
+    local hasFilter = true
+    while hasFilter do
+        local c = search:sub(1, 1)
+        if c == '#' then isInstalled = true
+        elseif c == '@' then isAuthor = true
+        else hasFilter = false
+        end
+
+        if hasFilter then
+            search = search:sub(2)
+        end
+    end
+
+    if isInstalled and not (modctrl.mods[mod.id] and next(modctrl.mods[mod.id].versions)) then
+        return false
+    end
+
+    if not (isAuthor and mod.author or mod.title):lower():find(search) then
+        return false
+    end
 
     local hasCatFilt = false
     local hasCatMatch = false

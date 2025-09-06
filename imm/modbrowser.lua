@@ -211,7 +211,7 @@ end
 --- @field ses imm.Browser
 --- @field mod bmi.Meta
 local UIModSes = {
-    otherCyclePageSize = 5,
+    otherCyclePageSize = 8,
     idOtherCycle = 'imm-other-cycle',
     idImageSelectCnt = 'imm-slc-imgcnt',
     releasesBusy = false
@@ -334,7 +334,7 @@ function UIModSes:uiModSelectTabInstalled()
         --- @type [string, imm.ModVersion.Entry][]
         local version = {}
         for ver, info in pairs(l.versions) do table.insert(version, {ver, info}) end
-        table.sort(version, function (a, b) return V(a[1]) < V(b[1]) end)
+        table.sort(version, function (a, b) return V(a[1]) > V(b[1]) end)
 
         for i, entry in ipairs(version) do
             local ver, info = entry[1], entry[2]

@@ -1,0 +1,10 @@
+[manifest]
+version = "1.0.0"
+priority = 0
+
+[[patches]]
+[patches.regex]
+target = "functions/button_callbacks.lua"
+pattern = "extended_corpus and \""
+position = "after"
+payload = "@#"
