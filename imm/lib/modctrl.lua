@@ -10,66 +10,96 @@ function IModCtrl:init()
     self.mods = getmods()
 end
 
+function IModCtrl:_errNotFound(mod)
+    return false, string.format('Mod %s not found', mod)
+end
+
+function IModCtrl:_errNative(mod)
+    return false, string.format('Mod %s is native and therefore cannot be edited', mod)
+end
+
+function IModCtrl:_errVerNotFound(mod, version)
+    return false, string.format('Mod %s with version %s not found', mod, version)
+end
+
+--- @protected
+--- @param entry imm.ModList.Entry
+--- @param info imm.ModVersion.Entry
+function IModCtrl:_deleteEntry(entry, info)
+    if entry.native then return false, self:_errNative(entry.mod) end
+
+    if entry.active and entry.active == info then self:_disableEntry(entry) end
+    local ok = util.rmdir(info.path, true)
+    if not ok then return false, 'Failed deleting moddir' end
+    entry.versions[info.version] = nil
+
+    sendInfoMessage(string.format('Deleted %s %s (%s)', entry.mod, info.version, info.path), 'imm')
+
+    return true
+end
+
 --- @protected
 --- @param entry imm.ModList.Entry
 function IModCtrl:_disableEntry(entry)
-    if entry.native or not entry.active then return end
+    if entry.native then return false, self:_errNative(entry.mod) end
+    if not entry.active then return true end
+
+    local ok, err = NFS.write(entry.active.path .. '/.lovelyignore', '')
+    if not ok then return ok, err end
+
+    sendInfoMessage(string.format('Disabled %s %s', entry.mod, entry.active.version), 'imm')
+
     entry.active = nil
+    return true
 end
 
 --- @protected
 --- @param entry imm.ModList.Entry
 --- @param info imm.ModVersion.Entry
 function IModCtrl:_enableEntry(entry, info)
-    if entry.native or entry.active then self:_disableEntry(entry) end
+    if entry.native then return false, self:_errNative(entry.mod) end
+    if entry.active then self:_disableEntry(entry) end
+
+    local ok,err = NFS.remove(info.path .. '/.lovelyignore')
+    if not ok then return ok, err end
+
+    sendInfoMessage(string.format('Enabled %s %s', entry.mod, entry.active.version), 'imm')
+
     entry.active = info
+    return true
 end
 
 --- @param mod string
 function IModCtrl:disableMod(mod)
     local modinfo = self.mods[mod]
-    if not modinfo then return false, string.format('Mod not found %s', mod) end
+    if not modinfo then return self:_errNotFound(mod) end
     if not modinfo.active then return true end
-    local ok, err = NFS.write(modinfo.active.path .. '/.lovelyignore', '')
-    if not ok then return false, err end
 
-    self:_disableEntry(modinfo)
-
-    return true
+    return self:_disableEntry(modinfo)
 end
 
 --- @param mod string
 --- @param version string
 function IModCtrl:enableMod(mod, version)
     local modinfo = self.mods[mod]
-    if not modinfo then return false, string.format('Mod not found %s', mod) end
-    if modinfo.active and modinfo.active.version == version then return true end
+    if not modinfo then return self:_errNotFound(mod) end
     local info = modinfo.versions[version]
-    if not info then return false, string.format('Mod %s with version not found %s', mod, version) end
-    local ok,err = NFS.remove(info.path .. '/.lovelyignore')
-    if not ok then return false, err end
+    if not info then return self:_errVerNotFound(mod, version) end
 
-    self:_enableEntry(modinfo, info)
+    if modinfo.active and modinfo.active.version == version then return true end
 
-    return true
+    return self:_enableEntry(modinfo, info)
 end
 
 --- @param mod string
 --- @param version string
 function IModCtrl:deleteMod(mod, version)
     local modinfo = self.mods[mod]
-    if not modinfo then return false, string.format('Mod not found %s', mod) end
+    if not modinfo then return self:_errNotFound(mod) end
     local info = modinfo.versions[version]
-    if not info then return false, string.format('Mod %s with version not found %s', mod, version) end
+    if not info then return self:_errVerNotFound(mod, version) end
 
-    if modinfo.active and modinfo.active.version == version then
-        self:_disableEntry(modinfo)
-    end
-
-    util.rmdir(info.path, true)
-    modinfo.versions[version] = nil
-
-    return true
+    return self:_deleteEntry(modinfo, info)
 end
 
 --- @param mod string
@@ -77,9 +107,13 @@ end
 --- @param info imm.ModVersion.Entry
 --- @param sourceNfs boolean
 function IModCtrl:installMod(mod, ver, info, sourceNfs)
-    if not self.mods[mod] then self.mods[mod] = { versions = {} } end
+    if not self.mods[mod] then self.mods[mod] = { versions = {}, mod = mod } end
     local modinfo = self.mods[mod]
-    if modinfo.versions[ver] then return false, 'Already installed' end
+
+    if modinfo.versions[ver] then
+        local ok, err = self:_deleteEntry(modinfo, modinfo.versions[ver])
+        if not ok then return ok, err end
+    end
 
     local c = 0
     local tpath_orig = string.format('%s/%s-%s', SMODS.MODS_DIR, mod, ver)
@@ -91,10 +125,12 @@ function IModCtrl:installMod(mod, ver, info, sourceNfs)
 
     util.cpdir(info.path, tpath, sourceNfs, true)
     local ok, err = NFS.write(tpath .. '/.lovelyignore', '')
-    if not ok then return false, err end
+    if not ok then return ok, err end
 
     modinfo.versions[ver] = info
     info.path = tpath
+
+    sendInfoMessage(string.format('Installed %s %s (%s)', mod, ver, tpath), 'imm')
 
     return true
 end

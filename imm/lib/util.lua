@@ -82,10 +82,12 @@ end
 function util.rmdir(path, isNfs)
     local prov = isNfs and NFS or love.filesystem
     local items = prov.getDirectoryItems(path)
+
     for i, item in ipairs(items) do
-        util.rmdir(path .. '/' .. item, isNfs)
+        local ok = util.rmdir(path .. '/' .. item, isNfs)
+        if not ok then return ok end
     end
-    assert(prov.remove(path))
+    return prov.remove(path)
 end
 
 --- @param str string

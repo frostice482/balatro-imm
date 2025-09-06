@@ -6,7 +6,7 @@ local fetch_list = Fetch('https://github.com/frostice482/balatro-mod-index-tiny/
 --- @param data string
 --- @return table<string, bmi.Meta[]>
 function fetch_list:interpretRes(data)
-    return JSON.decode(love.data.decompress("string", 'gzip', data))
+    return JSON.decode(love.data.decompress("string", 'gzip', data)) --- @diagnostic disable-line
 end
 
 --- @type imm.Fetch<string, string>

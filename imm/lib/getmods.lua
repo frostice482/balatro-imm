@@ -16,6 +16,7 @@ local util = require("imm.lib.util")
 --- @field conflicts imm.DependencyRule[][]
 
 --- @class imm.ModList.Entry
+--- @field mod string
 --- @field versions table<string, imm.ModVersion.Entry>
 --- @field active? imm.ModVersion.Entry
 --- @field native? boolean
@@ -219,7 +220,7 @@ local function processFile(ctx, base, file)
 
     --- @type imm.ModVersion.Entry
     local info = { format = fmt, info = mod, path = base, version = version, deps = deps, conflicts = conflicts }
-    if not ctx.list[id] then ctx.list[id] = { versions = {} } end
+    if not ctx.list[id] then ctx.list[id] = { versions = {}, mod = id } end
     local versionList = ctx.list[id]
     versionList.versions[version] = info
 
