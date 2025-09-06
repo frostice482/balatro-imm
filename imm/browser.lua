@@ -84,7 +84,7 @@ local UISes = {
     ready = false,
     errorText = '',
     taskText = '',
-    noThumbnail = true,
+    noThumbnail = jit.os ~= 'Windows',
     taskDone = true,
     fonttemp = love.graphics.newText(G.LANG.font.FONT),
 
