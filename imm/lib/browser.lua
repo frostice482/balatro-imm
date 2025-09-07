@@ -73,7 +73,7 @@ end
 --- @field list bmi.Meta[]
 --- @field listMapped table<string, bmi.Meta>
 --- @field listProviders table<string, bmi.Meta[]>
---- @field imageCache table<string, love.Image>
+--- @field imageCache table<string, love.Image | false>
 --- @field releasesCache table<string, ghapi.Releases>
 --- @field selectedMod? imm.ModBrowser
 --- @field taskQueues? fun()[]
@@ -97,7 +97,7 @@ local UISes = {
     prepared = false,
     errorText = '',
     taskText = '',
-    noThumbnail = jit.os ~= 'Windows',
+    noThumbnail = false,
     taskDone = true,
     fonttemp = love.graphics.newText(G.LANG.font.FONT),
 
@@ -493,23 +493,25 @@ end
 --- @param key string
 --- @param cb fun(err?: string, data?: love.Image)
 function UISes:getImage(key, cb)
-    if self.noThumbnail then return cb(nil, nil) end
+    if self.noThumbnail or self.imageCache[key] == false then return cb(nil, nil) end
     if self.imageCache[key] then return cb(nil, self.imageCache[key]) end
+
     repo.thumbnails:fetch(key, function (err, res)
-        if not res then return cb(err, res) end
+        if not res then
+            self.imageCache[key] = false
+            return cb(err, res)
+        end
 
         local ok, img = pcall(love.graphics.newImage, love.filesystem.newFileData(res, key))
-        if ok then
-            self.imageCache[key] = img
-            cb(nil, img)
-        end
+        self.imageCache[key] = ok and img or false
+        cb(nil, ok and img or nil)
     end)
 end
 
---- @param id string
+--- @param containerId string
 --- @param img love.Image
-function UISes:uiUpdateImage(id, img)
-    local imgcnt = self.uibox:get_UIE_by_ID(id)
+function UISes:uiUpdateImage(containerId, img)
+    local imgcnt = self.uibox:get_UIE_by_ID(containerId)
     if not imgcnt then return end
 
     self.uibox:add_child({
@@ -519,16 +521,17 @@ function UISes:uiUpdateImage(id, img)
 end
 
 --- @param mod bmi.Meta
---- @param id string
-function UISes:updateModImage(mod, id)
+--- @param containerId string
+--- @param nocheckUpdate? boolean
+function UISes:updateModImage(mod, containerId, nocheckUpdate)
     if not mod.pathname then return end
     local aid = self.updateId
     self:getImage(mod.pathname, function (err, data)
-        if not data or self.updateId ~= aid then
+        if not data or not nocheckUpdate and self.updateId ~= aid then
             if err then print(string.format("Error loading thumbnail %s: %s", mod.pathname, err)) end
             return
         end
-        self:uiUpdateImage(id, data)
+        self:uiUpdateImage(containerId, data)
     end)
 end
 
@@ -543,6 +546,7 @@ function UISes:updateMod(mod, n)
 end
 
 function UISes:updateMods()
+    self.updateId = self.updateId + 1
     self.uibox:remove_group(nil, self.idMod)
     local off = (self.listPage - 1) * self.listW * self.listH
     for i=1, self.listH * self.listW, 1 do
@@ -647,8 +651,6 @@ function UISes:updateFilter()
 end
 
 function UISes:update()
-    self.updateId = self.updateId + 1
-
     self.uibox:remove_group(nil, self.idCycle)
 
     self:updateFilter()

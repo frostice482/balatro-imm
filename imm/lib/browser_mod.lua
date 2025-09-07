@@ -63,7 +63,7 @@ G.FUNCS[funcs.releasesInit] = function(elm)
         local isLatestHash = mod.version:match('^%x%x%x%x%x%x%x$')
         uibox:add_child(modses:uiVersion({
             version = 'Source',
-            sub = isLatestHash and (mod.version..' - Potentially unstable!') or mod.version,
+            sub = mod.version..' - Potentially unstable!',
             downloadUrl = mod.downloadURL
         }), elm)
 
@@ -458,7 +458,7 @@ function UIModSes:container()
 end
 
 function UIModSes:update()
-    self.ses:updateModImage(self.mod, self.idImageSelectCnt)
+    self.ses:updateModImage(self.mod, self.idImageSelectCnt, true)
 end
 
 --- @param ver string
