@@ -1,6 +1,6 @@
 [manifest]
 version = "1.0.0"
-priority = 0
+priority = -10
 
 [[patches]]
 [patches.regex]
@@ -16,3 +16,21 @@ pattern = '''G\.C\.UI\.TEXT_DARK, scale = 0\.4'''
 position = "at"
 payload = "G.C.UI.TEXT_DARK, scale = tooltip.text_scale or 0.4"
 times = 3
+
+[[patches]]
+[patches.copy]
+target = "main.lua"
+position = "append"
+sources = ["main.lua"]
+
+[[patches]]
+[patches.module]
+source = "include/nativefs.lua"
+before = "main.lua"
+name = "imm-nativefs"
+
+[[patches]]
+[patches.module]
+source = "include/json.lua"
+before = "main.lua"
+name = "imm-json"

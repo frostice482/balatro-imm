@@ -1,4 +1,4 @@
-The ingame SMODS mod browser.
+The ingame mod browser.
 
 The mod sources are taken from [balatro-mod-index](https://github.com/skyline69/balatro-mod-index),
 [modified](https://github.com/frostice482/balatro-mod-index-tiny) for the purpose of smaller API requests.
@@ -22,3 +22,9 @@ If you want to clear cache, simply delete `%AppData%\Balatro\immcache` (on windo
 - Fix & Improve UI
 - Add clear cache button
 - Add restart button
+
+## Included libraries
+
+IMM uses the following libs:
+- [rxi's json](https://github.com/rxi/json.lua)
+- [nativefs](https://github.com/EngineerSmith/nativefs)

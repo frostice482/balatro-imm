@@ -1,6 +1,7 @@
 local constructor = require("imm.lib.constructor")
-local https = require("SMODS.https")
+local https = require("imm.https_agent")
 local util = require("imm.lib.util")
+local logger = require("imm.logger")
 
 --- @class imm.Fetch<A, T>: balatro.Object, {
 ---     fetch: fun(self, arg: A, cb: fun(err?: string, res?: T), refreshCache?: boolean, useCache?: boolean);
@@ -73,8 +74,9 @@ end
 --- @param url string
 --- @param n number
 function IFetch:runreq(cachefile, cb, useCache, url, n)
-    https.asyncRequest(
+    https:request(
         url,
+        nil,
         function (code, body, headers)
             local redirect = false
             if code == 302 or code == 301 then
@@ -86,7 +88,7 @@ function IFetch:runreq(cachefile, cb, useCache, url, n)
                 return
             end
             if code ~= 200 then
-                sendWarnMessage(string.format("%s: HTTP %d\n%s", url, code, body), "imm")
+                logger.fmt('error', "%s: HTTP %d\n%s", url, code, body)
                 cb(string.format('%s: HTTP Error %d', url, code))
                 return
             end

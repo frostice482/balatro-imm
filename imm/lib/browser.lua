@@ -3,19 +3,14 @@ local LoveMoveable = require("imm.lib.love_moveable")
 local ModBrowser = require("imm.lib.browser_mod")
 local getmods = require("imm.lib.mod.get")
 local ui = require("imm.lib.ui")
-local repo = require("imm.repo")
+local repo = require("imm.lib.repo")
 
 local funcs = {
     setCategory = 'imm_ses_setcat',
     update      = 'imm_ses_update',
     cyclePage   = 'imm_ses_cycle',
-    chooseMod   = 'imm_ses_choosemod',
-    restartGame = 'imm_ses_restart'
+    chooseMod   = 'imm_ses_choosemod'
 }
-
-G.FUNCS[funcs.restartGame] = function()
-    SMODS.restart_game()
-end
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.setCategory] = function(elm)

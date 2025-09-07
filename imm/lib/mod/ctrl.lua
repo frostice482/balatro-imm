@@ -2,6 +2,8 @@ local constructor = require('imm.lib.constructor')
 local ModList = require('imm.lib.mod.list')
 local getmods = require('imm.lib.mod.get')
 local util = require('imm.lib.util')
+local repo = require('imm.lib.repo')
+local logger = require('imm.logger')
 
 --- @class imm.ModController
 --- The provided id \
@@ -118,7 +120,7 @@ function IModCtrl:install(info, sourceNfs)
 
     -- get target path
     local c = 0
-    local tpath_orig = string.format('%s/%s-%s', SMODS.MODS_DIR, mod, ver)
+    local tpath_orig = string.format('%s/%s-%s', repo.modsDir, mod, ver)
     local tpath = tpath_orig
     if NFS.getInfo(tpath) then
         c = c + 1
@@ -136,7 +138,7 @@ function IModCtrl:install(info, sourceNfs)
     info.path = tpath
 
     self:add(info)
-    sendInfoMessage(string.format('Installed %s %s (%s)', mod, ver, tpath), 'imm')
+    logger.fmt('log', 'Installed %s %s (%s)', mod, ver, tpath)
     return true
 end
 
@@ -153,7 +155,7 @@ function IModCtrl:installFromDir(dir, sourceNfs)
         for ver, info in pairs(modvers.versions) do
             local ok, err = self:install(info, sourceNfs)
             if not ok then
-                sendWarnMessage(err, "imm")
+                logger.err(err)
                 table.insert(errors, string.format('%s %s: %s', mod, ver, err))
             else
                 table.insert(flatlist, { mod = mod, version = ver })

@@ -1,9 +1,64 @@
-NFS.mount(SMODS.current_mod.path..'/imm', 'imm')
+local function __imm_atlas(base, key, path, px, py)
+    local abspath = string.format('%s/assets/%dx/%s', base, G.SETTINGS.GRAPHICS.texture_scaling, path)
+    local name = 'imm_'..key
 
-SMODS.Atlas({ key = 'icons', path = 'icons.png', px = 19, py = 19 })
-SMODS.Atlas({ key = 'toggle', path = 'toggle.png', px = 15, py = 9 })
+    G.ASSET_ATLAS[name] = {
+        image = love.graphics.newImage(assert(NFS.newFileData(abspath)), nil),
+        name = name,
+        px = px,
+        py = py
+    }
+end
 
-require('imm.ui')
-require('imm.dropinstall')
+local function __imm_postload(selfdir)
+    __imm_atlas(selfdir, 'icons', 'icons.png', 19, 19)
+    __imm_atlas(selfdir, 'toggle', 'toggle.png', 15, 9)
 
-_G.imm = require("imm.modctrl")
+    require('imm.ui')
+    require('imm.dropinstall')
+end
+
+local function __imm_init()
+    if package.preload.nativefs then
+        print("Using SMODS-provided NFS")
+        NFS = require("nativefs")
+    else
+        NFS = require("imm-nativefs")
+    end
+
+    if package.preload.json then
+        print("Using SMODS-provided JOSN")
+        JSON = require("json")
+    else
+        JSON = require("imm-json")
+    end
+
+    local selfdir
+    local moddir = require('lovely').mod_dir
+    for i, item in ipairs(NFS.getDirectoryItems(moddir)) do
+        local base = moddir..'/'..item
+        local data = NFS.read(base..'/imm/sig')
+        if data and data == 'balatro-imm' then
+            selfdir = base
+            break
+        end
+    end
+
+    if not selfdir then
+        print('imm: could not determine path')
+        return
+    end
+
+    NFS.mount(selfdir..'/imm', 'imm')
+    package.loaded['imm.config'] = {
+        path = selfdir,
+        modsDir = moddir
+    }
+
+    local loveload = love.load
+    function love.load() --- @diagnostic disable-line
+        loveload()
+        __imm_postload(selfdir)
+    end
+end
+__imm_init()

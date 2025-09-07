@@ -1,5 +1,6 @@
 local util = require("imm.lib.util")
 local ModList = require("imm.lib.mod.list")
+local config = require("imm.config")
 
 local modlist = {}
 
@@ -192,11 +193,12 @@ function modlist.parseInfo(mod, format)
     return id, version, deps, conflicts, provides
 end
 
---- @param ctx _imm.GetModsContext
 --- @param base string
 --- @param file string
-function modlist.processFile(ctx, base, file)
-    local prov = ctx.isNfs and NFS or love.filesystem
+--- @param list table<string, imm.ModList>
+--- @param isNfs? boolean
+function modlist.processFile(base, file, list, isNfs)
+    local prov = isNfs and NFS or love.filesystem
     local path = base..'/'..file
     local ifile = file:lower()
     local mod
@@ -205,14 +207,14 @@ function modlist.processFile(ctx, base, file)
 
     --- get mod meta & format
     if util.endswith(ifile, ".json") then
-        local parsed = modlist.processJson(path, ctx.isNfs)
+        local parsed = modlist.processJson(path, isNfs)
         if modlist.isSmodsMod(parsed) then
             mod, fmt = parsed, 'smods'
         elseif ifile == "manifest.json" and modlist.isTsMod(parsed) then
             mod, fmt = parsed, 'thunderstore'
         end
     elseif util.endswith(ifile, ".lua") then
-        local parsed = modlist.processHeader(path, ctx.isNfs)
+        local parsed = modlist.processHeader(path, isNfs)
         if parsed then
             mod, fmt = parsed, 'smods-header'
         end
@@ -232,8 +234,8 @@ function modlist.processFile(ctx, base, file)
     version = modlist.transformVersion(id, version)
 
     --- add the mod
-    if not ctx.list[id] then ctx.list[id] = ModList(id) end
-    ctx.list[id]:createVersion(version, {
+    if not list[id] then list[id] = ModList(id) end
+    list[id]:createVersion(version, {
         format = fmt,
         info = mod,
         path = base,
@@ -247,53 +249,34 @@ modlist.excludedDirs = {
     lovely = true
 }
 
-modlist.excludedSubdirs = {
-    localization = true,
-    assets = true,
-    lovely = true
-}
-
---- @class _imm.GetModsContext
---- @field isNfs boolean
---- @field depthLimit number
---- @field list table<string, imm.ModList>
-
---- @class imm.GetModsContextOptions
+--- @class imm.GetModsOptions
 --- @field isNfs? boolean
---- @field depthLimit? number
 --- @field list? table<string, imm.ModList>
 --- @field base? string
 
---- @param ctx _imm.GetModsContext
---- @param base string
---- @param depth number
-function modlist.getModsLow(ctx, base, depth)
-    if depth > ctx.depthLimit then return end
+--- @param opts? imm.GetModsOptions
+function modlist.getMods(opts)
+    opts = opts or {}
+    local list = opts.list or {}
+    local base = opts.base or config.modsDir
+    local isNfs = opts.isNfs ~= false
 
-    local prov = ctx.isNfs and NFS or love.filesystem
+    local prov = isNfs and NFS or love.filesystem
     for i, file in ipairs(prov.getDirectoryItems(base)) do
         local path = base..'/'..file
         local stat = prov.getInfo(path)
-        if stat and stat.type == 'file' then
-            modlist.processFile(ctx, base, file)
-        else
-            local exclusion = depth == 1 and modlist.excludedDirs or modlist.excludedSubdirs
-            if not exclusion[file:lower()] then
-                modlist.getModsLow(ctx, path, depth + 1)
+        if stat and stat.type ~= 'file' and not modlist.excludedDirs[file] then
+            for j, subfile in ipairs(prov.getDirectoryItems(path)) do
+                local subpath = path..'/'..subfile
+                local substat = prov.getInfo(subpath)
+                if substat and substat.type == 'file' then
+                    modlist.processFile(path, subfile, list, isNfs)
+                end
             end
         end
     end
-end
 
---- @param opts? imm.GetModsContextOptions
-function modlist.getMods(opts)
-    opts = opts or {}
-    opts.list = opts.list or {}
-    opts.isNfs = opts.isNfs ~= false
-    opts.depthLimit = opts.depthLimit or 3
-    modlist.getModsLow(opts, opts.base or SMODS.MODS_DIR, 1) --- @diagnostic disable-line
-
-    return opts.list
+    return list
 end
 
 return modlist

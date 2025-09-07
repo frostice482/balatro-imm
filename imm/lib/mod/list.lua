@@ -1,5 +1,7 @@
 local constructor = require("imm.lib.constructor")
 local Mod = require("imm.lib.mod.mod")
+local V = require("imm.lib.version")
+local logger = require("imm.logger")
 
 --- @class imm.ModList
 --- @field versions table<string, imm.Mod>
@@ -45,7 +47,7 @@ function IModList:disable()
     local ok, err = NFS.write(self.active.path .. '/.lovelyignore', '')
     if not ok then return ok, err end
 
-    sendInfoMessage(string.format('Disabled %s %s', self.mod, self.active.version), 'imm')
+    logger.fmt('log', 'Disabled %s %s', self.mod, self.active.version)
     self.active = nil
     return true
 end

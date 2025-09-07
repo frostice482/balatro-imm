@@ -13,4 +13,6 @@ ctrl.mods.Lovely:createVersion(lovelyver)
 ctrl.mods.lovely = ModList('lovely', true)
 ctrl.mods.lovely:createVersion(lovelyver)
 
+_G.immctrl = ctrl
+
 return ctrl

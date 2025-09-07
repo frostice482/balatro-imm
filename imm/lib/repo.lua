@@ -38,7 +38,8 @@ local Repo = {
     thumbnails = fetch_thumb,
     github_releases = fetch_gh_releases,
     releases_generic = fetch_releases_generic,
-    blob = fetch_blob
+    blob = fetch_blob,
+    modsDir = require('imm.config').modsDir
 }
 
 --- @class imm.RepoProvider: imm.HostInfo

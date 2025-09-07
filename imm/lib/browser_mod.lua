@@ -1,7 +1,8 @@
 local constructor = require("imm.lib.constructor")
+local V = require("imm.lib.version")
 local ui = require("imm.lib.ui")
 local util = require("imm.lib.util")
-local repo = require("imm.repo")
+local repo = require("imm.lib.repo")
 
 local function transformTagVersion(tag)
     if tag:sub(1, 1) == "v" then tag = tag:sub(2) end
@@ -370,7 +371,7 @@ function UIModSes:uiModSelectTabInstalled()
             local ver, info = entry[1], entry[2]
             table.insert(list, self:uiVersionEntry({
                 version = ver,
-                sub = info.path:sub(SMODS.MODS_DIR:len() + 2),
+                sub = info.path:sub(repo.modsDir:len() + 2),
                 installed = true
             }))
         end

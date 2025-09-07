@@ -1,5 +1,6 @@
 local constructor = require("imm.lib.constructor")
 local util = require('imm.lib.util')
+local logger = require('imm.logger')
 
 local function errNative(mod)
     return false, string.format('Mod %s is native and therefore cannot be edited', mod)
@@ -78,7 +79,7 @@ function IMod:uninstall()
     local ok = util.rmdir(self.path, true)
     if not ok then return false, 'Failed deleting moddir' end
 
-    sendInfoMessage(string.format('Deleted %s %s (%s)', self.mod, self.version, self.path), 'imm')
+    logger.fmt('log', 'Deleted %s %s (%s)', self.mod, self.version, self.path)
     self.list.versions[self.version] = nil
     return true
 end
@@ -89,7 +90,7 @@ function IMod:enable()
     local ok,err = NFS.remove(self.path .. '/.lovelyignore')
     if not ok then return ok, err end
 
-    sendInfoMessage(string.format('Enabled %s %s', self.mod, self.version), 'imm')
+    logger.fmt('log', 'Enabled %s %s', self.mod, self.version)
     self.list.active = self
     return true
 end
