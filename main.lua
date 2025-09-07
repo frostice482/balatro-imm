@@ -3,7 +3,7 @@ local function __imm_atlas(base, key, path, px, py)
     local name = 'imm_'..key
 
     G.ASSET_ATLAS[name] = {
-        image = love.graphics.newImage(assert(NFS.newFileData(abspath)), { dpiscale = 2 }),
+        image = love.graphics.newImage(assert(NFS.newFileData(abspath)), { dpiscale = G.SETTINGS.GRAPHICS.texture_scaling }),
         name = name,
         px = px,
         py = py
