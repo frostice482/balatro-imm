@@ -4,12 +4,14 @@ local ModBrowser = require("imm.lib.browser_mod")
 local getmods = require("imm.lib.mod.get")
 local ui = require("imm.lib.ui")
 local repo = require("imm.lib.repo")
+local util = require("imm.lib.util")
 
 local funcs = {
     setCategory = 'imm_ses_setcat',
     update      = 'imm_ses_update',
     cyclePage   = 'imm_ses_cycle',
-    chooseMod   = 'imm_ses_choosemod'
+    chooseMod   = 'imm_ses_choosemod',
+    refresh     = 'imm_refresh'
 }
 
 --- @param elm balatro.UIElement
@@ -50,6 +52,18 @@ G.FUNCS[funcs.chooseMod] = function(elm)
     local ses, mod = r.ses, r.mod
 
     ses:selectMod(mod)
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.refresh] = function(elm)
+    util.rmdir('immcache', false)
+
+    --- @type imm.Browser
+    local ses = elm.config.ref_table
+    if ses then
+        ses.prepared = false
+        ses:showOverlay(true)
+    end
 end
 
 --- @class imm.Browser
@@ -142,6 +156,17 @@ function UISes:getModElmCntId(n)
     return 'imm-mod-container-'..n
 end
 
+--- @param text string
+--- @param scale? number
+--- @param col? ColorHex
+function UISes:uiText(text, scale, col)
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.T,
+        config = { text = text, scale = self.fontscale * (scale or 1), colour = col or G.C.UI.TEXT_LIGHT }
+    }
+end
+
 --- @param id string
 function UISes:uiImage(id)
     --- @type balatro.UIElement.Definition
@@ -187,41 +212,12 @@ function UISes:uiModAuthor(text)
     return {
         n = G.UIT.R,
         config = { align = 'm' },
-        nodes = {{
-            n = G.UIT.T,
-            config = {
-                text = 'By ' .. text,
-                scale = self.fontscale * 0.75,
-                colour = G.C.UI.TEXT_LIGHT,
-            }
-        }}
+        nodes = {self:uiText('By '..text, 0.75)}
     }
 end
 
 function UISes:uiModSelectContainer()
     return ui.container(self.idModSelectCnt)
-end
-
-function UISes:uiHeaderInput()
-    return create_text_input({
-        ref_table = self,
-        ref_value = 'search',
-        w = 16 * .6,
-        prompt_text = 'Mod name (@author, #installed, $id)',
-        text_scale = self.fontscale,
-        extended_corpus = true
-    })
-end
-
-function UISes:uiHeader()
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        config = { align = 'cm', padding = 0.1 },
-        nodes = {
-            self:uiHeaderInput()
-        }
-    }
 end
 
 function UISes:uiCategory(label, category)
@@ -241,31 +237,48 @@ function UISes:uiCategory(label, category)
             button = funcs.setCategory,
             ref_table = { ses = self, cat = category }
         },
-        nodes = {{
-            n = G.UIT.T,
-            config = { text = label, scale = self.fontscale, colour = G.C.UI.TEXT_LIGHT }
-        }}
+        nodes = {self:uiText(label)}
     }
 end
 
-function UISes:uiSidebarExitButton()
+--- @type balatro.UIElement.Config
+local someWeirdBase = { padding = 0.15, r = 0.1, hover = true, shadow = true, colour = G.C.BLUE }
+
+function UISes:uiSidebarHeaderExit()
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.C,
+        config = setmetatable({ tooltip = { text = {'Exit'} }, button = 'exit_overlay_menu' }, {__index = someWeirdBase}),
+        nodes = {self:uiText('X')}
+    }
+end
+
+function UISes:uiSidebarHeaderRefresh()
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.C,
+        config = setmetatable({ tooltip = { text = {'Refresh'} }, button = funcs.refresh, ref_table = self }, {__index = someWeirdBase}),
+        nodes = {self:uiText('R')}
+    }
+end
+
+function UISes:uiSidebarHeader()
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
         config = { padding = 0.1, align = 'm' },
-        nodes = {{
-            n = G.UIT.C, config = { padding = 0.15, r = 0.1, hover = true, shadow = true, colour = G.C.PURPLE, button = 'exit_overlay_menu' },
-            nodes = {{
-                n = G.UIT.T, config = { text = "X", scale = self.fontscale, colour = G.C.UI.TEXT_LIGHT }
-            }}
-        }}
+        nodes = {
+            self:uiSidebarHeaderExit(),
+            ui.gap('C', self.fontscale / 5),
+            self:uiSidebarHeaderRefresh(),
+        }
     }
 end
 
 function UISes:uiSidebar()
     local categories = {}
 
-    table.insert(categories, self:uiSidebarExitButton())
+    table.insert(categories, self:uiSidebarHeader())
 
     for i,entry in ipairs(self.categories) do
         table.insert(categories, self:uiCategory(entry[1], entry[2]))
@@ -295,6 +308,28 @@ function UISes:uiModEntry(mod, n)
         nodes = {
             self:uiImage(id .. self.idImageContSuff),
             self:uiModText(mod.title, self.thumbW),
+        }
+    }
+end
+
+function UISes:uiHeaderInput()
+    return create_text_input({
+        ref_table = self,
+        ref_value = 'search',
+        w = 16 * .6,
+        prompt_text = 'Search (@author, #installed, $id)',
+        text_scale = self.fontscale,
+        extended_corpus = true
+    })
+end
+
+function UISes:uiHeader()
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.R,
+        config = { align = 'cm', padding = 0.1 },
+        nodes = {
+            self:uiHeaderInput()
         }
     }
 end

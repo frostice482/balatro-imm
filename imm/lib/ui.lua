@@ -1,20 +1,5 @@
 local ui = {}
 
--- Taken from balamod, modified
--- https://github.com/balamod/balamod_lua/blob/main/src/balamod_uidefs.lua
---- @param content balatro.UIElement.Definition[]
-function ui.wrap(content, button, col)
-    --- @type balatro.UIElement.Definition
-    return {
-        n = col and G.UIT.C or G.UIT.R, config = { align = "cm", padding = 0.2, r = 0.1, emboss = 0.1, colour = G.C.L_BLACK },
-        nodes = {{
-            n = G.UIT.R,
-            config = { align = "cm", padding = 0.15, r = 0.1, hover = true, colour = G.C.PURPLE, shadow = true, button = button },
-            nodes = content
-        }}
-    }
-end
-
 --- @type balatro.UI.ButtonParam
 local ui_def_yes = {
     col = true,
@@ -105,6 +90,33 @@ function ui.removeChildrens(elm)
         elm.children[k]:remove()
         elm.children[k] = nil
     end
+end
+
+--- @param mode 'R' | 'C'
+--- @param size number
+function ui.gap(mode, size)
+    --- @type balatro.UIElement.Definition
+    return {
+        n = mode == 'R' and G.UIT.R or G.UIT.C,
+        config = {
+            minw = mode == 'C' and size or nil,
+            minh = mode == 'R' and size or nil
+        }
+    }
+end
+
+--- @param mode 'R' | 'C'
+--- @param size number
+--- @param list balatro.UIElement.Definition[]
+function ui.gapList(mode, size, list)
+    local gapElm = ui.gap(mode, size)
+    --- @type balatro.UIElement.Definition[]
+    local gapped = {}
+    for i, elm in ipairs(list) do
+        if i ~= 1 then table.insert(gapped, gapElm) end
+        table.insert(gapped, elm)
+    end
+    return gapped
 end
 
 return ui

@@ -1,5 +1,4 @@
 local constructor = require("imm.lib.constructor")
-local V = require("imm.lib.version")
 local ui = require("imm.lib.ui")
 local repo = require("imm.lib.repo")
 
@@ -47,13 +46,13 @@ G.FUNCS[funcs.releasesInit] = function(elm)
             end
 
             if latest then
-                uibox:add_child(modses:uiVersionEntry({
+                uibox:add_child(modses:uiVersion({
                     version = transformTagVersion(latest.tag_name),
                     downloadUrl = latest.zipball_url
                 }), elm)
             end
             if pre then
-                uibox:add_child(modses:uiVersionEntry({
+                uibox:add_child(modses:uiVersion({
                     version = transformTagVersion(pre.tag_name),
                     sub = 'Prerelease',
                     downloadUrl = pre.zipball_url
@@ -62,7 +61,7 @@ G.FUNCS[funcs.releasesInit] = function(elm)
         end
 
         local isLatestHash = mod.version:match('^%x%x%x%x%x%x%x$')
-        uibox:add_child(modses:uiVersionEntry({
+        uibox:add_child(modses:uiVersion({
             version = 'Source',
             sub = isLatestHash and (mod.version..' - Potentially unstable!') or mod.version,
             downloadUrl = mod.downloadURL
@@ -108,7 +107,7 @@ G.FUNCS[funcs.otherInit] = function(elm)
             local release = res[i]
             if not release then break end
 
-            local t = modses:uiVersionEntry({
+            local t = modses:uiVersion({
                 version = transformTagVersion(release.tag_name),
                 downloadUrl = release.zipball_url
             })
@@ -140,7 +139,7 @@ G.FUNCS[funcs.otherCycle] = function(ev)
         local release = list[i+off]
         if not release then break end
 
-        local t = ses:uiVersionEntry({
+        local t = ses:uiVersion({
             version = transformTagVersion(release.tag_name),
             downloadUrl = release.zipball_url
         })
@@ -266,21 +265,11 @@ end
 --- @field downloadSize? number
 
 --- @param opts imm.ModSession.VersionParam
-function UIModSes:uiVersionEntry(opts)
-    local l = self.ses.modctrl.mods[self.mod.id]
-    if l then
-        if opts.installed == nil then
-            opts.installed = not not l.versions[opts.version]
-        end
-        if opts.enabled == nil then
-            opts.enabled = (l.active and l.active.version) == opts.version
-        end
-    end
-
+function UIModSes:uiVersionTitle(opts)
     --- @type balatro.UIElement.Definition
-    local title = {
+    return {
         n = G.UIT.C,
-        config = { minw = self.ses.fontscale * 8 },
+        config = { minw = self.ses.fontscale * 10 },
         nodes = {{
             n = G.UIT.R,
             nodes = {{
@@ -297,15 +286,18 @@ function UIModSes:uiVersionEntry(opts)
             }}
         }, opts.sub and {
             n = G.UIT.R,
-            nodes = {{
-                n = G.UIT.T, config = { text = opts.sub, colour = G.C.UI.TEXT_LIGHT, scale = self.ses.fontscale * 0.5 }
-            }}
+            nodes = {self.ses:uiText(opts.sub, 0.5)}
         }},
     }
+end
+
+--- @param opts imm.ModSession.VersionParam
+function UIModSes:uiVersionSwitchBtn(opts)
+    --- @type balatro.UIElement.Definition
+    if not opts.installed then return { n = G.UIT.C } end
 
     --- @type balatro.UIElement.Definition
-    local btnSwitch
-    if opts.installed then btnSwitch = {
+    return {
         n = G.UIT.O,
         config = {
             object = Sprite(0, 0, self.ses.fontscale * 15/9, self.ses.fontscale, G.ASSET_ATLAS.imm_toggle, opts.enabled and { x = 1, y = 0 } or { x = 0, y = 0 }),
@@ -313,13 +305,14 @@ function UIModSes:uiVersionEntry(opts)
             button_dist = 0.4,
             ref_table = { ses = self, ver = opts.version, toggle = opts.enabled }
         }
-    } else btnSwitch = {
-        n = G.UIT.C
-    } end
+    }
+end
 
+--- @param opts imm.ModSession.VersionParam
+function UIModSes:uiVersionActionBtn(opts)
+    if not (opts.installed or opts.downloadUrl) then return end
     --- @type balatro.UIElement.Definition
-    local btnAction
-    if opts.installed or opts.downloadUrl then btnAction = {
+    return {
         n = G.UIT.O,
         config = {
             object = Sprite(0, 0, self.ses.fontscale, self.ses.fontscale, G.ASSET_ATLAS.imm_icons, opts.installed and { x = 0, y = 0 } or { x = 1, y = 0 }),
@@ -327,22 +320,40 @@ function UIModSes:uiVersionEntry(opts)
             button_dist = 0.4,
             ref_table = { ses = self, ver = opts.version, durl = opts.downloadUrl, dsize = opts.downloadSize }
         }
-    } end
+    }
+end
+
+--- @param opts imm.ModSession.VersionParam
+function UIModSes:uiVersionActions(opts)
+    local list = {}
+    local switch = self:uiVersionSwitchBtn(opts)
+    if switch then table.insert(list, switch) end
+    local action = self:uiVersionActionBtn(opts)
+    if action then table.insert(list, action) end
 
     --- @type balatro.UIElement.Definition
-    local actions = {
+    return {
         n = G.UIT.C,
         config = { minw = self.ses.fontscale * (15/9 + 1 + 1/5), align = 'cr' },
         nodes = {{
             n = G.UIT.R,
             config = { align = 'c' },
-            nodes = {
-                btnSwitch,
-                { n = G.UIT.C, config = { minw = self.ses.fontscale / 5 } },
-                btnAction
-            }
+            nodes = ui.gapList('C', self.ses.fontscale / 5, list)
         }}
     }
+end
+
+--- @param opts imm.ModSession.VersionParam
+function UIModSes:uiVersion(opts)
+    local l = self.ses.modctrl.mods[self.mod.id]
+    if l then
+        if opts.installed == nil then
+            opts.installed = not not l.versions[opts.version]
+        end
+        if opts.enabled == nil then
+            opts.enabled = (l.active and l.active.version) == opts.version
+        end
+    end
 
     --- @type balatro.UIElement.Definition
     return {
@@ -353,11 +364,14 @@ function UIModSes:uiVersionEntry(opts)
             r = true,
             shadow = true,
         },
-        nodes = {title, actions}
+        nodes = {
+            self:uiVersionTitle(opts),
+            self:uiVersionActions(opts)
+        }
     }
 end
 
-function UIModSes:uiModSelectTabInstalled()
+function UIModSes:uiTabInstalled()
     local list = {}
     local l = self.ses.modctrl.mods[self.mod.id]
     if l then
@@ -367,7 +381,7 @@ function UIModSes:uiModSelectTabInstalled()
         table.sort(version, function (a, b) return a.versionParsed > b.versionParsed end)
 
         for i, info in ipairs(version) do
-            table.insert(list, self:uiVersionEntry({
+            table.insert(list, self:uiVersion({
                 version = info.version,
                 sub = info.path:sub(repo.modsDir:len() + 2),
                 installed = true
@@ -379,13 +393,13 @@ function UIModSes:uiModSelectTabInstalled()
 end
 
 --- @param func string
-function UIModSes:uiModReleasesContainer(func)
+function UIModSes:uiReleasesContainer(func)
     local err
     if not self.mod.repo then err = 'Repo info\nunavailable' end
     if self.releasesBusy then err = 'Bust' end
 
     --- @type balatro.UIElement.Definition
-    if err then return { n = G.UIT.T, config = { text = err, scale = self.ses.fontscale * 1.25, colour = G.C.ORANGE } } end
+    if err then return self.ses:uiText(err, 1.25, G.C.ORANGE) end
 
     --- @type balatro.UIElement.Definition
     return {
@@ -393,15 +407,12 @@ function UIModSes:uiModReleasesContainer(func)
         config = { func = func, ref_table = self },
         nodes = {{
             n = G.UIT.R,
-            nodes = {{
-                n = G.UIT.T,
-                config = { text = 'Please wait', scale = self.ses.fontscale * 1.25, colour = G.C.UI.TEXT_LIGHT }
-            }}
+            nodes = {self.ses:uiText('Please wait', 1.25)}
         }}
     }
 end
 
-function UIModSes:uiModSelectTabs()
+function UIModSes:uiTabs()
     local mod = self.mod
     local hasVersion = not not ( self.ses.modctrl.mods[mod.id] and next(self.ses.modctrl.mods[mod.id].versions) )
 
@@ -415,18 +426,18 @@ function UIModSes:uiModSelectTabs()
             chosen = hasVersion,
             label = 'Installed',
             tab_definition_function = function (arg)
-                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiModSelectTabInstalled()} }
+                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiTabInstalled()} }
             end
         }, {
             chosen = not hasVersion,
             label = 'Releases',
             tab_definition_function = function (arg)
-                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiModReleasesContainer(funcs.releasesInit)} }
+                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiReleasesContainer(funcs.releasesInit)} }
             end
         }, {
             label = 'Older',
             tab_definition_function = function (arg)
-                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiModReleasesContainer(funcs.otherInit)} }
+                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiReleasesContainer(funcs.otherInit)} }
             end
         }}
     })
@@ -441,7 +452,7 @@ function UIModSes:container()
             self.ses:uiImage(self.idImageSelectCnt),
             self.ses:uiModText(self.mod.title),
             self.ses:uiModAuthor(self.mod.author),
-            self:uiModSelectTabs()
+            self:uiTabs()
         }
     }
 end
@@ -456,14 +467,7 @@ function UIModSes:uiDeleteVersionMessage(ver)
     return {
         n = G.UIT.R,
         config = { padding = 0.2 },
-        nodes = {{
-            n = G.UIT.T,
-            config = {
-                text = string.format('Really delete %s %s?', self.mod.title, ver),
-                scale = self.ses.fontscale,
-                colour = G.C.UI.TEXT_LIGHT
-            },
-        }}
+        nodes = {self.ses:uiText(string.format('Really delete %s %s?', self.mod.title, ver))}
     }
 end
 

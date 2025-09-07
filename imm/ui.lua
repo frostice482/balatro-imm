@@ -2,6 +2,23 @@ local Browser = require("imm.lib.browser")
 local ui = require("imm.lib.ui")
 local modctrl = require("imm.modctrl")
 
+-- Taken from balamod, modified
+-- https://github.com/balamod/balamod_lua/blob/main/src/balamod_uidefs.lua
+--- @param content balatro.UIElement.Definition[]
+--- @param button string
+--- @param col? boolean
+local function wrap(content, button, col)
+    --- @type balatro.UIElement.Definition
+    return {
+        n = col and G.UIT.C or G.UIT.R, config = { align = "cm", padding = 0.2, r = 0.1, emboss = 0.1, colour = G.C.L_BLACK },
+        nodes = {{
+            n = G.UIT.R,
+            config = { align = "cm", padding = 0.15, r = 0.1, hover = true, colour = G.C.PURPLE, shadow = true, button = button },
+            nodes = content
+        }}
+    }
+end
+
 local function browse_button()
     --- @type balatro.UIElement.Definition
     return {
@@ -17,7 +34,7 @@ end
 local o1 = create_UIBox_main_menu_buttons
 function create_UIBox_main_menu_buttons()
     local r = o1()
-    table.insert(r.nodes[2].nodes, 1, ui.wrap({browse_button()}, 'imm_browse'))
+    table.insert(r.nodes[2].nodes, 1, wrap({browse_button()}, 'imm_browse'))
     return r
 end
 
