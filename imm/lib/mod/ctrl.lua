@@ -107,8 +107,8 @@ end
 
 --- @param info imm.Mod
 --- @param sourceNfs boolean
---- @param noCopy boolean
-function IModCtrl:install(info, sourceNfs, noCopy)
+--- @param excludedDirs? table<string, boolean>
+function IModCtrl:install(info, sourceNfs, excludedDirs)
     local mod, ver = info.mod, info.version
     if not self.mods[mod] then self.mods[mod] = ModList(mod) end
     local list = self.mods[mod]
@@ -119,28 +119,28 @@ function IModCtrl:install(info, sourceNfs, noCopy)
         if not ok then return ok, err end
     end
 
-    if not noCopy then
-        -- get target path
-        local c = 0
-        local tpath_orig = string.format('%s/%s-%s', repo.modsDir, mod, ver)
-        local tpath = tpath_orig
-        if NFS.getInfo(tpath) then
-            c = c + 1
-            tpath = string.format('%s_%d', tpath_orig, c)
-        end
-
-        -- copies to target
-        util.cpdir(info.path, tpath, sourceNfs, true)
-        local ok, err = NFS.write(tpath .. '/.lovelyignore', '')
-        if not ok then return ok, err end
-
-        info.path = tpath
-        logger.fmt('log', 'Copied %s %s to %s', mod, ver, tpath)
+    -- get target path
+    local c = 0
+    local tpath_orig = string.format('%s/%s-%s', repo.modsDir, mod, ver)
+    local tpath = tpath_orig
+    if NFS.getInfo(tpath) then
+        c = c + 1
+        tpath = string.format('%s_%d', tpath_orig, c)
     end
+
+    -- copies to target
+    local ok, err = pcall(util.cpdir, info.path, tpath, sourceNfs, true, excludedDirs and function (source) return excludedDirs[source] end)
+    if not ok then return ok, err end
+    logger.fmt('log', 'Copied %s %s to %s', mod, ver, tpath)
+
+    -- ignore
+    local ok, err = NFS.write(tpath .. '/.lovelyignore', '')
+    if not ok then return ok, err end
 
     -- fix linking
     list.versions[ver] = info
     info.list = list
+    info.path = tpath
 
     self:add(info)
     logger.fmt('log', 'Installed %s %s', mod, ver)
@@ -152,35 +152,58 @@ end
 function IModCtrl:installFromDir(dir, sourceNfs)
     local modslist = getmods.getMods({ base = dir, isNfs = sourceNfs })
     --- @type imm.Mod[]
-    local flatlist = {}
+    local intalled = {}
     --- @type string[]
     local errors = {}
 
+    --- @type imm.Mod[]
+    local rawlist = {}
     local paths = {}
+    local excludedPaths = {}
 
     for mod, modvers in pairs(modslist) do
         for ver, info in pairs(modvers.versions) do
+            table.insert(rawlist, info)
             paths[info.path] = info
         end
     end
+    table.sort(rawlist, function (a, b) return a.pathDepth > b.pathDepth end)
 
-    for mod, modvers in pairs(modslist) do
-        for ver, info in pairs(modvers.versions) do
-            local ok, err = self:install(info, sourceNfs, not not paths[util.dirname(info.path)])
-            if not ok then
-                logger.err(err)
-                table.insert(errors, string.format('%s %s: %s', mod, ver, err))
-            else
-                table.insert(flatlist, info)
+    for i, info in ipairs(rawlist) do
+        local curPath = info.path
+
+        -- install
+        local ok, err = self:install(info, sourceNfs, excludedPaths)
+        if not ok then
+            logger.err(err)
+            table.insert(errors, string.format('%s %s: %s', info.mod, info.version, err))
+        else
+            table.insert(intalled, info)
+        end
+
+        -- determine if nested install
+        -- if nested exclude the path
+        for i=info.pathDepth, 2, -1 do
+            local par = curPath
+            curPath = util.dirname(curPath)
+            local parmod = paths[curPath]
+            if parmod then
+                logger.fmt('log', '%s %s is a nested install from %s %s %s', info.mod, info.version, parmod.mod, parmod.version, curPath)
+                excludedPaths[par] = true
+                break
             end
         end
     end
-    return modslist, flatlist, errors
+
+    return modslist, intalled, errors
 end
+
+local mnttmp = 0
 
 --- @param zipData love.FileData
 function IModCtrl:installFromZip(zipData)
-    local tmpdir = 'mnt-' .. love.data.encode('string', 'hex', love.data.hash('md5', ''..love.timer.getTime()))
+    mnttmp = mnttmp + 1
+    local tmpdir = 'tmp-'..mnttmp
     local ok = love.filesystem.mount(zipData, tmpdir)
     if not ok then return {}, {}, { 'Mount failed - is the file a zip?' } end
 

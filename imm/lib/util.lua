@@ -57,9 +57,12 @@ end
 --- @param target string
 --- @param sourceNfs boolean
 --- @param targetNfs boolean
-function util.cpdir(source, target, sourceNfs, targetNfs)
+--- @param excludes? fun(source: string, target: string): boolean?
+function util.cpdir(source, target, sourceNfs, targetNfs, excludes)
     local sourceProv = sourceNfs and NFS or love.filesystem
     local targetProv = targetNfs and NFS or love.filesystem
+
+    if excludes and excludes(source, target) then return end
 
     local stat = sourceProv.getInfo(source)
     if not stat then error(string.format('stat %s returned undefined', source)) end
@@ -72,7 +75,7 @@ function util.cpdir(source, target, sourceNfs, targetNfs)
         assert(targetProv.createDirectory(target))
         local items = sourceProv.getDirectoryItems(source)
         for i, item in ipairs(items) do
-            util.cpdir(source..'/'..item, target..'/'..item, sourceNfs, targetNfs)
+            util.cpdir(source..'/'..item, target..'/'..item, sourceNfs, targetNfs, excludes)
         end
     end
 end

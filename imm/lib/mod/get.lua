@@ -198,7 +198,8 @@ end
 --- @param base string
 --- @param file string
 --- @param ctx _imm.GetModsContext
-function modlist.processFile(ctx, base, file)
+--- @param depth number
+function modlist.processFile(ctx, base, depth, file)
     local prov = ctx.isNfs and NFS or love.filesystem
     local path = base..'/'..file
     local ifile = file:lower()
@@ -242,7 +243,8 @@ function modlist.processFile(ctx, base, file)
         path = base,
         deps = deps,
         conflicts = conflicts,
-        provides = provides
+        provides = provides,
+        pathDepth = depth
     }, not ignored)
 end
 
@@ -282,7 +284,7 @@ function modlist.getModsLow(ctx, base, depth)
         local path = base..'/'..file
         local stat = prov.getInfo(path)
         if stat and stat.type == 'file' then
-            modlist.processFile(ctx, base, file)
+            modlist.processFile(ctx, base, depth, file)
         else
             local exclusion = depth == 1 and modlist.excludedDirs or modlist.excludedSubdirs
             if not exclusion[file:lower()] then

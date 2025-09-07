@@ -27,6 +27,7 @@ end
 --- @field deps? imm.Dependency.List
 --- @field conflicts? imm.Dependency.List
 --- @field provides? table<string, string>
+--- @field pathDepth? number
 
 --- @class imm.Mod
 local IMod = {}
@@ -47,7 +48,7 @@ function IMod:init(list, ver, opts)
     self.deps = opts.deps or {}
     self.conflicts = opts.conflicts or {}
     self.provides = opts.provides or {}
-
+    self.pathDepth = opts.pathDepth or 0
 end
 
 --- @protected
