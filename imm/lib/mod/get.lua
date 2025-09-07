@@ -196,10 +196,9 @@ end
 
 --- @param base string
 --- @param file string
---- @param list table<string, imm.ModList>
---- @param isNfs? boolean
-function modlist.processFile(base, file, list, isNfs)
-    local prov = isNfs and NFS or love.filesystem
+--- @param ctx _imm.GetModsContext
+function modlist.processFile(ctx, base, file)
+    local prov = ctx.isNfs and NFS or love.filesystem
     local path = base..'/'..file
     local ifile = file:lower()
     local mod
@@ -208,14 +207,14 @@ function modlist.processFile(base, file, list, isNfs)
 
     --- get mod meta & format
     if util.endswith(ifile, ".json") then
-        local parsed = modlist.processJson(path, isNfs)
+        local parsed = modlist.processJson(path, ctx.isNfs)
         if modlist.isSmodsMod(parsed) then
             mod, fmt = parsed, 'smods'
         elseif ifile == "manifest.json" and modlist.isTsMod(parsed) then
             mod, fmt = parsed, 'thunderstore'
         end
     elseif util.endswith(ifile, ".lua") then
-        local parsed = modlist.processHeader(path, isNfs)
+        local parsed = modlist.processHeader(path, ctx.isNfs)
         if parsed then
             mod, fmt = parsed, 'smods-header'
         end
@@ -235,8 +234,8 @@ function modlist.processFile(base, file, list, isNfs)
     version = modlist.transformVersion(id, version)
 
     --- add the mod
-    if not list[id] then list[id] = ModList(id) end
-    list[id]:createVersion(version, {
+    if not ctx.list[id] then ctx.list[id] = ModList(id) end
+    ctx.list[id]:createVersion(version, {
         format = fmt,
         info = mod,
         path = base,
@@ -250,34 +249,57 @@ modlist.excludedDirs = {
     lovely = true
 }
 
---- @class imm.GetModsOptions
+modlist.excludedDirs = {
+    lovely = true
+}
+
+modlist.excludedSubdirs = {
+    localization = true,
+    assets = true,
+    lovely = true
+}
+
+--- @class _imm.GetModsContext
+--- @field isNfs boolean
+--- @field depthLimit number
+--- @field list table<string, imm.ModList>
+
+--- @class imm.GetModsContextOptions
 --- @field isNfs? boolean
+--- @field depthLimit? number
 --- @field list? table<string, imm.ModList>
 --- @field base? string
 
---- @param opts? imm.GetModsOptions
-function modlist.getMods(opts)
-    opts = opts or {}
-    local list = opts.list or {}
-    local base = opts.base or config.modsDir
-    local isNfs = opts.isNfs ~= false
+--- @param ctx _imm.GetModsContext
+--- @param base string
+--- @param depth number
+function modlist.getModsLow(ctx, base, depth)
+    if depth > ctx.depthLimit then return end
 
-    local prov = isNfs and NFS or love.filesystem
+    local prov = ctx.isNfs and NFS or love.filesystem
     for i, file in ipairs(prov.getDirectoryItems(base)) do
         local path = base..'/'..file
         local stat = prov.getInfo(path)
-        if stat and stat.type ~= 'file' and not modlist.excludedDirs[file] then
-            for j, subfile in ipairs(prov.getDirectoryItems(path)) do
-                local subpath = path..'/'..subfile
-                local substat = prov.getInfo(subpath)
-                if substat and substat.type == 'file' then
-                    modlist.processFile(path, subfile, list, isNfs)
-                end
+        if stat and stat.type == 'file' then
+            modlist.processFile(ctx, base, file)
+        else
+            local exclusion = depth == 1 and modlist.excludedDirs or modlist.excludedSubdirs
+            if not exclusion[file:lower()] then
+                modlist.getModsLow(ctx, path, depth + 1)
             end
         end
     end
+end
 
-    return list
+--- @param opts? imm.GetModsContextOptions
+function modlist.getMods(opts)
+    opts = opts or {}
+    opts.list = opts.list or {}
+    opts.isNfs = opts.isNfs ~= false
+    opts.depthLimit = opts.depthLimit or 3
+    modlist.getModsLow(opts, opts.base or SMODS.MODS_DIR, 1) --- @diagnostic disable-line
+
+    return opts.list
 end
 
 return modlist
