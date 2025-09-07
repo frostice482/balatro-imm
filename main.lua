@@ -6,9 +6,4 @@ SMODS.Atlas({ key = 'toggle', path = 'toggle.png', px = 15, py = 9 })
 require('imm.ui')
 require('imm.dropinstall')
 
-_G.imm = {
-    repo = require('imm.repo'),
-    browser = require('imm.browser'),
-    mods = require('imm.lib.getmods'),
-    modctrl = require('imm.modctrl')
-}
+_G.imm = require("imm.modctrl")

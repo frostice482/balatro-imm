@@ -1,5 +1,6 @@
+local Browser = require("imm.lib.browser")
 local ui = require("imm.lib.ui")
-local Browser = require("imm.browser")
+local modctrl = require("imm.modctrl")
 
 local function browse_button()
     --- @type balatro.UIElement.Definition
@@ -10,9 +11,7 @@ end
 
 function G.FUNCS.imm_browse()
     G.SETTINGS.paused = true
-    local state = Browser()
-    state:showOverlay()
-    state:prepare()
+    Browser(modctrl):showOverlay(true)
 end
 
 local o1 = create_UIBox_main_menu_buttons

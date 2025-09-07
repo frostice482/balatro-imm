@@ -88,4 +88,13 @@ function ui.container(id, row, nodes)
     }
 end
 
+--- @param n number
+function ui.cycleOptions(n)
+    n = math.ceil(n)
+    --- @type string[]
+    local opts = {}
+    for i=1, n, 1 do table.insert(opts, string.format('%d/%d', i, n)) end
+    return  opts
+end
+
 return ui

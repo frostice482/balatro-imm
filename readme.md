@@ -20,3 +20,5 @@ If you want to clear cache, simply delete `%AppData%\Balatro\immcache` (on windo
 
 - Add dependencies, conflicts
 - Fix & Improve UI
+- Add clear cache button
+- Add restart button

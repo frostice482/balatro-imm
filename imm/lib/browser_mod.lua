@@ -2,7 +2,6 @@ local constructor = require("imm.lib.constructor")
 local ui = require("imm.lib.ui")
 local util = require("imm.lib.util")
 local repo = require("imm.repo")
-local modctrl = require("imm.modctrl")
 
 local function transformTagVersion(tag)
     if tag:sub(1, 1) == "v" then tag = tag:sub(2) end
@@ -92,9 +91,7 @@ G.FUNCS[funcs.otherInit] = function(elm)
             return
         end
 
-        local opts = {}
-        local n = math.max(math.ceil(#res / modses.otherCyclePageSize), 1)
-        for i=1, n, 1 do table.insert(opts, string.format('%d/%d', i, n)) end
+        local opts = ui.cycleOptions(#res / modses.otherCyclePageSize)
 
         local cycle = create_option_cycle({
             options = opts,
@@ -183,12 +180,16 @@ G.FUNCS[funcs.v_toggle] = function(elm)
     local r = elm.config.ref_table or {}
     --- @type imm.ModBrowser, string, boolean
     local modses, ver, enabled = r.ses, r.ver, r.toggle
+    local ses = modses.ses
+    local mod = modses.mod
 
-    if enabled then modctrl:disableMod(modses.mod.id)
-    else modctrl:enableMod(modses.mod.id, ver)
+    local ok, err
+    if enabled then ok, err = ses.modctrl:disable(mod.id)
+    else ok, err = ses.modctrl:enable(mod.id, ver)
     end
 
-    modses.ses:updateSelectedMod(modses.mod)
+    ses.errorText = err or ''
+    ses:updateSelectedMod(mod)
 end
 
 --- @param elm balatro.UIElement
@@ -200,11 +201,11 @@ G.FUNCS[funcs.v_deleteConfirm] = function(elm)
     local ses = modses.ses
 
     if r.confirm then
-        modctrl:deleteMod(modses.mod.id, r.ver)
+        local ok, err = ses.modctrl:uninstall(modses.mod.id, r.ver)
+        ses.errorText = err or ''
     end
 
-    ses:showOverlay()
-    ses:update()
+    ses:showOverlay(true)
 end
 
 --- @class imm.ModBrowser
@@ -265,7 +266,7 @@ end
 
 --- @param opts imm.ModSession.VersionParam
 function UIModSes:uiVersionEntry(opts)
-    local l = modctrl.mods[self.mod.id]
+    local l = self.ses.modctrl.mods[self.mod.id]
     if l then
         if opts.installed == nil then
             opts.installed = not not l.versions[opts.version]
@@ -348,9 +349,9 @@ end
 
 function UIModSes:uiModSelectTabInstalled()
     local list = {}
-    local l = modctrl.mods[self.mod.id]
+    local l = self.ses.modctrl.mods[self.mod.id]
     if l then
-        --- @type [string, imm.ModVersion.Entry][]
+        --- @type [string, imm.Mod][]
         local version = {}
         for ver, info in pairs(l.versions) do table.insert(version, {ver, info}) end
         table.sort(version, function (a, b) return V(a[1]) > V(b[1]) end)
@@ -360,8 +361,7 @@ function UIModSes:uiModSelectTabInstalled()
             table.insert(list, self:uiVersionEntry({
                 version = ver,
                 sub = info.path:sub(SMODS.MODS_DIR:len() + 2),
-                installed = true,
-                enabled = ver == (l.active and l.active.version)
+                installed = true
             }))
         end
     end
@@ -396,7 +396,7 @@ local transparent = { 0, 0, 0, 0 }
 
 function UIModSes:uiModSelectTabs()
     local mod = self.mod
-    local hasVersion = not not ( modctrl.mods[mod.id] and next(modctrl.mods[mod.id].versions) )
+    local hasVersion = not not ( self.ses.modctrl.mods[mod.id] and next(self.ses.modctrl.mods[mod.id].versions) )
 
     --- @type balatro.UIElement.Definition
     return create_tabs({
@@ -471,5 +471,5 @@ end
 
 --- @alias imm.ModBrowser.C p.Constructor<imm.ModBrowser, nil> | fun(ses: imm.Browser, mod: bmi.Meta): imm.ModBrowser
 --- @type imm.ModBrowser.C
-local uisesc = constructor(UIModSes)
-return uisesc
+local UIModSes = constructor(UIModSes)
+return UIModSes

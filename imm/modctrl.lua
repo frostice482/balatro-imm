@@ -1,20 +1,17 @@
-local ctrl = require("imm.lib.modctrl")()
+local ModCtrl = require("imm.lib.mod.ctrl")
+local ModList = require("imm.lib.mod.list")
+local Mod = require("imm.lib.mod.mod")
+local ctrl = ModCtrl()
 local balaver = G.VERSION
-local lovelyver = SMODS.Mods.Lovely.version
+local lovelyver = require("lovely").version
 
-local baseinfo = { format = 'smods', path = 'temp-'..math.random(), info = {}, deps = {}, conflicts = {} }
+ctrl.mods.Balatro = ModList('Balatro', true)
+ctrl.mods.Balatro:createVersion(balaver)
 
-ctrl.mods.Balatro = {
-    mod = 'Balatro',
-    versions = { [balaver] = setmetatable({ version = balaver }, { __index = baseinfo }) },
-    native = true
-}
+ctrl.mods.Lovely = ModList('Lovely', true)
+ctrl.mods.Lovely:createVersion(lovelyver)
 
-ctrl.mods.Lovely = {
-    mod = 'Lovely',
-    versions = { [lovelyver] = setmetatable({ version = lovelyver }, { __index = baseinfo }) },
-    native = true
-}
-ctrl.mods.lovely = ctrl.mods.Lovely
+ctrl.mods.lovely = ModList('lovely', true)
+ctrl.mods.lovely:createVersion(lovelyver)
 
 return ctrl

@@ -1,10 +1,9 @@
 local constructor = require("imm.lib.constructor")
 local LoveMoveable = require("imm.lib.love_moveable")
-local ModBrowser = require("imm.modbrowser")
-local repo = require("imm.repo")
+local ModBrowser = require("imm.lib.browser_mod")
 local ui = require("imm.lib.ui")
 local util = require("imm.lib.util")
-local modctrl = require("imm.modctrl")
+local repo = require("imm.repo")
 
 local funcs = {
     setCategory = 'imm_ses_setcat',
@@ -67,6 +66,7 @@ end
 --- @field releasesCache table<string, ghapi.Releases>
 --- @field selectedMod? imm.ModBrowser
 --- @field taskQueues? fun()[]
+--- @field modctrl imm.ModController
 local UISes = {
     search = '',
     prevSearch = '',
@@ -83,7 +83,7 @@ local UISes = {
     h = 0,
     fontscale = 0.4,
 
-    ready = false,
+    prepared = false,
     errorText = '',
     taskText = '',
     noThumbnail = jit.os ~= 'Windows',
@@ -98,7 +98,10 @@ local UISes = {
     idImageContSuff = '-imgcnt',
 }
 
-function UISes:init()
+--- @protected
+--- @param modctrl imm.ModController
+function UISes:init(modctrl)
+    self.modctrl = modctrl
     self.tags = {}
     self.filteredList = {}
     self.list = {}
@@ -340,11 +343,8 @@ function UISes:uiBody()
 end
 
 function UISes:uiCycle()
-    local opts = {}
     local n = math.max(math.ceil(#self.filteredList/(self.listW*self.listH)), 1)
-    for i=1, n, 1 do
-        table.insert(opts, string.format('%d/%d', i, n))
-    end
+    local opts = ui.cycleOptions(n)
     self.listPage = math.min(self.listPage, n)
 
     local obj = create_option_cycle({
@@ -465,7 +465,7 @@ end
 --- @param mod bmi.Meta
 --- @param filter imm.Filter
 function UISes:matchFilter(mod, filter)
-    if filter.installed and not (modctrl.mods[mod.id] and next(modctrl.mods[mod.id].versions)) then return false end
+    if filter.installed and not (self.modctrl.mods[mod.id] and next(self.modctrl.mods[mod.id].versions)) then return false end
     if not (filter.id and mod.id or filter.author and mod.author or mod.title):lower():find(filter.search) then return false end
 
     local hasCatFilt = false
@@ -582,9 +582,9 @@ function UISes:updateFilter()
         end
     end
     if filter.installed then
-        for mod, entry in pairs(modctrl.mods) do
-            if not ids[mod] then
-                local meta = util.createMetaFromEntry(entry)
+        for mod, list in pairs(self.modctrl.mods) do
+            if not ids[mod] and not list.native then
+                local meta = list:createBmiMeta()
                 if meta and self:matchFilter(meta, filter) then
                     table.insert(self.filteredList, meta)
                 end
@@ -598,22 +598,28 @@ function UISes:update()
 
     self.uibox:remove_group(nil, self.idCycle)
 
+    self:updateFilter()
+    self:updateMods()
+
     local cyclecont = self.uibox:get_UIE_by_ID(self.idCycleCont)
     if cyclecont then self.uibox:add_child(self:uiCycle(), cyclecont) end
 
-    self:updateFilter()
-    self:updateMods()
-    self:updateSelectedMod()
+    self.uibox:recalculate()
 end
 
 function UISes:prepare()
+    if self.prepared then
+        self:update()
+        self:updateSelectedMod()
+    end
+
+    self.prepared = true
     repo.list:fetch(nil, function (err, res)
         if not res then
             self.errorText = err
             return
         end
         self.list = res
-        self.ready = true
         self:update()
     end)
 end
@@ -625,14 +631,16 @@ function UISes:container()
     })
 end
 
-function UISes:showOverlay()
+function UISes:showOverlay(update)
     G.FUNCS.overlay_menu({ definition = self:container() })
     self.uibox = G.OVERLAY_MENU
     self.uibox.config.imm = self
+    if update then self:prepare() end
+    self.uibox:recalculate()
 end
 
 function UISes:installModFromZip(data)
-    local modlist, list, errlist = modctrl:installModFromZip(data)
+    local modlist, list, errlist = self.modctrl:installFromZip(data)
 
     local strlist = {}
     for i,v in ipairs(list) do table.insert(strlist, table.concat({v.mod, v.version}, ' ')) end
@@ -643,7 +651,7 @@ function UISes:installModFromZip(data)
     return modlist, list, errlist
 end
 
---- @alias imm.Browser.C p.Constructor<imm.Browser, nil> | fun(): imm.Browser
+--- @alias imm.Browser.C p.Constructor<imm.Browser, nil> | fun(modctrl: imm.ModController): imm.Browser
 --- @type imm.Browser.C
-local uisesc = constructor(UISes)
-return uisesc
+local UISes = constructor(UISes)
+return UISes

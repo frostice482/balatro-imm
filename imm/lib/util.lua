@@ -105,30 +105,4 @@ function util.remove_childrens(elm)
     end
 end
 
---- @param entry imm.ModList.Entry
-function util.createMetaFromEntry(entry)
-    --- @type imm.ModVersion.Entry?
-    local v = entry.active
-    if not v then
-        for ver, other in pairs(entry.versions) do
-            if not v or V(v.version) < V(ver) then v = other end
-        end
-    end
-    if not v then return end
-
-    local author = v.info.author
-    local authorStr = type(author) == 'table' and table.concat(author, ', ') or author or '-'
-
-    --- @type bmi.Meta
-    return {
-        id = entry.mod,
-        title = v.info.name or entry.mod,
-        author = authorStr,
-        categories = {},
-        metafmt = 'smods',
-        deps = v.info.dependencies,
-        conflicts = v.info.conflicts
-    }
-end
-
 return util

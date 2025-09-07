@@ -1,5 +1,3 @@
-local util = require('imm.lib.util')
-
 --- @param browser imm.Browser
 --- @param file love.DroppedFile
 local function dropinstall(browser, file)
@@ -7,9 +5,18 @@ local function dropinstall(browser, file)
     file:close()
 
     local ml = browser:installModFromZip(fd)
-    local _, mod = next(ml)
-    local modmeta = mod and util.createMetaFromEntry(mod)
-    if modmeta then browser:selectMod(modmeta) end
+    local _, list = next(ml)
+    if not list then return end
+
+    local meta
+    for i,v in ipairs(browser.list) do
+        if v.id == list.mod then
+            meta = v
+            break
+        end
+    end
+    meta = meta or list:createBmiMeta()
+    if meta then browser:selectMod(meta) end
 end
 
 local o2 = love.filedropped

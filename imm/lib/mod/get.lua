@@ -1,34 +1,9 @@
 local util = require("imm.lib.util")
+local ModList = require("imm.lib.mod.list")
 
---- @alias imm.ModMetaFormat 'thunderstore' | 'smods' | 'smods-header'
+local modlist = {}
 
---- @class imm.ModVersion
---- @field mod string
---- @field version string
-
---- @class imm.DependencyRule
---- @field id string
---- @field version string
---- @field op string
-
---- @class imm.ModVersion.Entry
---- @field format imm.ModMetaFormat
---- @field path string
---- @field info table
---- @field version string
---- @field deps imm.DependencyRule[][]
---- @field conflicts imm.DependencyRule[][]
-
---- @class imm.ModList.Entry
---- @field mod string
---- @field versions table<string, imm.ModVersion.Entry>
---- @field active? imm.ModVersion.Entry
---- @field native? boolean
-
---- List of mods, mapped by mod id, then version.
---- @class imm.ModList: {[string]: imm.ModList.Entry}
-
-local metaFields = {
+modlist.metaFields = {
     id = "string",
     name = "string",
     description = "string",
@@ -36,7 +11,7 @@ local metaFields = {
     author = "table"
 }
 
-local tsManifestFields = {
+modlist.tsManifestFields = {
     name = "string",
     version_number = "string",
     website_url = "string",
@@ -44,7 +19,7 @@ local tsManifestFields = {
     dependencies = "table"
 }
 
-local headerFields = {
+modlist.headerFields = {
     MOD_ID = { field = "id" },
     MOD_NAME = { field = "name" },
     MOD_DESCRIPTION = { field = "description" },
@@ -57,17 +32,17 @@ local headerFields = {
     CONFLICTS = { field = "conflicts", array = true },
 }
 
-local function isSmodsMod(meta)
+function modlist.isSmodsMod(meta)
     if type(meta) ~= "table" then return false end
-    for k, t in pairs(metaFields) do
+    for k, t in pairs(modlist.metaFields) do
         if type(meta[k]) ~= t then return false end
     end
     return true
 end
 
-local function isTsmod(meta)
+function modlist.isTsMod(meta)
     if type(meta) ~= "table" then return false end
-    for k, t in pairs(tsManifestFields) do
+    for k, t in pairs(modlist.tsManifestFields) do
         if type(meta[k]) ~= t then return false end
     end
     return true
@@ -75,7 +50,7 @@ end
 
 --- @param file string
 --- @param isNfs? boolean
-local function processJson(file, isNfs)
+function modlist.processJson(file, isNfs)
     local prov = isNfs and NFS or love.filesystem
     --- @type string?
     local content = prov.read('string', file) --- @diagnostic disable-line
@@ -88,14 +63,14 @@ local function processJson(file, isNfs)
 end
 
 --- @param content string
-local function parseHeader(content)
+function modlist.parseHeader(content)
     local values = {}
     local lines = util.strsplit(content, '\r?\n', false)
     for i, line in ipairs(lines), lines, 1 do
         local s, e, attr = line:find('^--- *([%w_]+): *')
         if not s then break end
-        if headerFields[attr] then
-            local info = headerFields[attr]
+        if modlist.headerFields[attr] then
+            local info = modlist.headerFields[attr]
             local val = line:sub(e+1)
 
             if info.array then
@@ -110,19 +85,19 @@ end
 
 --- @param file string
 --- @param isNfs? boolean
-local function processHeader(file, isNfs)
+function modlist.processHeader(file, isNfs)
     local prov = isNfs and NFS or love.filesystem
     --- @type string?
     local content = prov.read('string', file, 512) --- @diagnostic disable-line
     if not content then return end
     if not util.startswith(content, "--- STEAMODDED HEADER") then return end
 
-    return parseHeader(content)
+    return modlist.parseHeader(content)
 end
 
 --- @param id string
 --- @param version string
-local function transformVersion(id, version)
+function modlist.transformVersion(id, version)
     version = version:gsub('~', '-')
     if id == "Steamodded" then
         if util.endswith(version, "-STEAMODDED") then version = version:sub(1, -12) end
@@ -133,7 +108,7 @@ end
 
 --- @param entry string
 --- @return imm.DependencyRule[][]
-local function parseTsDep(entry)
+function modlist.parseTsDep(entry)
     local author, package, version = entry:match('^([^-]+)-([^-]+)-(.+)')
     if not author then return {} end
     --- @type imm.DependencyRule[][]
@@ -142,7 +117,7 @@ end
 
 --- @param entryStr string
 --- @return imm.DependencyRule[][]
-local function parseSmodsDep(entryStr)
+function modlist.parseSmodsDep(entryStr)
     local entries = {}
     local entriesStr = util.strsplit(entryStr, '|', true)
     for i, entry in ipairs(entriesStr) do
@@ -150,49 +125,34 @@ local function parseSmodsDep(entryStr)
         if not id then break end
 
         local list = {}
-        for op, version in entry:sub(e+1):gmatch("([<>=]+)%s*([%w_%.%-~]+)") do
+        local has = false
+        for op, version in entry:sub(e+1):gmatch("([<>=|]+)%s*([%w_%.%-~]*)") do
+            has = true
             table.insert(list, { id = id, version = version, op = op })
+        end
+        if not has then
+            table.insert(list, { id = id, version = "0.0.0", op = ">=" })
         end
         table.insert(entries, list)
     end
     return entries
 end
 
---- @param ctx imm.GetModsContext
---- @param base string
---- @param file string
-local function processFile(ctx, base, file)
-    local prov = ctx.isNfs and NFS or love.filesystem
-    local path = base..'/'..file
-    local ifile = file:lower()
-    local mod
-    --- @type imm.ModMetaFormat
-    local fmt
-
-    if util.endswith(ifile, ".json") then
-        local parsed = processJson(path, ctx.isNfs)
-        if isSmodsMod(parsed) then
-            mod = parsed
-            fmt = 'smods'
-        elseif ifile == "manifest.json" and isTsmod(parsed) then
-            mod = parsed
-            fmt = 'thunderstore'
-        end
-    elseif util.endswith(ifile, ".lua") then
-        mod = processHeader(path, ctx.isNfs)
-        if mod then fmt = 'smods-header' end
-    end
-    if not mod then return end
-
-    local id, version
+--- @param format bmi.Meta.Format
+--- @return string id
+--- @return string version
+--- @return imm.DependencyRule[][] deps
+--- @return imm.DependencyRule[][] conflicts
+function modlist.parseInfo(mod, format)
+    --- @type imm.DependencyRule[][], imm.DependencyRule[][]
     local deps, conflicts = {}, {}
-    local ignored = prov.getInfo(base..'/.lovelyignore')
+    local id, version
 
-    if fmt == 'thunderstore' then
+    if format == 'thunderstore' then
         id, version = mod.name, mod.version_number
 
         for i, entry in ipairs(mod.dependencies) do
-            for j, list in ipairs(parseTsDep(entry)) do
+            for j, list in ipairs(modlist.parseTsDep(entry)) do
                 table.insert(deps, list)
             end
         end
@@ -201,61 +161,98 @@ local function processFile(ctx, base, file)
 
         if mod.dependencies then
             for i, entry in ipairs(mod.dependencies) do
-                for j, list in ipairs(parseSmodsDep(entry)) do
+                for j, list in ipairs(modlist.parseSmodsDep(entry)) do
                     table.insert(deps, list)
                 end
             end
         end
         if mod.conflicts then
             for i, entry in ipairs(mod.conflicts) do
-                for j, list in ipairs(parseSmodsDep(entry)) do
+                for j, list in ipairs(modlist.parseSmodsDep(entry)) do
                     table.insert(conflicts, list)
                 end
             end
         end
     end
 
+    return id, version, deps, conflicts
+end
+
+--- @param ctx _imm.GetModsContext
+--- @param base string
+--- @param file string
+function modlist.processFile(ctx, base, file)
+    local prov = ctx.isNfs and NFS or love.filesystem
+    local path = base..'/'..file
+    local ifile = file:lower()
+    local mod
+    --- @type imm.ModMetaFormat
+    local fmt
+
+    --- get mod meta & format
+    if util.endswith(ifile, ".json") then
+        local parsed = modlist.processJson(path, ctx.isNfs)
+        if modlist.isSmodsMod(parsed) then
+            mod, fmt = parsed, 'smods'
+        elseif ifile == "manifest.json" and modlist.isTsMod(parsed) then
+            mod, fmt = parsed, 'thunderstore'
+        end
+    elseif util.endswith(ifile, ".lua") then
+        local parsed = modlist.processHeader(path, ctx.isNfs)
+        if parsed then
+            mod, fmt = parsed, 'smods-header'
+        end
+    end
+    if not mod then return end
+
+    --- extract mod meta
+    local id, version, deps, conflicts = modlist.parseInfo(mod, fmt)
+    local ignored = prov.getInfo(base..'/.lovelyignore')
+
+    --- modify version
     if id == "Steamodded" then
         local vercode = prov.read(base..'/version.lua') or ''
         local newver = vercode:match('"(.+)"')
         if newver then version = newver end
     end
-    version = transformVersion(id, version)
+    version = modlist.transformVersion(id, version)
 
-    --- @type imm.ModVersion.Entry
-    local info = { format = fmt, info = mod, path = base, version = version, deps = deps, conflicts = conflicts }
-    if not ctx.list[id] then ctx.list[id] = { versions = {}, mod = id } end
-    local versionList = ctx.list[id]
-    versionList.versions[version] = info
-
-    if not ignored then versionList.active = info end
+    --- add the mod
+    if not ctx.list[id] then ctx.list[id] = ModList(id) end
+    ctx.list[id]:createVersion(version, {
+        format = fmt,
+        info = mod,
+        path = base,
+        deps = deps,
+        conflicts = conflicts
+    }, not ignored)
 end
 
-local excludedDirs = {
+modlist.excludedDirs = {
     lovely = true
 }
 
-local excludedSubdirs = {
+modlist.excludedSubdirs = {
     localization = true,
     assets = true,
     lovely = true
 }
 
---- @class imm.GetModsContext
+--- @class _imm.GetModsContext
 --- @field isNfs boolean
 --- @field depthLimit number
---- @field list imm.ModList
+--- @field list table<string, imm.ModList>
 
 --- @class imm.GetModsContextOptions
 --- @field isNfs? boolean
 --- @field depthLimit? number
---- @field list? imm.ModList
+--- @field list? table<string, imm.ModList>
 --- @field base? string
 
---- @param ctx imm.GetModsContext
+--- @param ctx _imm.GetModsContext
 --- @param base string
 --- @param depth number
-local function getMods(ctx, base, depth)
+function modlist.getModsLow(ctx, base, depth)
     if depth > ctx.depthLimit then return end
 
     local prov = ctx.isNfs and NFS or love.filesystem
@@ -263,25 +260,25 @@ local function getMods(ctx, base, depth)
         local path = base..'/'..file
         local stat = prov.getInfo(path)
         if stat and stat.type == 'file' then
-            processFile(ctx, base, file)
+            modlist.processFile(ctx, base, file)
         else
-            local exclusion = depth == 1 and excludedDirs or excludedSubdirs
+            local exclusion = depth == 1 and modlist.excludedDirs or modlist.excludedSubdirs
             if not exclusion[file:lower()] then
-                getMods(ctx, path, depth + 1)
+                modlist.getModsLow(ctx, path, depth + 1)
             end
         end
     end
 end
 
 --- @param opts? imm.GetModsContextOptions
-local function getModsHigh(opts)
+function modlist.getMods(opts)
     opts = opts or {}
     opts.list = opts.list or {}
     opts.isNfs = opts.isNfs ~= false
     opts.depthLimit = opts.depthLimit or 3
-    getMods(opts, opts.base or SMODS.MODS_DIR, 1) --- @diagnostic disable-line
+    modlist.getModsLow(opts, opts.base or SMODS.MODS_DIR, 1) --- @diagnostic disable-line
 
     return opts.list
 end
 
-return getModsHigh
+return modlist
