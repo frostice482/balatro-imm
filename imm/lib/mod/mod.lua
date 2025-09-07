@@ -47,6 +47,7 @@ function IMod:init(list, ver, opts)
     self.deps = opts.deps or {}
     self.conflicts = opts.conflicts or {}
     self.provides = opts.provides or {}
+
 end
 
 --- @protected

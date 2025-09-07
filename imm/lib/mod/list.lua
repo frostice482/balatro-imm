@@ -46,7 +46,6 @@ function IModList:disable()
     local ok, err = NFS.write(self.active.path .. '/.lovelyignore', '')
     if not ok then return ok, err end
 
-    logger.fmt('log', 'Disabled %s %s', self.mod, self.active.version)
     self.active = nil
     return true
 end

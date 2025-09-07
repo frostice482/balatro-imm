@@ -107,7 +107,8 @@ end
 
 --- @param info imm.Mod
 --- @param sourceNfs boolean
-function IModCtrl:install(info, sourceNfs)
+--- @param noCopy boolean
+function IModCtrl:install(info, sourceNfs, noCopy)
     local mod, ver = info.mod, info.version
     if not self.mods[mod] then self.mods[mod] = ModList(mod) end
     local list = self.mods[mod]
@@ -118,27 +119,31 @@ function IModCtrl:install(info, sourceNfs)
         if not ok then return ok, err end
     end
 
-    -- get target path
-    local c = 0
-    local tpath_orig = string.format('%s/%s-%s', repo.modsDir, mod, ver)
-    local tpath = tpath_orig
-    if NFS.getInfo(tpath) then
-        c = c + 1
-        tpath = string.format('%s_%d', tpath_orig, c)
-    end
+    if not noCopy then
+        -- get target path
+        local c = 0
+        local tpath_orig = string.format('%s/%s-%s', repo.modsDir, mod, ver)
+        local tpath = tpath_orig
+        if NFS.getInfo(tpath) then
+            c = c + 1
+            tpath = string.format('%s_%d', tpath_orig, c)
+        end
 
-    -- copies to target
-    util.cpdir(info.path, tpath, sourceNfs, true)
-    local ok, err = NFS.write(tpath .. '/.lovelyignore', '')
-    if not ok then return ok, err end
+        -- copies to target
+        util.cpdir(info.path, tpath, sourceNfs, true)
+        local ok, err = NFS.write(tpath .. '/.lovelyignore', '')
+        if not ok then return ok, err end
+
+        info.path = tpath
+        logger.fmt('log', 'Copied %s %s to %s', mod, ver, tpath)
+    end
 
     -- fix linking
     list.versions[ver] = info
     info.list = list
-    info.path = tpath
 
     self:add(info)
-    logger.fmt('log', 'Installed %s %s (%s)', mod, ver, tpath)
+    logger.fmt('log', 'Installed %s %s', mod, ver)
     return true
 end
 
@@ -151,9 +156,17 @@ function IModCtrl:installFromDir(dir, sourceNfs)
     --- @type string[]
     local errors = {}
 
+    local paths = {}
+
     for mod, modvers in pairs(modslist) do
         for ver, info in pairs(modvers.versions) do
-            local ok, err = self:install(info, sourceNfs)
+            paths[info.path] = info
+        end
+    end
+
+    for mod, modvers in pairs(modslist) do
+        for ver, info in pairs(modvers.versions) do
+            local ok, err = self:install(info, sourceNfs, not not paths[util.dirname(info.path)])
             if not ok then
                 logger.err(err)
                 table.insert(errors, string.format('%s %s: %s', mod, ver, err))
