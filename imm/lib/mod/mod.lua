@@ -1,4 +1,5 @@
 local constructor = require("imm.lib.constructor")
+local V = require("imm.lib.version")
 local util = require('imm.lib.util')
 local logger = require('imm.logger')
 
@@ -8,27 +9,23 @@ end
 
 --- @alias imm.ModMetaFormat 'thunderstore' | 'smods' | 'smods-header'
 
---- @class imm.ModVersion
---- @field mod string
---- @field version string
-
---- @class imm.DependencyRule
---- @field id string
---- @field version string
+--- @class imm.Dependency.Rule
+--- @field version Version
 --- @field op string
 
---- OR - AND
---- @alias imm.DependencySet imm.DependencyRule[][]
+--- @class imm.Dependency.Mod
+--- @field mod string
+--- @field rules imm.Dependency.Rule[]
 
 --- AND - OR - AND
---- @alias imm.DependencyList imm.DependencySet[]
+--- @alias imm.Dependency.List imm.Dependency.Mod[][]
 
 --- @class imm.ModOpts
 --- @field path? string
 --- @field format? imm.ModMetaFormat
 --- @field info? table
---- @field deps? imm.DependencyList
---- @field conflicts? imm.DependencyList
+--- @field deps? imm.Dependency.List
+--- @field conflicts? imm.Dependency.List
 --- @field provides? table<string, string>
 
 --- @class imm.Mod
@@ -43,6 +40,7 @@ function IMod:init(list, ver, opts)
     self.list = list
     self.mod = list.mod
     self.version = ver
+    self.versionParsed = V(ver)
     self.path = opts.path or ('tmp-'..math.random())
     self.format = opts.format or 'thunderstore'
     self.info = opts.info or {}
@@ -86,6 +84,7 @@ end
 
 function IMod:enable()
     if self.list.native then return self:errNative() end
+    if self.list.active then self.list:disable() end
 
     local ok,err = NFS.remove(self.path .. '/.lovelyignore')
     if not ok then return ok, err end

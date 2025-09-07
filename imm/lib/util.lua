@@ -95,14 +95,4 @@ function util.trim(str)
     return str:match("^%s*(.-)%s*$") or str
 end
 
---- @param elm balatro.Node
-function util.remove_childrens(elm)
-    local keys = {}
-    for k in pairs(elm.children) do table.insert(keys, k) end
-    for i, k in ipairs(keys) do
-        elm.children[k]:remove()
-        elm.children[k] = nil
-    end
-end
-
 return util

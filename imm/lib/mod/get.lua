@@ -1,5 +1,6 @@
-local util = require("imm.lib.util")
 local ModList = require("imm.lib.mod.list")
+local V = require("imm.lib.version")
+local util = require("imm.lib.util")
 local config = require("imm.config")
 
 local modlist = {}
@@ -111,30 +112,30 @@ end
 function modlist.parseTsDep(entry)
     local author, package, version = entry:match('^([^-]+)-([^-]+)-(.+)')
     if not author then return {} end
-    --- @type imm.DependencySet
-    return {{{ id = package, op = '==', version = version }}}
+    --- @type imm.Dependency.Mod[]
+    return {{ mod = package, rules = {{ op = '==', version = V(version) }}}}
 end
 
 --- @param entryStr string
 function modlist.parseSmodsDep(entryStr)
-    --- @type imm.DependencySet
+    --- @type imm.Dependency.Mod[]
     local entries = {}
     local entriesStr = util.strsplit(entryStr, '|', true)
     for i, entry in ipairs(entriesStr) do
         local s, e, id = entry:find('^%s*([^%s<>=()]+)')
         if not id then break end
 
-        --- @return imm.DependencyRule[]
-        local list = {}
+        --- @type imm.Dependency.Mod
+        local modRules = { mod = id, rules = {} }
         local has = false
         for op, version in entry:sub(e+1):gmatch("([<>=|]+)%s*([%w_%.%-~]*)") do
             has = true
-            table.insert(list, { id = id, version = version, op = op })
+            table.insert(modRules.rules, { version = V(version), op = op })
         end
         if not has then
-            table.insert(list, { id = id, version = "0.0.0", op = ">=" })
+            table.insert(modRules.rules, { version = V(), op = ">=" })
         end
-        table.insert(entries, list)
+        table.insert(entries, modRules)
     end
     return entries
 end
@@ -153,11 +154,11 @@ end
 --- @param format bmi.Meta.Format
 --- @return string id
 --- @return string version
---- @return imm.DependencyList deps
---- @return imm.DependencyList conflicts
+--- @return imm.Dependency.List deps
+--- @return imm.Dependency.List conflicts
 --- @return table<string, string> provides
 function modlist.parseInfo(mod, format)
-    --- @type imm.DependencyList, imm.DependencyList, table<string, string>
+    --- @type imm.Dependency.List, imm.Dependency.List, table<string, string>
     local deps, conflicts, provides = {}, {}, {}
     local id, version
 

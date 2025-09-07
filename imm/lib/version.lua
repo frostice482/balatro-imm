@@ -3,7 +3,6 @@ Taken from: https://github.com/Steamodded/smods/blob/main/src/utils.lua#L609, mo
 
 ]]
 
-if V then return V end --- @diagnostic disable-line
 local constructor = require("imm.lib.constructor")
 
 --- @class Version: metatable
@@ -64,6 +63,20 @@ end
 --- @param b Version
 function IV.__lt(a, b)
     return a <= b and not (a == b)
+end
+
+--- @param rules imm.Dependency.Rule[]
+function IV:satisfies(rules)
+    for i, rule in ipairs(rules) do
+        if not (
+            rule.op == "<<" and self < rule.version
+        or  rule.op == "<=" and self <= rule.version
+        or  rule.op == ">>" and self > rule.version
+        or  rule.op == ">=" and self >= rule.version
+        or  rule.op == "==" and self == rule.version
+        ) then return false end
+    end
+    return true
 end
 
 --- @alias imm.Version.C p.Constructor<Version, nil> | fun(ver?: string): Version

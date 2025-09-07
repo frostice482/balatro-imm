@@ -146,7 +146,7 @@ end
 --- @param sourceNfs boolean
 function IModCtrl:installFromDir(dir, sourceNfs)
     local modslist = getmods.getMods({ base = dir, isNfs = sourceNfs })
-    --- @type imm.ModVersion[]
+    --- @type imm.Mod[]
     local flatlist = {}
     --- @type string[]
     local errors = {}
@@ -158,7 +158,7 @@ function IModCtrl:installFromDir(dir, sourceNfs)
                 logger.err(err)
                 table.insert(errors, string.format('%s %s: %s', mod, ver, err))
             else
-                table.insert(flatlist, { mod = mod, version = ver })
+                table.insert(flatlist, info)
             end
         end
     end

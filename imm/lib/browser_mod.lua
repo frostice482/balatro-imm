@@ -1,7 +1,6 @@
 local constructor = require("imm.lib.constructor")
 local V = require("imm.lib.version")
 local ui = require("imm.lib.ui")
-local util = require("imm.lib.util")
 local repo = require("imm.lib.repo")
 
 local function transformTagVersion(tag)
@@ -31,7 +30,7 @@ G.FUNCS[funcs.releasesInit] = function(elm)
     modses.releasesBusy = true
     repo.getReleases(mod.repo, function (err, res)
         modses.releasesBusy = false
-        util.remove_childrens(elm)
+        ui.removeChildrens(elm)
 
         if not res then
             ses.errorText = err
@@ -86,7 +85,7 @@ G.FUNCS[funcs.otherInit] = function(elm)
     modses.releasesBusy = true
     repo.getReleases(mod.repo, function (err, res)
         modses.releasesBusy = false
-        util.remove_childrens(elm)
+        ui.removeChildrens(elm)
 
         if not res then
             ses.errorText = err
@@ -135,7 +134,7 @@ G.FUNCS[funcs.otherCycle] = function(ev)
     local listcnt = uibox:get_UIE_by_ID(ses.idOtherCycle)
     if not listcnt then return end
 
-    util.remove_childrens(listcnt)
+    ui.removeChildrens(listcnt)
     local off = (ev.to_key - 1) * ses.otherCyclePageSize
     for i=1, ses.otherCyclePageSize, 1 do
         local release = list[i+off]
@@ -362,15 +361,14 @@ function UIModSes:uiModSelectTabInstalled()
     local list = {}
     local l = self.ses.modctrl.mods[self.mod.id]
     if l then
-        --- @type [string, imm.Mod][]
+        --- @type imm.Mod[]
         local version = {}
-        for ver, info in pairs(l.versions) do table.insert(version, {ver, info}) end
-        table.sort(version, function (a, b) return V(a[1]) > V(b[1]) end)
+        for ver, info in pairs(l.versions) do table.insert(version, info) end
+        table.sort(version, function (a, b) return a.versionParsed > b.versionParsed end)
 
-        for i, entry in ipairs(version) do
-            local ver, info = entry[1], entry[2]
+        for i, info in ipairs(version) do
             table.insert(list, self:uiVersionEntry({
-                version = ver,
+                version = info.version,
                 sub = info.path:sub(repo.modsDir:len() + 2),
                 installed = true
             }))

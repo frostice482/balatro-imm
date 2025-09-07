@@ -589,7 +589,7 @@ function UISes:updateFilter()
         for mod, list in pairs(self.modctrl.mods) do
             if not ids[mod] and not list.native then
                 local meta = list:createBmiMeta()
-                if meta and addeds[mod] and self:matchFilter(meta, filter) then
+                if meta and not addeds[mod] and self:matchFilter(meta, filter) then
                     table.insert(self.filteredList, meta)
                     addeds[mod] = true
                 end

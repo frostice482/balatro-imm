@@ -1,6 +1,5 @@
 local constructor = require("imm.lib.constructor")
 local Mod = require("imm.lib.mod.mod")
-local V = require("imm.lib.version")
 local logger = require("imm.logger")
 
 --- @class imm.ModList
@@ -66,15 +65,37 @@ function IModList:uninstall(version)
     return mod:uninstall()
 end
 
+--- @param ascending? boolean Sorts version by oldest first, defaults to false (latest first)
+function IModList:list(ascending)
+    --- @type imm.Mod[]
+    local list = {}
+    for k,v in pairs(self.versions) do table.insert(list, v) end
+    table.sort(list, function (a, b)
+        if ascending then return a.versionParsed < b.versionParsed end
+        return a.versionParsed > b.versionParsed
+    end)
+    return list
+end
+
 --- @return bmi.Meta?
 function IModList:createBmiMeta()
+    --- @type imm.Mod?
     local mod = self.active
     if not mod then
         for ver, other in pairs(self.versions) do
-            if not mod or V(mod.version) < V(ver) then mod = other end
+            if not mod or mod.versionParsed < other.versionParsed then mod = other end
         end
     end
     return mod and mod:createBmiMeta()
+end
+
+--- @param rules imm.Dependency.Rule[]
+function IModList:getVersionSatisfies(rules)
+    if self.active and self.active.versionParsed:satisfies(rules) then return self.active end
+
+    for i, mod in pairs(self.versions) do
+        if self.active ~= mod and mod.versionParsed:satisfies(rules) then return mod end
+    end
 end
 
 --- @alias imm.ModList.C p.Constructor<imm.ModList, nil> | fun(mod: string, native?: boolean): imm.ModList
