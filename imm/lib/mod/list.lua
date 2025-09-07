@@ -16,17 +16,14 @@ function IModList:init(mod, native)
     self.versions = {}
 end
 
---- @protected
 function IModList:errNative()
     return false, string.format('Mod %s is native and therefore cannot be edited', self.mod)
 end
 
---- @protected
 function IModList:errNotFound()
     return false, string.format('Mod %s not found', self.mod)
 end
 
---- @protected
 function IModList:errVerNotFound(version)
     return false, string.format('Mod %s with version %s not found', self.mod, version)
 end

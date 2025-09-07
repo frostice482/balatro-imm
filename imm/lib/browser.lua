@@ -1,8 +1,8 @@
 local constructor = require("imm.lib.constructor")
 local LoveMoveable = require("imm.lib.love_moveable")
 local ModBrowser = require("imm.lib.browser_mod")
+local getmods = require("imm.lib.mod.get")
 local ui = require("imm.lib.ui")
-local util = require("imm.lib.util")
 local repo = require("imm.repo")
 
 local funcs = {
@@ -62,6 +62,8 @@ end
 --- @field tags table<string, boolean>
 --- @field filteredList bmi.Meta[]
 --- @field list bmi.Meta[]
+--- @field listMapped table<string, bmi.Meta>
+--- @field listProviders table<string, bmi.Meta[]>
 --- @field imageCache table<string, love.Image>
 --- @field releasesCache table<string, ghapi.Releases>
 --- @field selectedMod? imm.ModBrowser
@@ -105,6 +107,8 @@ function UISes:init(modctrl)
     self.tags = {}
     self.filteredList = {}
     self.list = {}
+    self.listMapped = {}
+    self.listProviders = {}
     self.categories = {
         {'Content'},
         {'Joker'},
@@ -377,7 +381,7 @@ function UISes:uiErrorContainer()
             config = {
                 ref_table = self,
                 ref_value = 'errorText',
-                scale = self.fontscale,
+                scale = self.fontscale * 0.8,
                 colour = G.C.ORANGE
             }
         }}
@@ -393,7 +397,7 @@ function UISes:uiTaskContainer()
             config = {
                 ref_table = self,
                 ref_value = 'taskText',
-                scale = self.fontscale,
+                scale = self.fontscale * 0.8,
                 colour = G.C.UI.TEXT_LIGHT
             }
         }}
@@ -453,34 +457,6 @@ end
 function UISes:queueUpdateNext()
     self.queueCount = self.queueCount - 1
     if self.queueCount == 0 then self:update() end
-    return true
-end
-
---- @class imm.Filter
---- @field author? boolean
---- @field installed? boolean
---- @field id? boolean
---- @field search? string
-
---- @param mod bmi.Meta
---- @param filter imm.Filter
-function UISes:matchFilter(mod, filter)
-    if filter.installed and not (self.modctrl.mods[mod.id] and next(self.modctrl.mods[mod.id].versions)) then return false end
-    if not (filter.id and mod.id or filter.author and mod.author or mod.title):lower():find(filter.search) then return false end
-
-    local hasCatFilt = false
-    local hasCatMatch = false
-    local catobj = {}
-    for i, category in ipairs(mod.categories) do
-        catobj[category] = true
-    end
-    for category, filtered in pairs(self.tags) do
-        hasCatFilt = hasCatFilt or filtered
-        hasCatMatch = hasCatMatch or filtered and catobj[category]
-        if hasCatMatch then break end
-    end
-    if hasCatFilt and not hasCatMatch then return false end
-
     return true
 end
 
@@ -544,6 +520,34 @@ function UISes:updateMods()
     end
 end
 
+--- @class imm.Filter
+--- @field author? boolean
+--- @field installed? boolean
+--- @field id? boolean
+--- @field search? string
+
+--- @param mod bmi.Meta
+--- @param filter imm.Filter
+function UISes:matchFilter(mod, filter)
+    if filter.installed and not (self.modctrl.mods[mod.id] and next(self.modctrl.mods[mod.id].versions)) then return false end
+    if not (filter.id and mod.id or filter.author and mod.author or mod.title):lower():find(filter.search, 1, true) then return false end
+
+    local hasCatFilt = false
+    local hasCatMatch = false
+    local catobj = {}
+    for i, category in ipairs(mod.categories) do
+        catobj[category] = true
+    end
+    for category, filtered in pairs(self.tags) do
+        hasCatFilt = hasCatFilt or filtered
+        hasCatMatch = hasCatMatch or filtered and catobj[category]
+        if hasCatMatch then break end
+    end
+    if hasCatFilt and not hasCatMatch then return false end
+
+    return true
+end
+
 function UISes:createFilter()
     local search = self.search:lower()
     local isAuthor, isInstalled, isId
@@ -574,19 +578,38 @@ function UISes:updateFilter()
     self.filteredList = {}
 
     local ids = {}
+    local addeds = {}
     local filter = self:createFilter()
+
+    -- filter mods in list
     for k, meta in ipairs(self.list) do
-        ids[meta.id or ''] = true
-        if self:matchFilter(meta, filter) then
+        ids[meta.id] = true
+        if not addeds[meta.id] and self:matchFilter(meta, filter) then
             table.insert(self.filteredList, meta)
+            addeds[meta.id] = true
         end
     end
+    -- include local mods
     if filter.installed then
         for mod, list in pairs(self.modctrl.mods) do
             if not ids[mod] and not list.native then
                 local meta = list:createBmiMeta()
-                if meta and self:matchFilter(meta, filter) then
+                if meta and addeds[mod] and self:matchFilter(meta, filter) then
                     table.insert(self.filteredList, meta)
+                    addeds[mod] = true
+                end
+            end
+        end
+    end
+    -- include provider-based filtering
+    if not filter.author then
+        for providedId, list in pairs(self.listProviders) do
+            if providedId:lower():find(filter.search, 1, true) then
+                for i, entry in ipairs(list) do
+                    if not addeds[entry.id] then
+                        table.insert(self.filteredList, entry)
+                        addeds[entry.id] = true
+                    end
                 end
             end
         end
@@ -607,6 +630,26 @@ function UISes:update()
     self.uibox:recalculate()
 end
 
+--- @param list bmi.Meta[]
+function UISes:updateList(list)
+    self.list = list
+    self.listMapped = {}
+    self.listProviders = {}
+
+    for i, entry in ipairs(list) do
+        self.listMapped[entry.id] = entry
+        if entry.provides then
+            for k, provideEntry in ipairs(entry.provides) do
+                local providedId, providedVersion = getmods.parseSmodsProvides(provideEntry)
+                if providedId then
+                    self.listProviders[providedId] = self.listProviders[providedId] or {}
+                    table.insert(self.listProviders[providedId], entry)
+                end
+            end
+        end
+    end
+end
+
 function UISes:prepare()
     if self.prepared then
         self:update()
@@ -619,7 +662,7 @@ function UISes:prepare()
             self.errorText = err
             return
         end
-        self.list = res
+        self:updateList(res)
         self:update()
     end)
 end

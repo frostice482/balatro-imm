@@ -16,12 +16,19 @@ end
 --- @field version string
 --- @field op string
 
+--- OR - AND
+--- @alias imm.DependencySet imm.DependencyRule[][]
+
+--- AND - OR - AND
+--- @alias imm.DependencyList imm.DependencySet[]
+
 --- @class imm.ModOpts
 --- @field path? string
 --- @field format? imm.ModMetaFormat
 --- @field info? table
---- @field deps? imm.DependencyRule[][]
---- @field conflicts? imm.DependencyRule[][]
+--- @field deps? imm.DependencyList
+--- @field conflicts? imm.DependencyList
+--- @field provides? table<string, string>
 
 --- @class imm.Mod
 local IMod = {}
@@ -40,6 +47,7 @@ function IMod:init(list, ver, opts)
     self.info = opts.info or {}
     self.deps = opts.deps or {}
     self.conflicts = opts.conflicts or {}
+    self.provides = opts.provides or {}
 end
 
 --- @protected
@@ -57,8 +65,9 @@ function IMod:createBmiMeta()
         author = authorStr,
         categories = {},
         metafmt = 'smods',
-        deps = self.info.dependencies,
-        conflicts = self.info.conflicts
+        version = self.version,
+        provides = self.provides,
+        repo = self.info.repo
     }
 end
 

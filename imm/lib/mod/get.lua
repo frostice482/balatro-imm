@@ -107,23 +107,23 @@ function modlist.transformVersion(id, version)
 end
 
 --- @param entry string
---- @return imm.DependencyRule[][]
 function modlist.parseTsDep(entry)
     local author, package, version = entry:match('^([^-]+)-([^-]+)-(.+)')
     if not author then return {} end
-    --- @type imm.DependencyRule[][]
+    --- @type imm.DependencySet
     return {{{ id = package, op = '==', version = version }}}
 end
 
 --- @param entryStr string
---- @return imm.DependencyRule[][]
 function modlist.parseSmodsDep(entryStr)
+    --- @type imm.DependencySet
     local entries = {}
     local entriesStr = util.strsplit(entryStr, '|', true)
     for i, entry in ipairs(entriesStr) do
         local s, e, id = entry:find('^%s*([^%s<>=()]+)')
         if not id then break end
 
+        --- @return imm.DependencyRule[]
         local list = {}
         local has = false
         for op, version in entry:sub(e+1):gmatch("([<>=|]+)%s*([%w_%.%-~]*)") do
@@ -138,44 +138,58 @@ function modlist.parseSmodsDep(entryStr)
     return entries
 end
 
+--- @param entry string
+--- @return string? id
+--- @return string? version
+function modlist.parseSmodsProvides(entry)
+    local s, e, id = entry:find('^%s*([^%s<>=()]+)')
+    if not id then return end
+
+    local version = entry:sub(e+1):match('%d[%w_%.%-~]*')
+    return id, version
+end
+
 --- @param format bmi.Meta.Format
 --- @return string id
 --- @return string version
---- @return imm.DependencyRule[][] deps
---- @return imm.DependencyRule[][] conflicts
+--- @return imm.DependencyList deps
+--- @return imm.DependencyList conflicts
+--- @return table<string, string> provides
 function modlist.parseInfo(mod, format)
-    --- @type imm.DependencyRule[][], imm.DependencyRule[][]
-    local deps, conflicts = {}, {}
+    --- @type imm.DependencyList, imm.DependencyList, table<string, string>
+    local deps, conflicts, provides = {}, {}, {}
     local id, version
 
     if format == 'thunderstore' then
         id, version = mod.name, mod.version_number
 
-        for i, entry in ipairs(mod.dependencies) do
-            for j, list in ipairs(modlist.parseTsDep(entry)) do
-                table.insert(deps, list)
-            end
+        for i, set in ipairs(mod.dependencies) do
+            table.insert(deps, set)
         end
     else
         id, version = mod.id, mod.version
 
         if mod.dependencies then
-            for i, entry in ipairs(mod.dependencies) do
-                for j, list in ipairs(modlist.parseSmodsDep(entry)) do
-                    table.insert(deps, list)
-                end
+            for i, set in ipairs(mod.dependencies) do
+                table.insert(deps, set)
             end
         end
         if mod.conflicts then
-            for i, entry in ipairs(mod.conflicts) do
-                for j, list in ipairs(modlist.parseSmodsDep(entry)) do
-                    table.insert(conflicts, list)
+            for i, set in ipairs(mod.conflicts) do
+                table.insert(conflicts, set)
+            end
+        end
+        if mod.provides then
+            for i, entry in ipairs(mod.provides) do
+                local providedId, providedVersion = modlist.parseSmodsProvides(entry)
+                if providedId then
+                    provides[providedId] = providedVersion or version
                 end
             end
         end
     end
 
-    return id, version, deps, conflicts
+    return id, version, deps, conflicts, provides
 end
 
 --- @param ctx _imm.GetModsContext
@@ -206,7 +220,7 @@ function modlist.processFile(ctx, base, file)
     if not mod then return end
 
     --- extract mod meta
-    local id, version, deps, conflicts = modlist.parseInfo(mod, fmt)
+    local id, version, deps, conflicts, provides = modlist.parseInfo(mod, fmt)
     local ignored = prov.getInfo(base..'/.lovelyignore')
 
     --- modify version
@@ -224,7 +238,8 @@ function modlist.processFile(ctx, base, file)
         info = mod,
         path = base,
         deps = deps,
-        conflicts = conflicts
+        conflicts = conflicts,
+        provides = provides
     }, not ignored)
 end
 

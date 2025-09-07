@@ -1,6 +1,5 @@
 local ModCtrl = require("imm.lib.mod.ctrl")
 local ModList = require("imm.lib.mod.list")
-local Mod = require("imm.lib.mod.mod")
 local ctrl = ModCtrl()
 local balaver = G.VERSION
 local lovelyver = require("lovely").version

@@ -4,12 +4,23 @@ local getmods = require('imm.lib.mod.get')
 local util = require('imm.lib.util')
 
 --- @class imm.ModController
+--- The provided id \
+--- The version provided \
+--- the mod that provides it \
+--- @field provideds table<string, table<string, table<imm.Mod, imm.Mod>>>
 local IModCtrl = {}
 
 --- @protected
 --- @param noInit? boolean
 function IModCtrl:init(noInit)
     self.mods = noInit and {} or getmods.getMods()
+    self.provideds = {}
+
+    for id, list in pairs(self.mods) do
+        for ver, mod in pairs(list.versions) do
+            self:add(mod)
+        end
+    end
 end
 
 local function errNotFound(mod)
@@ -18,25 +29,78 @@ end
 
 --- @param mod string
 function IModCtrl:disable(mod)
-    local modinfo = self.mods[mod]
-    if not modinfo then return errNotFound(mod) end
-    return modinfo:disable()
+    local list = self.mods[mod]
+    if not list then return errNotFound(mod) end
+    return list:disable()
 end
 
 --- @param mod string
 --- @param version string
 function IModCtrl:enable(mod, version)
-    local modinfo = self.mods[mod]
-    if not modinfo then return errNotFound(mod) end
-    return modinfo:enable(version)
+    local list = self.mods[mod]
+    if not list then return errNotFound(mod) end
+    return list:enable(version)
+end
+
+--- @protected
+--- @param info imm.Mod
+--- @param id string
+--- @param ver string
+function IModCtrl:addProvider(info, id, ver)
+    if not self.provideds[id] then self.provideds[id] = {} end
+    local verList = self.provideds[id]
+    if not verList[ver] then verList[ver] = {} end
+
+    verList[ver][info] = info
+end
+
+--- @protected
+--- @param info imm.Mod
+--- @param id string
+--- @param ver string
+function IModCtrl:deleteProvider(info, id, ver)
+    if not self.provideds[id] then return end
+    local verList = self.provideds[id]
+    if not verList[ver] then return end
+
+    verList[ver][info] = nil
+    if not next(verList[ver]) then verList[ver] = nil end
+end
+
+--- @protected
+--- @param info imm.Mod
+function IModCtrl:add(info)
+    if info.provides then
+        for id, ver in pairs(info.provides) do
+            self:addProvider(info.provides, id, ver)
+        end
+    end
+    return true
+end
+
+--- @protected
+--- @param info imm.Mod
+function IModCtrl:deleteEntry(info, noUninstall)
+    if not noUninstall then
+        local ok, err = info:uninstall()
+        if not ok then return ok, err end
+    end
+    if info.provides then
+        for id, ver in pairs(info.provides) do
+            self:deleteProvider(info.provides, id, ver)
+        end
+    end
+    return true
 end
 
 --- @param mod string
 --- @param version string
 function IModCtrl:uninstall(mod, version)
-    local modinfo = self.mods[mod]
-    if not modinfo then return errNotFound(mod) end
-    return modinfo:uninstall(version)
+    local list = self.mods[mod]
+    if not list then return errNotFound(mod) end
+    local info = list.versions[version]
+    if not info then return list:errVerNotFound(version) end
+    return self:deleteEntry(info)
 end
 
 --- @param info imm.Mod
@@ -48,7 +112,7 @@ function IModCtrl:install(info, sourceNfs)
 
     -- unisntall existing version
     if list.versions[ver] then
-        local ok, err = list:uninstall(ver)
+        local ok, err = self:deleteEntry(list.versions[ver])
         if not ok then return ok, err end
     end
 
@@ -66,12 +130,13 @@ function IModCtrl:install(info, sourceNfs)
     local ok, err = NFS.write(tpath .. '/.lovelyignore', '')
     if not ok then return ok, err end
 
+    -- fix linking
     list.versions[ver] = info
     info.list = list
     info.path = tpath
 
+    self:add(info)
     sendInfoMessage(string.format('Installed %s %s (%s)', mod, ver, tpath), 'imm')
-
     return true
 end
 
