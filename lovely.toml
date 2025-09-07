@@ -5,6 +5,14 @@ priority = 0
 [[patches]]
 [patches.regex]
 target = "functions/button_callbacks.lua"
-pattern = "extended_corpus and \""
+pattern = '''extended_corpus and "'''
 position = "after"
 payload = "@#"
+
+[[patches]]
+[patches.regex]
+target = "functions/UI_definitions.lua"
+pattern = '''G\.C\.UI\.TEXT_DARK, scale = 0\.4'''
+position = "at"
+payload = "G.C.UI.TEXT_DARK, scale = tooltip.text_scale or 0.4"
+times = 3

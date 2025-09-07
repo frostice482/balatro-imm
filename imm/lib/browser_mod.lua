@@ -61,9 +61,10 @@ G.FUNCS[funcs.releasesInit] = function(elm)
             end
         end
 
+        local isLatestHash = mod.version:match('^%x%x%x%x%x%x%x$')
         uibox:add_child(modses:uiVersionEntry({
-            version = 'Source',
-            sub = 'May be unstable!',
+            version = 'Source - '..mod.version,
+            sub = isLatestHash and 'Potentially unstable!',
             downloadUrl = mod.downloadURL
         }), elm)
 
@@ -283,7 +284,16 @@ function UIModSes:uiVersionEntry(opts)
         nodes = {{
             n = G.UIT.R,
             nodes = {{
-                n = G.UIT.T, config = { text = opts.version, colour = G.C.UI.TEXT_LIGHT, scale = self.ses.fontscale }
+                n = G.UIT.T,
+                config = {
+                    text = opts.version,
+                    colour = G.C.UI.TEXT_LIGHT,
+                    scale = self.ses.fontscale,
+
+                    button = opts.installed and funcs.v_toggle or nil,
+                    ref_table = opts.installed and { ses = self, ver = opts.version, toggle = opts.enabled} or nil,
+                    tooltip = opts.downloadUrl and { text = {{ ref_table = {opts.downloadUrl}, ref_value = 1 }}, text_scale = self.ses.fontscale * 0.6 },
+                }
             }}
         }, opts.sub and {
             n = G.UIT.R,
@@ -392,8 +402,6 @@ function UIModSes:uiModReleasesContainer(func)
     }
 end
 
-local transparent = { 0, 0, 0, 0 }
-
 function UIModSes:uiModSelectTabs()
     local mod = self.mod
     local hasVersion = not not ( self.ses.modctrl.mods[mod.id] and next(self.ses.modctrl.mods[mod.id].versions) )
@@ -408,18 +416,18 @@ function UIModSes:uiModSelectTabs()
             chosen = hasVersion,
             label = 'Installed',
             tab_definition_function = function (arg)
-                return { n = G.UIT.ROOT, config = {colour = transparent}, nodes = {self:uiModSelectTabInstalled()} }
+                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiModSelectTabInstalled()} }
             end
         }, {
             chosen = not hasVersion,
             label = 'Releases',
             tab_definition_function = function (arg)
-                return { n = G.UIT.ROOT, config = {colour = transparent}, nodes = {self:uiModReleasesContainer(funcs.releasesInit)} }
+                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiModReleasesContainer(funcs.releasesInit)} }
             end
         }, {
             label = 'Older',
             tab_definition_function = function (arg)
-                return { n = G.UIT.ROOT, config = {colour = transparent}, nodes = {self:uiModReleasesContainer(funcs.otherInit)} }
+                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiModReleasesContainer(funcs.otherInit)} }
             end
         }}
     })
