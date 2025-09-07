@@ -27,7 +27,7 @@ local function __imm_init()
     end
 
     if package.preload.json then
-        print("Using SMODS-provided JOSN")
+        print("Using SMODS-provided JSON")
         JSON = require("json")
     else
         JSON = require("imm-json")

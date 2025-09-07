@@ -64,8 +64,8 @@ G.FUNCS[funcs.releasesInit] = function(elm)
 
         local isLatestHash = mod.version:match('^%x%x%x%x%x%x%x$')
         uibox:add_child(modses:uiVersionEntry({
-            version = 'Source - '..mod.version,
-            sub = isLatestHash and 'Potentially unstable!',
+            version = 'Source',
+            sub = isLatestHash and (mod.version..' - Potentially unstable!') or mod.version,
             downloadUrl = mod.downloadURL
         }), elm)
 

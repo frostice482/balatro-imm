@@ -600,10 +600,10 @@ function UISes:updateFilter()
     if not filter.author then
         for providedId, list in pairs(self.listProviders) do
             if providedId:lower():find(filter.search, 1, true) then
-                for i, entry in ipairs(list) do
-                    if not addeds[entry.id] then
-                        table.insert(self.filteredList, entry)
-                        addeds[entry.id] = true
+                for i, meta in ipairs(list) do
+                    if not addeds[meta.id] and self:matchFilter(meta, filter) then
+                        table.insert(self.filteredList, meta)
+                        addeds[meta.id] = true
                     end
                 end
             end
