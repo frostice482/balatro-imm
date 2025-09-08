@@ -1,7 +1,6 @@
 local ModList = require("imm.lib.mod.list")
 local V = require("imm.lib.version")
 local util = require("imm.lib.util")
-local config = require("imm.config")
 local repo   = require("imm.lib.repo")
 
 local modlist = {}
@@ -117,24 +116,24 @@ function modlist.parseTsDep(entry)
     return {{ mod = package, rules = {{ op = '==', version = V(version) }}}}
 end
 
+local modPattern = '^%s*([^%s<>=()]+)'
+local versionPattern = '[%w_~*.%-]*'
+local versionDepPattern = string.format('([<>=|]+)%%s*(%s)', versionPattern)
+local versionProvidePattern = '%d'..versionPattern
+
 --- @param entryStr string
 function modlist.parseSmodsDep(entryStr)
     --- @type imm.Dependency.Mod[]
     local entries = {}
     local entriesStr = util.strsplit(entryStr, '|', true)
     for i, entry in ipairs(entriesStr) do
-        local s, e, id = entry:find('^%s*([^%s<>=()]+)')
+        local s, e, id = entry:find(modPattern)
         if not id then break end
 
         --- @type imm.Dependency.Mod
         local modRules = { mod = id, rules = {} }
-        local has = false
-        for op, version in entry:sub(e+1):gmatch("([<>=|]+)%s*([%w_%.%-~]*)") do
-            has = true
+        for op, version in entry:sub(e+1):gmatch(versionDepPattern) do
             table.insert(modRules.rules, { version = V(version), op = op })
-        end
-        if not has then
-            table.insert(modRules.rules, { version = V(), op = ">=" })
         end
         table.insert(entries, modRules)
     end
@@ -145,10 +144,10 @@ end
 --- @return string? id
 --- @return string? version
 function modlist.parseSmodsProvides(entry)
-    local s, e, id = entry:find('^%s*([^%s<>=()]+)')
+    local s, e, id = entry:find(modPattern)
     if not id then return end
 
-    local version = entry:sub(e+1):match('%d[%w_%.%-~]*')
+    local version = entry:sub(e+1):match(versionProvidePattern)
     return id, version
 end
 
