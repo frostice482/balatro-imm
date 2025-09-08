@@ -28,6 +28,7 @@ end
 --- @field conflicts? imm.Dependency.List
 --- @field provides? table<string, string>
 --- @field pathDepth? number
+--- @field description? string
 
 --- @class imm.Mod
 local IMod = {}
@@ -49,6 +50,7 @@ function IMod:init(list, ver, opts)
     self.conflicts = opts.conflicts or {}
     self.provides = opts.provides or {}
     self.pathDepth = opts.pathDepth or 0
+    self.description = opts.description
 end
 
 --- @protected
@@ -68,7 +70,8 @@ function IMod:createBmiMeta()
         metafmt = 'smods',
         version = self.version,
         provides = self.provides,
-        repo = self.info.repo
+        repo = self.info.repo,
+        description = self.description
     }
 end
 

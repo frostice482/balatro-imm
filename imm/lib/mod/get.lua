@@ -243,7 +243,8 @@ function modlist.processFile(ctx, base, depth, file)
         deps = deps,
         conflicts = conflicts,
         provides = provides,
-        pathDepth = depth
+        pathDepth = depth,
+        description = mod.description
     }, not ignored)
 end
 

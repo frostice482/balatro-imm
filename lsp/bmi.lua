@@ -6,6 +6,7 @@
 --- @field id string
 --- @field metafmt bmi.Meta.Format
 --- @field provides? string[]
+--- @field description? string
 
 --- @class bmi.Meta: bmi.MetaInject
 --- @field title string

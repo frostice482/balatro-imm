@@ -99,7 +99,6 @@ local UISes = {
     taskText = '',
     noThumbnail = false,
     taskDone = true,
-    fonttemp = love.graphics.newText(G.LANG.font.FONT),
 
     idCycle = 'imm-cycle',
     idCycleCont = 'imm-cycle-cnt',
@@ -196,7 +195,7 @@ function UISes:uiModText(title, maxw)
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
-        config = { align = 'cm' },
+        config = { align = 'cm', minh = self.fontscale * 0.8 },
         nodes = {{
             n = G.UIT.O,
             config = {
@@ -291,6 +290,17 @@ end
 --- @param mod bmi.Meta
 --- @param n number
 function UISes:uiModEntry(mod, n)
+    local w, textDescs
+    if mod.description then
+        w, textDescs = G.LANG.font.FONT:getWrap(mod.description, G.TILESCALE * G.TILESIZE * 20 * 4)
+
+        for i, v in ipairs(textDescs) do
+            if i > 5 then textDescs[i] = nil
+            else textDescs[i] = v == "" and " " or v --- why smods??
+            end
+        end
+    end
+
     local id = self:getModElmId(n)
     --- @type balatro.UIElement.Definition
     return {
@@ -304,6 +314,10 @@ function UISes:uiModEntry(mod, n)
             button = funcs.chooseMod,
             ref_table = { ses = self, mod = mod },
             padding = 0.15,
+            on_demand_tooltip = textDescs and {
+                text = textDescs,
+                text_scale = self.fontscale
+            }
         },
         nodes = {
             self:uiImage(id .. self.idImageContSuff),
