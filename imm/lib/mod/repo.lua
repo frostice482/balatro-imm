@@ -36,6 +36,8 @@ function fetch_blob:getCacheFileName(arg)
     return self.cacheFile:format(love.data.encode('string', 'hex', love.data.hash('md5', arg)))
 end
 
+--- @alias imm.Repo.ReleasesCb fun(err?: string, res?: ghapi.Releases[])
+
 --- @class imm.Repo
 --- @field list bmi.Meta[]
 --- @field listMapped table<string, bmi.Meta>
@@ -43,6 +45,7 @@ end
 ---
 --- @field imageCache table<string, love.Image | false>
 --- @field releasesCache table<string, ghapi.Releases[]>
+--- @field releasesCb table<string, imm.Repo.ReleasesCb[]>
 local IRepo = {
     listDone = false
 }
@@ -87,6 +90,7 @@ function IRepo:init()
         releases_generic = fetch_releases_generic,
         blob = fetch_blob
     }
+    self.releasesCb = {}
     self:clear()
 end
 
@@ -106,32 +110,36 @@ function IRepo:getMod(mod)
 end
 
 --- @param repoUrl string
---- @param cb fun(err?: string, res?: ghapi.Releases[])
+--- @param cb imm.Repo.ReleasesCb
 --- @param cacheKey? string
 function IRepo:getReleases(repoUrl, cb, cacheKey)
     cacheKey = cacheKey or repoUrl
     if self.releasesCache[cacheKey] then return cb(nil, self.releasesCache[cacheKey]) end
-
-    local ocb = cb
-    cb = function (err, res)
-        if res then self.releasesCache[cacheKey] = res end
-        return ocb(err, res)
-    end
+    if self.releasesCb[repoUrl] then return table.insert(self.releasesCb[repoUrl], cb) end
 
     local prov = Repo.getProvider(repoUrl)
     if not prov.provider then
         cb(string.format('Unknown provider from given url %s', repoUrl))
         return
     end
-    if prov.provider == 'github' then
-        self.api.github_releases:fetch(prov.repo, cb)
-    else
-        self.api.releases_generic:fetch(prov, cb)
+
+    local function handle(err, res)
+        if res then self.releasesCache[cacheKey] = res end
+        for i, cb in ipairs(self.releasesCb[repoUrl]) do
+            cb(err, res)
+        end
+        self.releasesCb[repoUrl] = nil
+    end
+
+    self.releasesCb[repoUrl] = {cb}
+
+    if prov.provider == 'github' then self.api.github_releases:fetch(prov.repo, handle)
+    else self.api.releases_generic:fetch(prov, handle)
     end
 end
 
 --- @param mod string | bmi.Meta
---- @param cb fun(err?: string, res?: ghapi.Releases[])
+--- @param cb imm.Repo.ReleasesCb
 function IRepo:getModReleases(mod, cb)
     local mod = type(mod) == 'string' and self:getMod(mod) or mod
     if not mod then return cb(nil, nil) end
