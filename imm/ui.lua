@@ -1,6 +1,5 @@
-local Browser = require("imm.lib.browser")
 local ui = require("imm.lib.ui")
-local modctrl = require("imm.modctrl")
+local di
 
 -- Taken from balamod, modified
 -- https://github.com/balamod/balamod_lua/blob/main/src/balamod_uidefs.lua
@@ -27,8 +26,11 @@ local function browse_button()
 end
 
 function G.FUNCS.imm_browse()
+    di = di or require('imm.dropinstall')
+    Browser = Browser or require("imm.lib.browser")
+
     G.SETTINGS.paused = true
-    Browser(modctrl):showOverlay(true)
+    Browser():showOverlay(true)
 end
 
 local o1 = create_UIBox_main_menu_buttons

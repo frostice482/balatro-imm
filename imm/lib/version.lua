@@ -63,16 +63,19 @@ function IV.__lt(a, b)
     return a <= b and not (a == b)
 end
 
---- @param rules imm.Dependency.Rule[]
-function IV:satisfies(rules)
-    for i, rule in ipairs(rules) do
-        if not (
-            rule.op == "<<" and self < rule.version
+--- @param rule imm.Dependency.Rule
+function IV:satisfy(rule)
+    return  rule.op == "<<" and self < rule.version
         or  rule.op == "<=" and self <= rule.version
         or  rule.op == ">>" and self > rule.version
         or  rule.op == ">=" and self >= rule.version
         or  rule.op == "==" and self == rule.version
-        ) then return false end
+end
+
+--- @param rules imm.Dependency.Rule[]
+function IV:satisfies(rules)
+    for i, rule in ipairs(rules) do
+        if not self:satisfy(rule) then return false end
     end
     return true
 end

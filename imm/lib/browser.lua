@@ -1,9 +1,7 @@
 local constructor = require("imm.lib.constructor")
-local LoveMoveable = require("imm.lib.love_moveable")
 local ModBrowser = require("imm.lib.browser_mod")
-local getmods = require("imm.lib.mod.get")
+local LoveMoveable = require("imm.lib.love_moveable")
 local ui = require("imm.lib.ui")
-local repo = require("imm.lib.repo")
 local util = require("imm.lib.util")
 
 local funcs = {
@@ -61,6 +59,7 @@ G.FUNCS[funcs.refresh] = function(elm)
     --- @type imm.Browser
     local ses = elm.config.ref_table
     if ses then
+        ses.repo:clear()
         ses.prepared = false
         ses:showOverlay(true)
     end
@@ -70,11 +69,6 @@ end
 --- @field uibox balatro.UIBox
 --- @field tags table<string, boolean>
 --- @field filteredList bmi.Meta[]
---- @field list bmi.Meta[]
---- @field listMapped table<string, bmi.Meta>
---- @field listProviders table<string, bmi.Meta[]>
---- @field imageCache table<string, love.Image | false>
---- @field releasesCache table<string, ghapi.Releases>
 --- @field selectedMod? imm.ModBrowser
 --- @field taskQueues? fun()[]
 --- @field modctrl imm.ModController
@@ -109,14 +103,13 @@ local UISes = {
 }
 
 --- @protected
---- @param modctrl imm.ModController
-function UISes:init(modctrl)
-    self.modctrl = modctrl
+--- @param modctrl? imm.ModController
+--- @param repo? imm.Repo
+function UISes:init(modctrl, repo)
+    self.modctrl = modctrl or require('imm.modctrl')
+    self.repo = repo or require('imm.repo')
     self.tags = {}
     self.filteredList = {}
-    self.list = {}
-    self.listMapped = {}
-    self.listProviders = {}
     self.categories = {
         {'Content'},
         {'Joker'},
@@ -126,8 +119,6 @@ function UISes:init(modctrl)
         {'Resources', 'Resource Packs'},
         {'API'}
     }
-    self.imageCache = {}
-    self.releasesCache = {}
     self.taskQueues = {}
 end
 
@@ -402,6 +393,7 @@ function UISes:uiCycle()
         ref_value = 'listPage',
         _ses = self,
         opt_callback = funcs.cyclePage,
+        no_pips = true
     })
     obj.config.group = self.idCycle
     return obj
@@ -504,24 +496,6 @@ function UISes:queueUpdateNext()
     return true
 end
 
---- @param key string
---- @param cb fun(err?: string, data?: love.Image)
-function UISes:getImage(key, cb)
-    if self.noThumbnail or self.imageCache[key] == false then return cb(nil, nil) end
-    if self.imageCache[key] then return cb(nil, self.imageCache[key]) end
-
-    repo.thumbnails:fetch(key, function (err, res)
-        if not res then
-            self.imageCache[key] = false
-            return cb(err, res)
-        end
-
-        local ok, img = pcall(love.graphics.newImage, love.filesystem.newFileData(res, key))
-        self.imageCache[key] = ok and img or false
-        cb(nil, ok and img or nil)
-    end)
-end
-
 --- @param containerId string
 --- @param img love.Image
 function UISes:uiUpdateImage(containerId, img)
@@ -540,13 +514,13 @@ end
 function UISes:updateModImage(mod, containerId, nocheckUpdate)
     if not mod.pathname then return end
     local aid = self.updateId
-    self:getImage(mod.pathname, function (err, data)
+    self.repo:getImage(mod.pathname, function (err, data)
         if not data or not nocheckUpdate and self.updateId ~= aid then
             if err then print(string.format("Error loading thumbnail %s: %s", mod.pathname, err)) end
             return
         end
         self:uiUpdateImage(containerId, data)
-    end)
+    end, mod.id)
 end
 
 --- @param mod? bmi.Meta
@@ -630,7 +604,7 @@ function UISes:updateFilter()
     local filter = self:createFilter()
 
     -- filter mods in list
-    for k, meta in ipairs(self.list) do
+    for k, meta in ipairs(self.repo.list) do
         ids[meta.id] = true
         if not addeds[meta.id] and self:matchFilter(meta, filter) then
             table.insert(self.filteredList, meta)
@@ -651,7 +625,7 @@ function UISes:updateFilter()
     end
     -- include provider-based filtering
     if not filter.author then
-        for providedId, list in pairs(self.listProviders) do
+        for providedId, list in pairs(self.repo.listProviders) do
             if providedId:lower():find(filter.search, 1, true) then
                 for i, meta in ipairs(list) do
                     if not addeds[meta.id] and self:matchFilter(meta, filter) then
@@ -676,26 +650,6 @@ function UISes:update()
     self.uibox:recalculate()
 end
 
---- @param list bmi.Meta[]
-function UISes:updateList(list)
-    self.list = list
-    self.listMapped = {}
-    self.listProviders = {}
-
-    for i, entry in ipairs(list) do
-        self.listMapped[entry.id] = entry
-        if entry.provides then
-            for k, provideEntry in ipairs(entry.provides) do
-                local providedId, providedVersion = getmods.parseSmodsProvides(provideEntry)
-                if providedId then
-                    self.listProviders[providedId] = self.listProviders[providedId] or {}
-                    table.insert(self.listProviders[providedId], entry)
-                end
-            end
-        end
-    end
-end
-
 function UISes:prepare()
     if self.prepared then
         self:update()
@@ -703,12 +657,11 @@ function UISes:prepare()
     end
 
     self.prepared = true
-    repo.list:fetch(nil, function (err, res)
+    self.repo:getList(function (err, res)
         if not res then
             self.errorText = err
             return
         end
-        self:updateList(res)
         self:update()
     end)
 end
@@ -740,7 +693,7 @@ function UISes:installModFromZip(data)
     return modlist, list, errlist
 end
 
---- @alias imm.Browser.C p.Constructor<imm.Browser, nil> | fun(modctrl: imm.ModController): imm.Browser
+--- @alias imm.Browser.C p.Constructor<imm.Browser, nil> | fun(modctrl?: imm.ModController, modrepo?: imm.Repo): imm.Browser
 --- @type imm.Browser.C
 local UISes = constructor(UISes)
 return UISes

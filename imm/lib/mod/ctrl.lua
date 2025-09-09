@@ -1,22 +1,19 @@
 local constructor = require('imm.lib.constructor')
 local ModList = require('imm.lib.mod.list')
+local ProvidedList = require('imm.lib.mod.providedlist')
 local getmods = require('imm.lib.mod.get')
 local util = require('imm.lib.util')
-local repo = require('imm.lib.repo')
 local logger = require('imm.logger')
 
 --- @class imm.ModController
---- The provided id \
---- The version provided \
---- the mod that provides it \
---- @field provideds table<string, table<string, table<imm.Mod, imm.Mod>>>
+--- @field provideds imm.ProvidedList
 local IModCtrl = {}
 
 --- @protected
 --- @param noInit? boolean
 function IModCtrl:init(noInit)
     self.mods = noInit and {} or getmods.getMods()
-    self.provideds = {}
+    self.provideds = ProvidedList()
 
     for id, list in pairs(self.mods) do
         for ver, mod in pairs(list.versions) do
@@ -27,6 +24,42 @@ end
 
 local function errNotFound(mod)
     return false, string.format('Mod %s not found', mod)
+end
+
+--- @param rule1 imm.Dependency.List
+function IModCtrl:getMissingDeps(rule1)
+    --- @type table<string, imm.Dependency.Rule[][]>
+    local list = {}
+    for i, rule2 in ipairs(rule1) do
+        local satisfied = false
+        for i, rule3 in ipairs(rule2) do
+            local mod = self:findModSatisfies(rule3.mod, rule3.rules)
+            if mod then -- already installed
+                satisfied = true
+                break
+            end
+        end
+        if not satisfied then
+            for i, rule3 in ipairs(rule2) do
+                local x = rule3.mod
+                if not list[x] then list[x] = {} end
+                table.insert(list[x], rule3.rules)
+            end
+        end
+    end
+    return list
+end
+
+--- @param mod string
+--- @param rules imm.Dependency.Rule[]
+function IModCtrl:findModSatisfies(mod, rules)
+    local list = self.mods[mod]
+    local ruleMatch = list and list:getVersionSatisfies(rules)
+    if ruleMatch then return ruleMatch end
+
+    local provList = self.provideds.provideds[mod]
+    local provMatch = provList and provList:getVersionSatisfies(rules)
+    if provMatch then return provMatch end
 end
 
 --- @param mod string
@@ -46,37 +79,8 @@ end
 
 --- @protected
 --- @param info imm.Mod
---- @param id string
---- @param ver string
-function IModCtrl:addProvider(info, id, ver)
-    if not self.provideds[id] then self.provideds[id] = {} end
-    local verList = self.provideds[id]
-    if not verList[ver] then verList[ver] = {} end
-
-    verList[ver][info] = info
-end
-
---- @protected
---- @param info imm.Mod
---- @param id string
---- @param ver string
-function IModCtrl:deleteProvider(info, id, ver)
-    if not self.provideds[id] then return end
-    local verList = self.provideds[id]
-    if not verList[ver] then return end
-
-    verList[ver][info] = nil
-    if not next(verList[ver]) then verList[ver] = nil end
-end
-
---- @protected
---- @param info imm.Mod
 function IModCtrl:add(info)
-    if info.provides then
-        for id, ver in pairs(info.provides) do
-            self:addProvider(info.provides, id, ver)
-        end
-    end
+    self.provideds:add(info)
     return true
 end
 
@@ -87,11 +91,7 @@ function IModCtrl:deleteEntry(info, noUninstall)
         local ok, err = info:uninstall()
         if not ok then return ok, err end
     end
-    if info.provides then
-        for id, ver in pairs(info.provides) do
-            self:deleteProvider(info.provides, id, ver)
-        end
-    end
+    self.provideds:remove(info)
     return true
 end
 
@@ -121,7 +121,7 @@ function IModCtrl:install(info, sourceNfs, excludedDirs)
 
     -- get target path
     local c = 0
-    local tpath_orig = string.format('%s/%s-%s', repo.modsDir, mod, ver)
+    local tpath_orig = string.format('%s/%s-%s', require('imm.config').modsDir, mod, ver)
     local tpath = tpath_orig
     if NFS.getInfo(tpath) then
         c = c + 1

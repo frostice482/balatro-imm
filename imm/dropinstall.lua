@@ -9,7 +9,7 @@ local function dropinstall(browser, file)
     if not list then return end
 
     local meta
-    for i,v in ipairs(browser.list) do
+    for i,v in ipairs(browser.repo.list) do
         if v.id == list.mod then
             meta = v
             break

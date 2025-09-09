@@ -98,4 +98,15 @@ function util.trim(str)
     return str:match("^%s*(.-)%s*$") or str
 end
 
+--- @generic T: any[]
+--- @param list `T`
+--- @param startPos number
+--- @param endPos number
+--- @return T
+function util.slice(list, startPos, endPos)
+    local o = {}
+    for i = startPos, endPos, 1 do o[i-startPos+1] = list[i] end
+    return o
+end
+
 return util

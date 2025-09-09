@@ -1,21 +1,23 @@
 local constructor = require("imm.lib.constructor")
+local Repo = require("imm.lib.mod.repo")
 local ui = require("imm.lib.ui")
-local repo = require("imm.lib.repo")
-
-local function transformTagVersion(tag)
-    if tag:sub(1, 1) == "v" then tag = tag:sub(2) end
-    return tag
-end
 
 local funcs = {
     v_deleteConfirm = 'imm_mses_version_delete_confirm',
     v_delete        = 'imm_mses_version_delete',
     v_download      = 'imm_mses_version_download',
     v_toggle        = 'imm_mses_version_toggle',
+    openUrl         = 'imm_mses_openurl',
     releasesInit    = 'imm_mses_releases_init',
-    otherInit       = 'imm_mses_other_init',
-    otherCycle      = 'imm_mses_other_cycle',
+    otherInit       = 'imm_mses_other_init'
 }
+
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.openUrl] = function (elm)
+    local r = elm.config.ref_table or {}
+    love.system.openURL(r.url)
+end
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.releasesInit] = function(elm)
@@ -23,52 +25,11 @@ G.FUNCS[funcs.releasesInit] = function(elm)
     local modses = elm.config.ref_table
     local ses = modses.ses
     local mod = modses.mod
-    local uibox = elm.UIBox
     elm.config.func = nil
 
-    modses.releasesBusy = true
-    repo.getReleases(mod.repo, function (err, res)
-        modses.releasesBusy = false
+    ses.repo:getModReleases(mod, function (err, res)
         ui.removeChildrens(elm)
-
-        if not res then
-            ses.errorText = err
-            return
-        else
-            local pre
-            local latest
-
-            for i,v in ipairs(res) do
-                if v.prerelease then pre = pre or v
-                else latest = latest or v
-                end
-                if latest then break end
-            end
-
-            if latest then
-                uibox:add_child(modses:uiVersion({
-                    version = transformTagVersion(latest.tag_name),
-                    downloadUrl = latest.zipball_url
-                }), elm)
-            end
-            if pre then
-                uibox:add_child(modses:uiVersion({
-                    version = transformTagVersion(pre.tag_name),
-                    sub = 'Prerelease',
-                    downloadUrl = pre.zipball_url
-                }), elm)
-            end
-        end
-
-        local isLatestHash = mod.version:match('^%x%x%x%x%x%x%x$')
-        uibox:add_child(modses:uiVersion({
-            version = 'Source',
-            sub = mod.version..' - Potentially unstable!',
-            downloadUrl = mod.downloadURL
-        }), elm)
-
-        uibox:recalculate()
-        ses.uibox:recalculate()
+        modses:updateReleases(elm, err, res)
     end)
 end
 
@@ -78,74 +39,12 @@ G.FUNCS[funcs.otherInit] = function(elm)
     local modses = elm.config.ref_table
     local ses = modses.ses
     local mod = modses.mod
-    local uibox = elm.UIBox
     elm.config.func = nil
 
-    modses.releasesBusy = true
-    repo.getReleases(mod.repo, function (err, res)
-        modses.releasesBusy = false
+    ses.repo:getModReleases(mod, function (err, res)
         ui.removeChildrens(elm)
-
-        if not res then
-            ses.errorText = err
-            return
-        end
-
-        local opts = ui.cycleOptions(#res / modses.otherCyclePageSize)
-
-        local cycle = create_option_cycle({
-            options = opts,
-            current_option = 1,
-            opt_callback = funcs.otherCycle,
-            _list = res,
-            _uibox = uibox,
-            _ses = modses,
-        })
-
-        local vlist = {}
-        for i=1, modses.otherCyclePageSize, 1 do
-            local release = res[i]
-            if not release then break end
-
-            local t = modses:uiVersion({
-                version = transformTagVersion(release.tag_name),
-                downloadUrl = release.zipball_url
-            })
-            table.insert(vlist, t)
-        end
-
-        --- @type balatro.UIElement.Definition
-        local list = ui.container(modses.idOtherCycle, true, vlist)
-
-        uibox:add_child(cycle, elm)
-        uibox:add_child(list, elm)
-        uibox:recalculate()
-        ses.uibox:recalculate()
+        modses:updateOther(elm, err ,res)
     end)
-end
-
---- @param ev balatro.UI.CycleCallbackParam
-G.FUNCS[funcs.otherCycle] = function(ev)
-    local r = ev.cycle_config
-    --- @type ghapi.Releases[], balatro.UIBox, imm.ModBrowser
-    local list, uibox, ses = r._list, r._uibox, r._ses
-
-    local listcnt = uibox:get_UIE_by_ID(ses.idOtherCycle)
-    if not listcnt then return end
-
-    ui.removeChildrens(listcnt)
-    local off = (ev.to_key - 1) * ses.otherCyclePageSize
-    for i=1, ses.otherCyclePageSize, 1 do
-        local release = list[i+off]
-        if not release then break end
-
-        local t = ses:uiVersion({
-            version = transformTagVersion(release.tag_name),
-            downloadUrl = release.zipball_url
-        })
-        uibox:add_child(t, listcnt)
-    end
-    uibox:recalculate()
 end
 
 --- @param elm balatro.UIElement
@@ -212,10 +111,9 @@ end
 --- @field ses imm.Browser
 --- @field mod bmi.Meta
 local UIModSes = {
-    otherCyclePageSize = 8,
-    idOtherCycle = 'imm-other-cycle',
-    idImageSelectCnt = 'imm-slc-imgcnt',
-    releasesBusy = false
+    cyclePageSize = 8,
+    idListCnt = 'imm-other-cycle',
+    idImageSelectCnt = 'imm-slc-imgcnt'
 }
 
 --- @protected
@@ -241,7 +139,7 @@ function UIModSes:queueTaskDownload(url, cb, extra)
 
     self.ses:queueTask(function ()
         ses.taskText = string.format('Downloading %s\n(%s%s)', name, url, size and string.format(', %.1fMB', size / 1048576) or '')
-        repo.blob:fetch(url, function (err, res)
+        ses.repo.api.blob:fetch(url, function (err, res)
             if not res then
                 err = err or 'unknown error'
                 ses.taskText = string.format('Failed downloading %s: %s', name, err)
@@ -372,34 +270,34 @@ function UIModSes:uiVersion(opts)
 end
 
 function UIModSes:uiTabInstalled()
-    local list = {}
     local l = self.ses.modctrl.mods[self.mod.id]
-    if l then
-        --- @type imm.Mod[]
-        local version = {}
-        for ver, info in pairs(l.versions) do table.insert(version, info) end
-        table.sort(version, function (a, b) return a.versionParsed > b.versionParsed end)
+    if not l or not next(l.versions) then return self.ses:uiText('No installed\nversions', 1.25, G.C.ORANGE) end
 
-        for i, info in ipairs(version) do
-            table.insert(list, self:uiVersion({
-                version = info.version,
-                sub = info.path:sub(repo.modsDir:len() + 2),
-                installed = true
-            }))
-        end
-    end
+    --- @type imm.Mod[]
+    local versions = {}
+    for ver, info in pairs(l.versions) do table.insert(versions, info) end
+    table.sort(versions, function (a, b) return a.versionParsed > b.versionParsed end)
+
     --- @type balatro.UIElement.Definition
-    return { n = G.UIT.C, nodes = list }
+    return {
+        n = G.UIT.C,
+        nodes = {
+            self:uiCycle(#versions, function (i)
+                local info = versions[i]
+                return info and self:uiVersion({
+                    version = info.version,
+                    sub = info.path:sub(require('imm.config').modsDir:len() + 2),
+                    installed = true
+                })
+            end),
+            ui.container(self.idListCnt, true)
+        }
+    }
 end
 
 --- @param func string
 function UIModSes:uiReleasesContainer(func)
-    local err
-    if not self.mod.repo then err = 'Repo info\nunavailable' end
-    if self.releasesBusy then err = 'Bust' end
-
-    --- @type balatro.UIElement.Definition
-    if err then return self.ses:uiText(err, 1.25, G.C.ORANGE) end
+    if not self.mod.repo then return self.ses:uiText("Repo info\nunavailable", 1.25, G.C.ORANGE) end
 
     --- @type balatro.UIElement.Definition
     return {
@@ -410,6 +308,95 @@ function UIModSes:uiReleasesContainer(func)
             nodes = {self.ses:uiText('Please wait', 1.25)}
         }}
     }
+end
+
+--- @param elm balatro.UIElement
+--- @param err? string
+--- @param res? ghapi.Releases[]
+function UIModSes:updateReleases(elm, err, res)
+    --- @type imm.ModSession.VersionParam[]
+    local list = {}
+
+    if not res then
+        self.ses.errorText = err or ''
+        return
+    else
+        local pre
+        local latest
+
+        for i,v in ipairs(res) do
+            if v.prerelease then pre = pre or v
+            else latest = latest or v
+            end
+            if latest then break end
+        end
+
+        if latest then
+            table.insert(list, {
+                version = Repo.transformTagVersion(latest.tag_name),
+                downloadUrl = latest.zipball_url
+            })
+        end
+        if pre then
+            table.insert(list, {
+                version = Repo.transformTagVersion(pre.tag_name),
+                sub = 'Prerelease',
+                downloadUrl = pre.zipball_url
+            })
+        end
+    end
+
+    table.insert(list, {
+        version = 'Source',
+        sub = self.mod.version..' - Potentially unstable!',
+        downloadUrl = self.mod.downloadURL
+    })
+
+    self:uiAdd(elm, #list, function (i)
+        local info = list[i]
+        return info and self:uiVersion(info)
+    end)
+end
+
+--- @param elm balatro.UIElement
+--- @param err? string
+--- @param res? ghapi.Releases[]
+function UIModSes:updateOther(elm, err, res)
+    if not res then
+        self.ses.errorText = err or ''
+        return
+    end
+
+    self:uiAdd(elm, #res, function (i)
+        local info = res[i]
+        return info and self:uiVersion({
+            version = Repo.transformTagVersion(info.tag_name),
+            downloadUrl = info.zipball_url
+        })
+    end)
+end
+
+--- @param elm balatro.UIElement
+--- @param len number
+--- @param func fun(i: number): balatro.UIElement.Definition?
+function UIModSes:uiAdd(elm, len, func)
+    local uibox = elm.UIBox
+    uibox:add_child(self:uiCycle(len, func), elm)
+    uibox:add_child(ui.container(self.idListCnt, true), elm)
+    uibox:recalculate()
+    self.ses.uibox:recalculate()
+end
+
+--- @param len number
+--- @param func fun(i: number): balatro.UIElement.Definition?
+function UIModSes:uiCycle(len, func)
+    return ui.cycle({
+        func = func,
+        length = len,
+        id = self.idListCnt,
+        pagesize = self.cyclePageSize,
+        onCycle = function () self.ses.uibox:recalculate() end
+    }, { no_pips = true })
 end
 
 function UIModSes:uiTabs()
@@ -443,6 +430,36 @@ function UIModSes:uiTabs()
     })
 end
 
+function UIModSes:uiRepoButton()
+    if not self.mod.repo then
+        --- @type balatro.UIElement.Definition
+        return { n = G.UIT.R, config = {} }
+    end
+
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.R,
+        config = { padding = 0.1, align = 'm' },
+        nodes = {{
+            n = G.UIT.C,
+            config = {
+                colour = G.C.PURPLE,
+                padding = 0.1,
+                shadow = true,
+                button = funcs.openUrl,
+                ref_table = { url = self.mod.repo },
+                r = true,
+                button_dist = 0.1,
+                tooltip = {
+                    text = { self.mod.repo },
+                    text_scale = self.ses.fontscale * 0.8
+                }
+            },
+            nodes = {self.ses:uiText('Repo')}
+        }}
+    }
+end
+
 function UIModSes:container()
     --- @type balatro.UIElement.Definition
     return {
@@ -452,6 +469,7 @@ function UIModSes:container()
             self.ses:uiImage(self.idImageSelectCnt),
             self.ses:uiModText(self.mod.title),
             self.ses:uiModAuthor(self.mod.author),
+            self:uiRepoButton(),
             self:uiTabs()
         }
     }

@@ -15,7 +15,6 @@ local function __imm_postload(selfdir)
     __imm_atlas(selfdir, 'toggle', 'toggle.png', 15, 9)
 
     require('imm.ui')
-    require('imm.dropinstall')
 end
 
 local function __imm_init()

@@ -1,7 +1,6 @@
 local ModList = require("imm.lib.mod.list")
 local V = require("imm.lib.version")
 local util = require("imm.lib.util")
-local repo   = require("imm.lib.repo")
 
 local modlist = {}
 
@@ -173,12 +172,12 @@ function modlist.parseInfo(mod, format)
 
         if mod.dependencies then
             for i, set in ipairs(mod.dependencies) do
-                table.insert(deps, set)
+                table.insert(deps, modlist.parseSmodsDep(set))
             end
         end
         if mod.conflicts then
             for i, set in ipairs(mod.conflicts) do
-                table.insert(conflicts, set)
+                table.insert(conflicts, modlist.parseSmodsDep(set))
             end
         end
         if mod.provides then
@@ -300,7 +299,7 @@ function modlist.getMods(opts)
     opts.list = opts.list or {}
     opts.isNfs = opts.isNfs ~= false
     opts.depthLimit = opts.depthLimit or 3
-    modlist.getModsLow(opts, opts.base or repo.modsDir, 1) --- @diagnostic disable-line
+    modlist.getModsLow(opts, opts.base or require('imm.config').modsDir, 1) --- @diagnostic disable-line
 
     return opts.list
 end

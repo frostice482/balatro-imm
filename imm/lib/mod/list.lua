@@ -1,6 +1,5 @@
 local constructor = require("imm.lib.constructor")
 local Mod = require("imm.lib.mod.mod")
-local logger = require("imm.logger")
 
 --- @class imm.ModList
 --- @field versions table<string, imm.Mod>

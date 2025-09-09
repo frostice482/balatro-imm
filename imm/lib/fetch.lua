@@ -89,7 +89,7 @@ function IFetch:runreq(cachefile, cb, useCache, url, n)
             end
             if code ~= 200 then
                 logger.fmt('error', "%s: HTTP %d\n%s", url, code, body)
-                cb(string.format('%s: HTTP Error %d', url, code))
+                cb(string.format('HTTP Error %d (%s)', code, url))
                 return
             end
 

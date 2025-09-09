@@ -1,4 +1,11 @@
-local ui = {}
+local funcs = {
+    cycle = 'imm_cycle',
+    cycleInit = 'imm_cycle_init'
+}
+
+local ui = {
+    funcs = funcs
+}
 
 --- @type balatro.UI.ButtonParam
 local ui_def_yes = {
@@ -13,6 +20,40 @@ local ui_def_no = {
     label = {'No'},
     colour = G.C.GREY,
 }
+
+--- @param ev balatro.UI.CycleCallbackParam
+G.FUNCS[funcs.cycle] = function (ev)
+    --- @type imm.UI.CycleOptions
+    local opts = ev.cycle_config.extra
+    local uibox = opts.uibox or opts.elm.UIBox
+
+    ui.removeChildrens(opts.elm)
+
+    local off = (ev.to_key - 1) * opts.pagesize
+    for i=1, opts.pagesize, 1 do
+        local elm = opts.func(i+off)
+        if elm then uibox:add_child(elm, opts.elm) end
+    end
+
+    uibox:recalculate()
+    if opts.onCycle then opts.onCycle(ev.to_key) end
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.cycleInit] = function (elm)
+    local r = elm.config.ref_table or {}
+    elm.config.func = nil
+    elm.config.ref_table = r.table
+
+    local opts = r.opts
+    opts.elm = elm.UIBox:get_UIE_by_ID(opts.id)
+    if not opts.noImmediate then
+        G.FUNCS[funcs.cycle]({
+            cycle_config = { extra = opts },
+            to_key = opts.currentPage or 1
+        })
+    end
+end
 
 --- @param button string
 --- @param ref_table any
@@ -58,7 +99,7 @@ function ui.confirm(contentColumns, button, ref_table, yesButton, noButton)
     })
 end
 
---- @param id string
+--- @param id? string
 --- @param row? boolean
 --- @param nodes? balatro.UIElement.Definition[]
 function ui.container(id, row, nodes)
@@ -103,6 +144,38 @@ function ui.gap(mode, size)
             minh = mode == 'R' and size or nil
         }
     }
+end
+
+--- @class imm.UI.CycleOptions
+--- @field func fun(i: number): balatro.UIElement.Definition?
+--- @field length number
+--- @field pagesize number
+--- @field currentPage? number
+--- @field noImmediate? boolean
+--- @field onCycle? fun(page: number)
+--- @field id string
+--- @field elm? balatro.UIElement
+--- @field uibox? balatro.UIBox
+
+--- @param opts imm.UI.CycleOptions
+--- @param cycleOpts? balatro.UI.OptionCycleParam
+function ui.cycle(opts, cycleOpts)
+    --- @type balatro.UI.OptionCycleParam
+    local overopts = {
+        options = ui.cycleOptions(opts.length / opts.pagesize),
+        current_option = 1,
+        opt_callback = funcs.cycle,
+        extra = opts
+    }
+    setmetatable(overopts, { __index = cycleOpts })
+
+    local elm = create_option_cycle(overopts)
+    elm.config.ref_table = {
+        opts = opts,
+        table = elm.config.ref_table
+    }
+    elm.config.func = funcs.cycleInit
+    return elm
 end
 
 --- @param mode 'R' | 'C'
