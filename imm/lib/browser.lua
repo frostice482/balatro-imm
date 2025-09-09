@@ -1,8 +1,10 @@
 local constructor = require("imm.lib.constructor")
 local ModBrowser = require("imm.lib.browser_mod")
 local LoveMoveable = require("imm.lib.love_moveable")
+local Repo = require("imm.lib.mod.repo")
 local ui = require("imm.lib.ui")
 local util = require("imm.lib.util")
+local logger = require("imm.logger")
 
 local funcs = {
     setCategory = 'imm_ses_setcat',
@@ -92,6 +94,7 @@ local UISes = {
     errorText = '',
     taskText = '',
     noThumbnail = false,
+    noAutoDownloadMissing = false,
     taskDone = true,
 
     idCycle = 'imm-cycle',
@@ -134,6 +137,17 @@ end
 function UISes:queueTask(func)
     table.insert(self.taskQueues, func)
     if self.taskDone then self:nextTask() end
+end
+
+function UISes:queueTaskCo()
+    util.co(function (res)
+        if self.taskDone then
+            self.taskDone = false
+            res()
+            return
+        end
+        table.insert(self.taskQueues, res)
+    end)
 end
 
 --- @param n number
@@ -508,19 +522,28 @@ function UISes:uiUpdateImage(containerId, img)
     }, imgcnt)
 end
 
+--- @protected
+--- @param mod bmi.Meta
+--- @param containerId string
+--- @param nocheckUpdate? boolean
+function UISes:_updateModImage(mod, containerId, nocheckUpdate)
+    if not mod.pathname then return end
+    local aid = self.updateId
+    local err, data = self.repo:getImageCo(mod.pathname)
+
+    if not data or not nocheckUpdate and self.updateId ~= aid then
+        if err then print(string.format("Error loading thumbnail %s: %s", mod.pathname, err)) end
+        return
+    end
+
+    self:uiUpdateImage(containerId, data)
+end
+
 --- @param mod bmi.Meta
 --- @param containerId string
 --- @param nocheckUpdate? boolean
 function UISes:updateModImage(mod, containerId, nocheckUpdate)
-    if not mod.pathname then return end
-    local aid = self.updateId
-    self.repo:getImage(mod.pathname, function (err, data)
-        if not data or not nocheckUpdate and self.updateId ~= aid then
-            if err then print(string.format("Error loading thumbnail %s: %s", mod.pathname, err)) end
-            return
-        end
-        self:uiUpdateImage(containerId, data)
-    end, mod.id)
+    util.createCo(self._updateModImage, self, mod, containerId, nocheckUpdate)
 end
 
 --- @param mod? bmi.Meta
@@ -681,7 +704,82 @@ function UISes:showOverlay(update)
     self.uibox:recalculate()
 end
 
-function UISes:installModFromZip(data)
+--- @class imm.ModSession.QueueDownloadExtraInfo
+--- @field name? string
+--- @field size? number
+--- @field blacklist? table<string>
+--- @field cb? fun(err?: string)
+
+--- @protected
+--- @param url string
+--- @param extra? imm.ModSession.QueueDownloadExtraInfo
+function UISes:_queueTaskInstall(url, extra)
+    extra = extra or {}
+    local name = extra.name or 'something'
+    local size = extra.size
+    extra.blacklist = extra.blacklist or {}
+
+    self:queueTaskCo()
+
+    if extra.blacklist[url] then return end
+
+    self.taskText = string.format('Downloading %s (%s%s)', name, url, size and string.format(', %.1fMB', size / 1048576) or '')
+    logger.log(self.taskText)
+
+    local err, res = self.repo.api.blob:fetchCo(url)
+    if not res then
+        err = err or 'unknown error'
+        self.taskText = string.format('Failed downloading %s: %s', name, err)
+        if extra.cb then extra.cb(err) end
+    else
+        extra.blacklist[url] = true
+        self:installModFromZip(love.filesystem.newFileData(res, 'swap'), extra.blacklist)
+        if extra.cb then extra.cb(err) end
+    end
+
+    return self:nextTask()
+end
+
+--- @param url string
+--- @param extra? imm.ModSession.QueueDownloadExtraInfo
+function UISes:queueTaskInstall(url, extra)
+    util.createCo(self._queueTaskInstall, self, url, extra)
+end
+
+--- @protected
+--- @param id string
+--- @param list imm.Dependency.Rule[][]
+--- @param blacklistState? table<string>
+function UISes:_installMissingModEntry(id, list, blacklistState)
+    local mod = self.repo:getMod(id)
+    if not mod then return logger.fmt('warn', 'Mod id %s does not exist in repo', id) end
+    local title = mod.title
+
+    local err, releases = self.repo:getModReleasesCo(mod)
+    if err then logger:fmt('warn', 'Failed to obtain releases from %s: %s', mod.title, err) end
+
+    local url, rel = self.repo:findModVersionToDownload(id, list)
+    if not url then return logger.fmt('warn', 'Mod %s does not have URL downloads', title) end
+    if not rel then logger.fmt('warn', 'Mod %s is downloading from source', title) end
+
+    self:_queueTaskInstall(url, {
+        name = title..' '..mod.version,
+        blacklist = blacklistState
+    })
+end
+
+--- @param mod imm.Mod
+--- @param blacklistState? table<string>
+function UISes:installMissingMods(mod, blacklistState)
+    local missings = self.modctrl:getMissingDeps(mod.deps)
+    for missingid, missingList in pairs(missings) do
+        logger.fmt('log', 'Missing dependency %s by %s', missingid, mod.mod)
+        util.createCo(self._installMissingModEntry, self, missingid, missingList, blacklistState)
+    end
+end
+
+---@param blacklistState? table<string>
+function UISes:installModFromZip(data, blacklistState)
     local modlist, list, errlist = self.modctrl:installFromZip(data)
 
     local strlist = {}
@@ -689,6 +787,12 @@ function UISes:installModFromZip(data)
 
     self.errorText = table.concat(errlist, '\n')
     self.taskText = #strlist ~= 0 and 'Installed '..table.concat(strlist, ', ') or ''
+
+    if not self.noAutoDownloadMissing then
+        for i, mod in ipairs(list) do
+            self:installMissingMods(mod, blacklistState)
+        end
+    end
 
     return modlist, list, errlist
 end

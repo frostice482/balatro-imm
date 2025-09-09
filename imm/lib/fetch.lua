@@ -5,6 +5,7 @@ local logger = require("imm.logger")
 
 --- @class imm.Fetch<A, T>: balatro.Object, {
 ---     fetch: fun(self, arg: A, cb: fun(err?: string, res?: T), refreshCache?: boolean, useCache?: boolean);
+---     fetchCo: fun(self, arg: A, refreshCache?: boolean, useCache?: boolean): T;
 --- }
 local IFetch = {}
 
@@ -103,13 +104,18 @@ function IFetch:runreq(cachefile, cb, useCache, url, n)
     )
 end
 
+--- @type imm.Fetch<any, any>
 local IFetch2 = IFetch
 
-function IFetch2:fetch(arg, cb, refreshCache, useCache) --- @diagnostic disable-line
+function IFetch2:fetch(arg, cb, refreshCache, useCache)
     local cachefile = self:getCacheFileName(arg)
     local cache = not refreshCache and love.filesystem.read(cachefile)
     if cache then return cb(nil, self:parseCache(cache)) end
     self:runreq(cachefile, cb, useCache, self:getUrl(arg), 10)
+end
+
+function IFetch2:fetchCo(arg, refreshCache, useCache)
+    return util.co(function (res) self:fetch(arg, res, refreshCache, useCache) end)
 end
 
 --- @alias imm.Fetch.C p.Constructor<imm.Fetch, nil> | fun(url: string, file: string, isResJson?: boolean, isJson?: boolean): imm.Fetch<any, any>

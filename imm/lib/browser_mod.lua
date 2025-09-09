@@ -1,6 +1,7 @@
 local constructor = require("imm.lib.constructor")
 local Repo = require("imm.lib.mod.repo")
 local ui = require("imm.lib.ui")
+local util = require("imm.lib.util")
 
 local funcs = {
     v_deleteConfirm = 'imm_mses_version_delete_confirm',
@@ -56,11 +57,11 @@ G.FUNCS[funcs.v_download] = function(elm)
 
     if not url then return end
 
-    modses:queueTaskDownload(
-        url,
-        function (err) if not err then modses.ses:updateSelectedMod(modses.mod) end end,
-        { name = modses.mod.title..' '..ver, size = size }
-    )
+    modses.ses:queueTaskInstall(url, {
+        name = modses.mod.title..' '..ver,
+        size = size,
+        cb = function (err) if not err then modses.ses:updateSelectedMod(modses.mod) end end
+    })
 end
 
 --- @param elm balatro.UIElement
@@ -122,35 +123,6 @@ local UIModSes = {
 function UIModSes:init(ses, mod)
     self.ses = ses
     self.mod = mod
-end
-
---- @class imm.ModSession.QueueDownloadExtraInfo
---- @field name? string
---- @field size? number
-
---- @param url string
---- @param cb? fun(err?: string)
---- @param extra? imm.ModSession.QueueDownloadExtraInfo
-function UIModSes:queueTaskDownload(url, cb, extra)
-    extra = extra or {}
-    local name = extra.name or 'something'
-    local size = extra.size
-    local ses = self.ses
-
-    self.ses:queueTask(function ()
-        ses.taskText = string.format('Downloading %s\n(%s%s)', name, url, size and string.format(', %.1fMB', size / 1048576) or '')
-        ses.repo.api.blob:fetch(url, function (err, res)
-            if not res then
-                err = err or 'unknown error'
-                ses.taskText = string.format('Failed downloading %s: %s', name, err)
-                if cb then cb(err) end
-            else
-                ses:installModFromZip(love.filesystem.newFileData(res, 'swap'))
-                if cb then cb(err) end
-            end
-            self.ses:nextTask()
-        end)
-    end)
 end
 
 --- @class imm.ModSession.VersionParam

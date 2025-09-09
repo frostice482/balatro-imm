@@ -1,4 +1,5 @@
 local constructor = require("imm.lib.constructor")
+local util        = require("imm.lib.util")
 
 local gid = 0
 --- @type table<number, imm.Tasks>
@@ -7,6 +8,7 @@ setmetatable(registry, { __mode = 'v' })
 
 --- @class imm.Tasks<Req, Res>: {
 ---     runTask: fun(self: self, req: Req, res: fun(res: Res) ): number;
+---     runTaskCo: fun(self: self, req: Req ): Res;
 --- }
 --- @field threadcode love.FileData
 --- @field threads love.Thread[]
@@ -53,11 +55,10 @@ function ITasks:handleRes(id, res)
     cb(res)
 end
 
+
+--- @type imm.Tasks<any, any>
 local _ITasks = ITasks
 
---- @param req any
---- @param cb fun(res: any)
---- @diagnostic disable-next-line
 function _ITasks:runTask(req, cb)
     self.pendingCount = self.pendingCount + 1
     self.nextId = self.nextId + 1
@@ -69,6 +70,10 @@ function _ITasks:runTask(req, cb)
     end
 
     return self.nextId
+end
+
+function _ITasks:runTaskCo(req)
+    return util.co(function (res) self:runTask(req, res) end)
 end
 
 --- @diagnostic disable-next-line

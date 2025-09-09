@@ -112,7 +112,7 @@ function modlist.parseTsDep(entry)
     local author, package, version = entry:match('^([^-]+)-([^-]+)-(.+)')
     if not author then return {} end
     --- @type imm.Dependency.Mod[]
-    return {{ mod = package, rules = {{ op = '==', version = V(version) }}}}
+    return {{ mod = package, rules = {{ op = '>=', version = V(version) }}}}
 end
 
 local modPattern = '^%s*([^%s<>=()]+)'
@@ -132,7 +132,7 @@ function modlist.parseSmodsDep(entryStr)
         --- @type imm.Dependency.Mod
         local modRules = { mod = id, rules = {} }
         for op, version in entry:sub(e+1):gmatch(versionDepPattern) do
-            table.insert(modRules.rules, { version = V(version), op = op })
+            table.insert(modRules.rules, { version = V(modlist.transformVersion(id, version)), op = op })
         end
         table.insert(entries, modRules)
     end
@@ -165,7 +165,7 @@ function modlist.parseInfo(mod, format)
         id, version = mod.name, mod.version_number
 
         for i, set in ipairs(mod.dependencies) do
-            table.insert(deps, set)
+            table.insert(deps, modlist.parseTsDep(set))
         end
     else
         id, version = mod.id, mod.version

@@ -2,6 +2,7 @@ local constructor = require("imm.lib.constructor")
 local V = require("imm.lib.version")
 local Fetch = require("imm.lib.fetch")
 local getmods = require("imm.lib.mod.get")
+local util = require("imm.lib.util")
 
 --- @type imm.Fetch<nil, bmi.Meta>
 local fetch_list = Fetch('https://github.com/frostice482/balatro-mod-index-tiny/raw/master/out.json.gz', 'immcache/list', false, true)
@@ -138,12 +139,27 @@ function IRepo:getReleases(repoUrl, cb, cacheKey)
     end
 end
 
+--- @param repoUrl string
+--- @param cacheKey? string
+--- @return string? err
+--- @return ghapi.Releases[]? releases
+function IRepo:getReleasesCo(repoUrl, cacheKey)
+    return util.co(function (res) self:getReleases(repoUrl, res, cacheKey) end)
+end
+
 --- @param mod string | bmi.Meta
 --- @param cb imm.Repo.ReleasesCb
 function IRepo:getModReleases(mod, cb)
     local mod = type(mod) == 'string' and self:getMod(mod) or mod
     if not mod then return cb(nil, nil) end
     self:getReleases(mod.repo, cb, mod.id)
+end
+
+--- @param mod string | bmi.Meta
+--- @return string? err
+--- @return ghapi.Releases[]? releases
+function IRepo:getModReleasesCo(mod)
+    return util.co(function (res) self:getModReleases(mod, res) end)
 end
 
 --- @param url string
@@ -169,6 +185,14 @@ function IRepo:getImage(url, cb, cacheKey)
             cb(img, nil)
         end
     end)
+end
+
+--- @param url string
+--- @param cacheKey? string
+--- @return string? err
+--- @return love.Image? data
+function IRepo:getImageCo(url, cacheKey)
+    return util.co(function (res) self:getImage(url, res, cacheKey) end)
 end
 
 --- @param res bmi.Meta[]
@@ -205,6 +229,12 @@ function IRepo:getList(cb)
     self.api.list:fetch(nil, cb)
 end
 
+--- @return string? err
+--- @return bmi.Meta[]? list
+function IRepo:getListCo()
+    return util.co(function (res) self:getList(res) end)
+end
+
 --- Note that this function may return only the direct downloadURL instead of releases
 --- if the releases of the mod is not initialized.
 --- You should use this within `getReleases` callback.
@@ -225,7 +255,7 @@ function IRepo:findModVersionToDownload(mod, rulesList)
             lastRelease = lastRelease or release
             local ok, parsed
             if not release.draft and not release.prerelease then
-                ok, parsed = pcall(V, release) --- @diagnostic disable-line
+                ok, parsed = pcall(V, Repo.transformTagVersion(release.tag_name)) --- @diagnostic disable-line
             end
             if ok and parsed then
                 for j, rules in ipairs(rulesList) do
@@ -233,9 +263,11 @@ function IRepo:findModVersionToDownload(mod, rulesList)
                 end
             end
         end
+        --[[
         if lastRelease then
-            return lastRelease.tarball_url, lastRelease
+            return lastRelease.zipball_url, lastRelease
         end
+        ]]
     end
 
     local relatedMod = self.listMapped[mod]
