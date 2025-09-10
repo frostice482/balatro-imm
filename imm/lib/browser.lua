@@ -12,13 +12,19 @@ local funcs = {
     cyclePage   = 'imm_s_cycle',
     chooseMod   = 'imm_s_choosemod',
     refresh     = 'imm_s_refresh',
-    restart     = 'imm_s_restart'
+    restart     = 'imm_s_restart',
+    openModFolder = 'imm_s_open'
 }
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.restart] = function(elm)
     if not elm.config.ref_table.confirm then return G.FUNCS.exit_overlay_menu() end
     util.restart()
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.openModFolder] = function(elm)
+    love.system.openURL('file:///'..require('imm.config').modsDir:gsub('\\', '/'))
 end
 
 --- @param elm balatro.UIElement
@@ -274,6 +280,15 @@ function UISes:uiSidebarHeaderRefresh()
     }
 end
 
+function UISes:uiSidebarHeaderOpenMods()
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.C,
+        config = setmetatable({ tooltip = { text = {'Open Mods Folder'} }, button = funcs.openModFolder, ref_table = self }, {__index = someWeirdBase}),
+        nodes = {self:uiText('O')}
+    }
+end
+
 function UISes:uiSidebarHeader()
     --- @type balatro.UIElement.Definition
     return {
@@ -281,8 +296,10 @@ function UISes:uiSidebarHeader()
         config = { padding = 0.1, align = 'm' },
         nodes = {
             self:uiSidebarHeaderExit(),
-            ui.gap('C', self.fontscale / 5),
+            ui.gap('C', self.fontscale / 8),
             self:uiSidebarHeaderRefresh(),
+            ui.gap('C', self.fontscale / 8),
+            self:uiSidebarHeaderOpenMods(),
         }
     }
 end
