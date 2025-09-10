@@ -1,0 +1,2 @@
+local __IMM_WRAP = true
+local func, err = load([=====[

@@ -60,4 +60,4 @@ local function __imm_init()
         __imm_postload(selfdir)
     end
 end
-__imm_init()
+if not __IMM_WRAP then __imm_init() end

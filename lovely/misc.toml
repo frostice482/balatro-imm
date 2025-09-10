@@ -18,12 +18,6 @@ payload = "G.C.UI.TEXT_DARK, scale = tooltip.text_scale or 0.4"
 times = 3
 
 [[patches]]
-[patches.copy]
-target = "main.lua"
-position = "append"
-sources = ["main.lua"]
-
-[[patches]]
 [patches.module]
 source = "include/nativefs.lua"
 before = "main.lua"

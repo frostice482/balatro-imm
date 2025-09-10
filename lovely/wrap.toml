@@ -1,0 +1,15 @@
+[manifest]
+version = "1.0.0"
+priority = 2147483647
+
+[[patches]]
+[patches.copy]
+target = "main.lua"
+position = "prepend"
+sources = ["imm/patch_prepend.txt"]
+
+[[patches]]
+[patches.copy]
+target = "main.lua"
+position = "append"
+sources = ["imm/patch_append.txt", "main.lua", "emergency_err.lua"]

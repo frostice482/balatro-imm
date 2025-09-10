@@ -1,11 +1,12 @@
 local ModCtrl = require("imm.lib.mod.ctrl")
 local ModList = require("imm.lib.mod.list")
 local ctrl = ModCtrl()
-local balaver = G.VERSION
 local lovelyver = require("lovely").version
 
-ctrl.mods.Balatro = ModList('Balatro', true)
-ctrl:addEntry(ctrl.mods.Balatro:createVersion(balaver, nil, true))
+if G then
+    ctrl.mods.Balatro = ModList('Balatro', true)
+    ctrl:addEntry(ctrl.mods.Balatro:createVersion(G.VERSION, nil, true))
+end
 
 ctrl.mods.Lovely = ModList('Lovely', true)
 ctrl:addEntry(ctrl.mods.Lovely:createVersion(lovelyver, nil, true))
