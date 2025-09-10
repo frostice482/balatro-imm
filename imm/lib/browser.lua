@@ -73,7 +73,7 @@ end
 --- @field filteredList bmi.Meta[]
 --- @field selectedMod? imm.ModBrowser
 --- @field taskQueues? fun()[]
---- @field modctrl imm.ModController
+--- @field ctrl imm.ModController
 local UISes = {
     search = '',
     prevSearch = '',
@@ -109,7 +109,7 @@ local UISes = {
 --- @param modctrl? imm.ModController
 --- @param repo? imm.Repo
 function UISes:init(modctrl, repo)
-    self.modctrl = modctrl or require('imm.modctrl')
+    self.ctrl = modctrl or require('imm.modctrl')
     self.repo = repo or require('imm.repo')
     self.tags = {}
     self.filteredList = {}
@@ -574,7 +574,7 @@ end
 --- @param mod bmi.Meta
 --- @param filter imm.Filter
 function UISes:matchFilter(mod, filter)
-    if filter.installed and not (self.modctrl.mods[mod.id] and next(self.modctrl.mods[mod.id].versions)) then return false end
+    if filter.installed and not (self.ctrl.mods[mod.id] and next(self.ctrl.mods[mod.id].versions)) then return false end
     if not (filter.id and mod.id or filter.author and mod.author or mod.title):lower():find(filter.search, 1, true) then return false end
 
     local hasCatFilt = false
@@ -636,7 +636,7 @@ function UISes:updateFilter()
     end
     -- include local mods
     if filter.installed then
-        for mod, list in pairs(self.modctrl.mods) do
+        for mod, list in pairs(self.ctrl.mods) do
             if not ids[mod] and not list.native then
                 local meta = list:createBmiMeta()
                 if meta and not addeds[mod] and self:matchFilter(meta, filter) then
@@ -771,7 +771,7 @@ end
 --- @param mod imm.Mod
 --- @param blacklistState? table<string>
 function UISes:installMissingMods(mod, blacklistState)
-    local missings = self.modctrl:getMissingDeps(mod.deps)
+    local missings = self.ctrl:getMissingDeps(mod.deps)
     for missingid, missingList in pairs(missings) do
         logger.fmt('log', 'Missing dependency %s by %s', missingid, mod.mod)
         util.createCo(self._installMissingModEntry, self, missingid, missingList, blacklistState)
@@ -780,7 +780,7 @@ end
 
 ---@param blacklistState? table<string>
 function UISes:installModFromZip(data, blacklistState)
-    local modlist, list, errlist = self.modctrl:installFromZip(data)
+    local modlist, list, errlist = self.ctrl:installFromZip(data)
 
     local strlist = {}
     for i,v in ipairs(list) do table.insert(strlist, table.concat({v.mod, v.version}, ' ')) end

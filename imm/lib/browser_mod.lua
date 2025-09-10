@@ -1,7 +1,6 @@
 local constructor = require("imm.lib.constructor")
 local Repo = require("imm.lib.mod.repo")
 local ui = require("imm.lib.ui")
-local util = require("imm.lib.util")
 
 local funcs = {
     v_deleteConfirm = 'imm_mses_version_delete_confirm',
@@ -84,8 +83,8 @@ G.FUNCS[funcs.v_toggle] = function(elm)
     local mod = modses.mod
 
     local ok, err
-    if enabled then ok, err = ses.modctrl:disable(mod.id)
-    else ok, err = ses.modctrl:enable(mod.id, ver)
+    if enabled then ok, err = ses.ctrl:disable(mod.id)
+    else ok, err = ses.ctrl:enable(mod.id, ver)
     end
 
     ses.errorText = err or ''
@@ -101,7 +100,7 @@ G.FUNCS[funcs.v_deleteConfirm] = function(elm)
     local ses = modses.ses
 
     if r.confirm then
-        local ok, err = ses.modctrl:uninstall(modses.mod.id, r.ver)
+        local ok, err = ses.ctrl:uninstall(modses.mod.id, r.ver)
         ses.errorText = err or ''
     end
 
@@ -215,7 +214,7 @@ end
 
 --- @param opts imm.ModSession.VersionParam
 function UIModSes:uiVersion(opts)
-    local l = self.ses.modctrl.mods[self.mod.id]
+    local l = self.ses.ctrl.mods[self.mod.id]
     if l then
         if opts.installed == nil then
             opts.installed = not not l.versions[opts.version]
@@ -242,7 +241,7 @@ function UIModSes:uiVersion(opts)
 end
 
 function UIModSes:uiTabInstalled()
-    local l = self.ses.modctrl.mods[self.mod.id]
+    local l = self.ses.ctrl.mods[self.mod.id]
     if not l or not next(l.versions) then return self.ses:uiText('No installed\nversions', 1.25, G.C.ORANGE) end
 
     --- @type imm.Mod[]
@@ -373,7 +372,7 @@ end
 
 function UIModSes:uiTabs()
     local mod = self.mod
-    local hasVersion = not not ( self.ses.modctrl.mods[mod.id] and next(self.ses.modctrl.mods[mod.id].versions) )
+    local hasVersion = not not ( self.ses.ctrl.mods[mod.id] and next(self.ses.ctrl.mods[mod.id].versions) )
 
     --- @type balatro.UIElement.Definition
     return create_tabs({
