@@ -1,11 +1,15 @@
 local constructor = require("imm.lib.constructor")
 local Mod = require("imm.lib.mod.mod")
+local logger = require("imm.logger")
 
 --- @class imm.ModList
 --- @field versions table<string, imm.Mod>
 --- @field active? imm.Mod
 --- @field native? boolean
-local IModList = {}
+--- @field cachedList imm.Mod[]
+local IModList = {
+    listRequiresUpdate = false
+}
 
 --- @protected
 --- @param mod string
@@ -14,6 +18,7 @@ function IModList:init(mod, native)
     self.mod = mod
     self.native = native
     self.versions = {}
+    self.cachedList = {}
 end
 
 function IModList:errNative()
@@ -35,21 +40,33 @@ function IModList:createVersion(version, opts, enabled)
     local m = Mod(self, version, opts)
     self.versions[version] = m
     if enabled then self.active = m end
+    self.listRequiresUpdate = true
     return m
 end
 
+--- @param mod imm.Mod
+function IModList:add(mod)
+    mod.mod = self.mod
+    mod.list = self
+    self.versions[mod.version] = mod
+    self.listRequiresUpdate = true
+end
+
+--- @return boolean ok, string? err
 function IModList:disable()
     if self.native then return self:errNative() end
     if not self.active then return true end
 
     local ok, err = NFS.write(self.active.path .. '/.lovelyignore', '')
-    if not ok then return ok, err end
+    if not ok then return false, err end
 
+    logger.fmt('log', 'Disabled %s %s', self.mod, self.active.version)
     self.active = nil
     return true
 end
 
 --- @param version string
+--- @return boolean ok, string? err
 function IModList:enable(version)
     local mod = self.versions[version]
     if not mod or mod.list ~= self then return self:errVerNotFound(version) end
@@ -57,22 +74,21 @@ function IModList:enable(version)
 end
 
 --- @param version string
+--- @return boolean ok, string? err
 function IModList:uninstall(version)
     local mod = self.versions[version]
     if not mod or mod.list ~= self then return self:errVerNotFound(version) end
+    self.listRequiresUpdate = true
     return mod:uninstall()
 end
 
---- @param ascending? boolean Sorts version by oldest first, defaults to false (latest first)
-function IModList:list(ascending)
-    --- @type imm.Mod[]
-    local list = {}
-    for k,v in pairs(self.versions) do table.insert(list, v) end
-    table.sort(list, function (a, b)
-        if ascending then return a.versionParsed < b.versionParsed end
-        return a.versionParsed > b.versionParsed
-    end)
-    return list
+function IModList:list()
+    if not self.listRequiresUpdate then return self.cachedList end
+    self.listRequiresUpdate = false
+    self.cachedList = {}
+    for k,v in pairs(self.versions) do table.insert(self.cachedList, v) end
+    table.sort(self.cachedList, function (a, b) return a.versionParsed > b.versionParsed end)
+    return self.cachedList
 end
 
 --- @return bmi.Meta?
@@ -88,11 +104,22 @@ function IModList:createBmiMeta()
 end
 
 --- @param rules imm.Dependency.Rule[]
-function IModList:getVersionSatisfies(rules)
-    if self.active and self.active.versionParsed:satisfies(rules) then return self.active end
+--- @param excludesOr? imm.Dependency.Rule[][]
+function IModList:getVersionSatisfies(rules, excludesOr)
+    if self.active
+        and self.active.versionParsed:satisfiesAll(rules)
+        and not (excludesOr and self.active.versionParsed:satisfiesAllAny(excludesOr))
+    then
+        return self.active
+    end
 
-    for i, mod in pairs(self.versions) do
-        if self.active ~= mod and mod.versionParsed:satisfies(rules) then return mod end
+    for i, mod in ipairs(self:list()) do
+        if self.active ~= mod
+            and mod.versionParsed:satisfiesAll(rules)
+            and not (excludesOr and mod.versionParsed:satisfiesAllAny(excludesOr))
+        then
+            return mod
+        end
     end
 end
 

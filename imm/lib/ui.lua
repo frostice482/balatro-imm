@@ -95,7 +95,8 @@ function ui.confirm(contentColumns, button, ref_table, yesButton, noButton)
                 contentColumns,
                 ui.yesno(button, ref_table, yesButton, noButton)
             }
-        }}
+        }},
+        no_back = true
     })
 end
 
@@ -190,6 +191,14 @@ function ui.gapList(mode, size, list)
         table.insert(gapped, elm)
     end
     return gapped
+end
+
+--- @param text string
+--- @param scale? number
+--- @param color? ColorHex
+function ui.simpleTextRow(text, scale, color)
+    --- @type balatro.UIElement.Definition
+    return { n = G.UIT.R, nodes = {{ n = G.UIT.T, config = { text = text, scale = scale or 1, colour = color or G.C.UI.TEXT_LIGHT } }} }
 end
 
 return ui

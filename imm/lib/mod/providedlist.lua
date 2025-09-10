@@ -85,12 +85,13 @@ function IProvidedEntry:latest()
 end
 
 --- @param rules imm.Dependency.Rule[]
+--- @param excludesOr? imm.Dependency.Rule[][]
 --- @return imm.Mod?
 --- @return Version?
-function IProvidedEntry:getVersionSatisfies(rules)
+function IProvidedEntry:getVersionSatisfies(rules, excludesOr)
     for i, entry in ipairs(self:list()) do
         local ver, mods = entry[1], entry[2]
-        if ver:satisfies(rules) then return mods[1], ver end
+        if ver:satisfiesAll(rules) and not (excludesOr and ver:satisfiesAllAny(excludesOr)) then return mods[1], ver end
     end
 end
 

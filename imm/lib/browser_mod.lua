@@ -3,15 +3,24 @@ local Repo = require("imm.lib.mod.repo")
 local ui = require("imm.lib.ui")
 
 local funcs = {
-    v_deleteConfirm = 'imm_mses_version_delete_confirm',
-    v_delete        = 'imm_mses_version_delete',
-    v_download      = 'imm_mses_version_download',
-    v_toggle        = 'imm_mses_version_toggle',
-    openUrl         = 'imm_mses_openurl',
-    releasesInit    = 'imm_mses_releases_init',
-    otherInit       = 'imm_mses_other_init'
+    v_deleteConfirm       = 'imm_ms_delete_confirm',
+    v_delete              = 'imm_ms_delete',
+    v_download            = 'imm_ms_download',
+    v_toggle              = 'imm_ms_toggle',
+    vt_confirm            = 'imm_ms_t_confirm',
+    vt_confirmOne         = 'imm_ms_t_confirm_one',
+    vt_download           = 'imm_ms_t_download',
+    vt_cancel             = 'imm_ms_t_cancel',
+    openUrl               = 'imm_ms_openurl',
+    releasesInit          = 'imm_ms_releases_init',
+    otherInit             = 'imm_ms_other_init'
 }
 
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.v_deleteConfirm] = function (elm)
+    local r = elm.config.ref_table or {}
+    love.system.openURL(r.url)
+end
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.openUrl] = function (elm)
@@ -49,7 +58,6 @@ end
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.v_download] = function(elm)
-    -- { ses = self, ver = opts.version, durl = opts.downloadUrl, dsize = opts.downloadSize }
     local r = elm.config.ref_table or {}
     --- @type imm.ModBrowser, string, string?, number?
     local modses, ver, url, size = r.ses, r.ver, r.durl, r.dsize
@@ -65,7 +73,6 @@ end
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.v_delete] = function(elm)
-    -- { ses = self, ver = opts.version }
     local r = elm.config.ref_table or {}
     --- @type imm.ModBrowser, string
     local modses, ver = r.ses, r.ver
@@ -75,25 +82,44 @@ end
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.v_toggle] = function(elm)
-    -- { ses = self, ver = opts.version, toggle = opts.enabled }
     local r = elm.config.ref_table or {}
     --- @type imm.ModBrowser, string, boolean
     local modses, ver, enabled = r.ses, r.ver, r.toggle
     local ses = modses.ses
-    local mod = modses.mod
+    local modid = modses.mod.id
 
-    local ok, err
-    if enabled then ok, err = ses.ctrl:disable(mod.id)
-    else ok, err = ses.ctrl:enable(mod.id, ver)
+    local mod = ses.ctrl:getMod(modid, ver)
+    if not mod then
+        ses.errorText = string.format("Cannot find %s %s", modid, ver)
+        return
     end
 
-    ses.errorText = err or ''
-    ses:updateSelectedMod(mod)
+    local test = enabled and ses.ctrl:tryDisable(mod) or ses.ctrl:tryEnable(mod)
+    local ll = ses.ctrl.loadlist
+
+    local c = 0
+    local hasErr
+    hasErr = not not next(test.missingDeps)
+    for k,act in pairs(test.actions) do
+        c = c + 1
+        hasErr = hasErr or act.impossible
+    end
+
+    if c <= 1 and not hasErr then
+        local ok, err
+        if enabled then ok, err = ses.ctrl:disable(modid)
+        else ok, err = ses.ctrl:enable(modid, ver)
+        end
+
+        ses.errorText = err or ''
+        ses:updateSelectedMod(modses.mod)
+    else
+        G.FUNCS.overlay_menu({definition = modses:uiConfirmModify(test, mod, enabled)})
+    end
 end
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.v_deleteConfirm] = function(elm)
-    -- { ses = self, ver = ver }
     local r = elm.config.ref_table or {}
     --- @type imm.ModBrowser
     local modses = r.ses
@@ -107,13 +133,63 @@ G.FUNCS[funcs.v_deleteConfirm] = function(elm)
     ses:showOverlay(true)
 end
 
+G.FUNCS[funcs.vt_download] = function (elm)
+    local r = elm.config.ref_table
+    --- @type imm.Browser, imm.LoadList
+    local ses, list = r.ses, r.list
+
+    ses:showOverlay(true)
+    for id,entries in pairs(list.missingDeps) do
+        local rules = {}
+        for mod, rule in pairs(entries) do table.insert(rules, rule) end
+        ses:installMissingModEntry(id, rules)
+    end
+end
+
+G.FUNCS[funcs.vt_confirm] = function (elm)
+    local r = elm.config.ref_table
+    --- @type imm.Browser, imm.LoadList
+    local ses, list = r.ses, r.list
+
+    for id, act in pairs(list.actions) do
+        if not act.impossible then
+            local mod = act.mod
+            if act.action == 'enable' or act.action == 'switch' then
+                assert(ses.ctrl:enableMod(mod))
+            elseif act.action == 'disable' then
+                assert(ses.ctrl:disableMod(mod))
+            end
+        end
+    end
+
+    ses:showOverlay(true)
+end
+
+G.FUNCS[funcs.vt_confirmOne] = function (elm)
+    local r = elm.config.ref_table
+    --- @type imm.Browser, imm.Mod
+    local ses, mod = r.ses, r.mod
+
+    local ok, err = ses.ctrl:enableMod(mod)
+    ses.errorText = err or ''
+    ses:showOverlay(true)
+end
+
+G.FUNCS[funcs.vt_cancel] = function (elm)
+    elm.config.ref_table.ses:showOverlay(true)
+end
+
 --- @class imm.ModBrowser
 --- @field ses imm.Browser
 --- @field mod bmi.Meta
 local UIModSes = {
     cyclePageSize = 8,
     idListCnt = 'imm-other-cycle',
-    idImageSelectCnt = 'imm-slc-imgcnt'
+    idImageSelectCnt = 'imm-slc-imgcnt',
+
+    actFontScaleTitle = 0.3,
+    actFontScale = 0.3,
+    actFontScaleSub = 0.3 * 0.75
 }
 
 --- @protected
@@ -122,6 +198,11 @@ local UIModSes = {
 function UIModSes:init(ses, mod)
     self.ses = ses
     self.mod = mod
+
+    --- @type ColorHex
+    self.actWhoColor = G.C.WHITE
+    --- @type ColorHex
+    self.actVersionColor = G.C.BLUE
 end
 
 --- @class imm.ModSession.VersionParam
@@ -429,6 +510,173 @@ function UIModSes:uiRepoButton()
             nodes = {self.ses:uiText('Repo')}
         }}
     }
+end
+
+local actionsRank = {
+    disable = 3,
+    switch = 2,
+    enable = 1,
+}
+
+--- @param act imm.LoadList.ModAction
+function UIModSes:uiAct(act)
+    local name = act.mod.name
+    local version = act.mod.version
+    local entryScale = self.actFontScale
+    local entryScaleSub = self.actFontScaleSub
+
+    --- @type balatro.UIElement.Definition?
+    local byElm = act.cause and { n = G.UIT.T, config = { text = string.format(' (%s)', act.cause.mod), scale = entryScaleSub, colour = self.actWhoColor } }
+    --- @type balatro.UIElement.Definition
+    local verElm = { n = G.UIT.T, config = { text = ' '..version, scale = entryScaleSub, colour = self.actVersionColor } }
+    --- @type balatro.UIElement.Definition[]
+    local t
+
+    if act.impossible then
+        t = {{ n = G.UIT.T, config = { text = '! '..name, scale = entryScale, colour = G.C.RED } }}
+    elseif act.action == 'enable' then
+        t = {{ n = G.UIT.T, config = { text = '+ '..name, scale = entryScale, colour = G.C.GREEN } }}
+    elseif act.action == 'disable' then
+        t = {{ n = G.UIT.T, config = { text = '- '..name, scale = entryScale, colour = G.C.ORANGE } }}
+    elseif act.action == 'switch' then
+        local from = (self.ses.ctrl.loadlist.loadedMods[act.mod.mod] or {}).version or '?'
+        t = {
+            { n = G.UIT.T, config = { text = '/ '..name, scale = entryScale, colour = G.C.YELLOW } },
+            { n = G.UIT.T, config = { text = from, scale = entryScaleSub, colour = self.actVersionColor } },
+            { n = G.UIT.T, config = { text = ' ->', scale = entryScaleSub, colour = G.C.UI.TEXT_LIGHT } },
+        }
+    end
+
+    table.insert(t, verElm)
+    table.insert(t, byElm)
+
+    --- @type balatro.UIElement.Definition
+    return { n = G.UIT.R, nodes = t }
+end
+
+--- @param nodes balatro.UIElement.Definition[]
+--- @param list imm.LoadList
+--- @param mod imm.Mod
+--- @return boolean hasImpossible, boolean hasChange
+function UIModSes:uiConfirmModifyPartActions(nodes, list, mod)
+    local hasImpossible, hasChange = false, false
+    local ll = self.ses.ctrl.loadlist
+
+    --- @type imm.LoadList.ModAction[]
+    local impossibles = {}
+    --- @type imm.LoadList.ModAction[]
+    local actions = {}
+    for k, act in pairs(list.actions) do
+        if act.impossible or act.mod ~= mod then
+            if act.action == 'enable' and self.ses.ctrl.loadlist.loadedMods[act.mod.mod] then act.action = 'switch' end
+            table.insert(act.impossible and impossibles or actions, act)
+        end
+    end
+    table.sort(impossibles, function (a, b)
+        return a.mod.name < b.mod.name
+    end)
+    table.sort(actions, function (a, b)
+        if a.action ~= b.action then return actionsRank[a.action] > actionsRank[b.action] end
+        return a.mod.name < b.mod.name
+    end)
+
+    for i,act in ipairs(impossibles) do
+        if not hasImpossible then
+            table.insert(nodes, ui.simpleTextRow('These mods are in impossible condition to load:', self.actFontScaleTitle))
+            hasImpossible = true
+        end
+        table.insert(nodes, self:uiAct(act))
+    end
+
+    for i,act in ipairs(actions) do
+        if not hasChange then
+            table.insert(nodes, ui.simpleTextRow('These mods will also take effect:', self.actFontScaleTitle))
+            hasChange = true
+        end
+        table.insert(nodes, self:uiAct(act))
+    end
+
+    return hasImpossible, hasChange
+end
+
+--- @param nodes balatro.UIElement.Definition[]
+--- @param list imm.LoadList
+--- @param mod imm.Mod
+--- @return boolean hasMissing
+function UIModSes:uiConfirmModifyPartMissing(nodes, list, mod)
+    local hasMissing = false
+
+    -- 1 month from now i will probably forget how this code does
+
+    --- @type [string, string[]][]
+    local missings = {}
+    for k, missing in pairs(list.missingDeps) do
+        --- @type string[]
+        local modsRulesStr = {}
+        for other, rules in pairs(missing) do
+            --- @type string[]
+            local rulesStr = {}
+            for i, rule in ipairs(rules) do
+                table.insert(rulesStr, rule.op..' '..rule.version.raw)
+            end
+            table.insert(modsRulesStr, string.format('%s (%s)', other.name, table.concat(rulesStr, ' ')))
+        end
+        table.sort(modsRulesStr, function (a, b) return a < b end)
+        table.insert(missings, { k, modsRulesStr })
+    end
+    table.sort(missings, function (a, b) return a[1] < b[1] end)
+
+    for i, entry in ipairs(missings) do
+        if not hasMissing then
+            table.insert(nodes, ui.simpleTextRow('These mods have missing dependencies:', self.actFontScaleTitle))
+            hasMissing = true
+        end
+
+        local base = ui.simpleTextRow(string.format('? %s', entry[1]), self.actFontScale, G.C.YELLOW)
+        table.insert(nodes, base)
+        for i, entry in pairs(entry[2]) do
+            table.insert(nodes, ui.simpleTextRow('    '..entry, self.actFontScaleSub))
+        end
+    end
+
+    return hasMissing
+end
+
+--- @param list imm.LoadList
+--- @param mod imm.Mod
+--- @param isDisable boolean
+function UIModSes:uiConfirmModify(list, mod, isDisable)
+    local tgltext = isDisable and 'Disable' or 'Enable'
+
+    --- @type balatro.UIElement.Definition[]
+    local nodes = {}
+    table.insert(nodes, ui.simpleTextRow(string.format('%s %s %s, but..', tgltext, mod.name, mod.version), self.actFontScaleTitle * 1.25))
+
+    local hasMissing = self:uiConfirmModifyPartMissing(nodes, list, mod)
+    local hasImpossible, hasChange = self:uiConfirmModifyPartActions(nodes, list, mod)
+    local hasErr = hasMissing or hasImpossible
+
+    local data = { list = list, ses = self.ses, mod = mod }
+    local bconf = { __index = { scale = self.ses.fontscale, ref_table = data, minh = 0.5, minw = 5 } }
+
+    if hasMissing then
+        table.insert(nodes, UIBox_button(setmetatable({ button = funcs.vt_download, label = {'Download missings'} }, bconf)))
+    end
+    local labelModifyAll = 'Modify all'
+    local labelOne = string.format('%s JUST %s', tgltext, mod.name)
+    if hasErr then
+        labelModifyAll = labelModifyAll..' anyway'
+        labelOne = labelOne..' anyway'
+    end
+
+    table.insert(nodes, UIBox_button(setmetatable({ button = funcs.vt_confirm, label = {labelModifyAll} }, bconf)))
+    table.insert(nodes, UIBox_button(setmetatable({ button = funcs.vt_confirmOne, label = {labelOne} }, bconf)))
+    table.insert(nodes, UIBox_button(setmetatable({ button = funcs.vt_cancel, label = {'Cancel'}, colour = G.C.GREY }, bconf)))
+
+    return create_UIBox_generic_options({
+        contents = nodes,
+        no_back = true
+    })
 end
 
 function UIModSes:container()

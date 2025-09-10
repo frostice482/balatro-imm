@@ -31,7 +31,9 @@ end
 --- @field description? string
 
 --- @class imm.Mod
-local IMod = {}
+local IMod = {
+    name = ''
+}
 
 --- @protected
 --- @param list imm.ModList
@@ -51,9 +53,10 @@ function IMod:init(list, ver, opts)
     self.provides = opts.provides or {}
     self.pathDepth = opts.pathDepth or 0
     self.description = opts.description
+    self.name = opts.info and opts.info.name or list.mod
 end
 
---- @protected
+--- @return boolean ok, string err
 function IMod:errNative()
     return false, string.format('Mod %s is native and therefore cannot be edited', self.mod)
 end
@@ -75,6 +78,7 @@ function IMod:createBmiMeta()
     }
 end
 
+--- @return boolean ok, string? err
 function IMod:uninstall()
     if self.list.native then return errNative() end
 
@@ -87,6 +91,7 @@ function IMod:uninstall()
     return true
 end
 
+--- @return boolean ok, string? err
 function IMod:enable()
     if self.list.native then return self:errNative() end
     if self.list.active then self.list:disable() end

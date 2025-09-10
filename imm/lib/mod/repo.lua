@@ -258,9 +258,7 @@ function IRepo:findModVersionToDownload(mod, rulesList)
                 ok, parsed = pcall(V, Repo.transformTagVersion(release.tag_name)) --- @diagnostic disable-line
             end
             if ok and parsed then
-                for j, rules in ipairs(rulesList) do
-                    if parsed:satisfies(rules) then return release.zipball_url, release end
-                end
+                if parsed:satisfiesAllAny(rulesList) then return release.zipball_url, release end
             end
         end
         --[[

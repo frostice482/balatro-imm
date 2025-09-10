@@ -9,7 +9,8 @@ get.metaFields = {
     name = "string",
     description = "string",
     prefix = "string",
-    author = "table"
+    author = "table",
+    version = "string"
 }
 
 get.tsManifestFields = {
@@ -115,9 +116,9 @@ function get.parseTsDep(entry)
     return {{ mod = package, rules = {{ op = '>=', version = V(version) }}}}
 end
 
-local modPattern = '^%s*([^%s<>=()]+)'
+local modPattern = '^%s*([^%s<>=()!]+)'
 local versionPattern = '[%w_~*.%-]*'
-local versionDepPattern = string.format('([<>=|]+)%%s*(%s)', versionPattern)
+local versionDepPattern = string.format('([<>=!]+)%%s*(%s)', versionPattern)
 local versionProvidePattern = '%d'..versionPattern
 
 --- @param entry string

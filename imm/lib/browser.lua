@@ -7,11 +7,11 @@ local util = require("imm.lib.util")
 local logger = require("imm.logger")
 
 local funcs = {
-    setCategory = 'imm_ses_setcat',
-    update      = 'imm_ses_update',
-    cyclePage   = 'imm_ses_cycle',
-    chooseMod   = 'imm_ses_choosemod',
-    refresh     = 'imm_refresh'
+    setCategory = 'imm_s_setcat',
+    update      = 'imm_s_update',
+    cyclePage   = 'imm_s_cycle',
+    chooseMod   = 'imm_s_choosemod',
+    refresh     = 'imm_s_refresh'
 }
 
 --- @param elm balatro.UIElement
@@ -768,13 +768,20 @@ function UISes:_installMissingModEntry(id, list, blacklistState)
     })
 end
 
+--- @param id string
+--- @param list imm.Dependency.Rule[][]
+--- @param blacklistState? table<string>
+function UISes:installMissingModEntry(id, list, blacklistState)
+    util.createCo(self._installMissingModEntry, self, id, list, blacklistState)
+end
+
 --- @param mod imm.Mod
 --- @param blacklistState? table<string>
 function UISes:installMissingMods(mod, blacklistState)
     local missings = self.ctrl:getMissingDeps(mod.deps)
     for missingid, missingList in pairs(missings) do
         logger.fmt('log', 'Missing dependency %s by %s', missingid, mod.mod)
-        util.createCo(self._installMissingModEntry, self, missingid, missingList, blacklistState)
+        self:installMissingModEntry(missingid, missingList, blacklistState)
     end
 end
 
@@ -786,7 +793,7 @@ function UISes:installModFromZip(data, blacklistState)
     for i,v in ipairs(list) do table.insert(strlist, table.concat({v.mod, v.version}, ' ')) end
 
     self.errorText = table.concat(errlist, '\n')
-    self.taskText = #strlist ~= 0 and 'Installed '..table.concat(strlist, ', ') or ''
+    self.taskText = #strlist ~= 0 and 'Installed '..table.concat(strlist, ', ') or 'Nothing is installed - Check that the zip has a valid metadata file'
 
     if not self.noAutoDownloadMissing then
         for i, mod in ipairs(list) do

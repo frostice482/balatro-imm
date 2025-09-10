@@ -16,6 +16,7 @@ function IV:init(str)
     local major, minor, patch, rev = str:match('^(%d+)%.?([%d%*]*)%.?([%d%*]*)([%w_~*.%-]*)$')
     if not major or rev and not patch then error('Illegal version '..str) end
 
+    self.raw = str
     self.major = tonumber(major)
     self.minor = minor == '*' and WILDCARD or tonumber(minor) or 0
     self.patch = patch == '*' and WILDCARD or tonumber(patch) or 0
@@ -64,20 +65,39 @@ function IV.__lt(a, b)
 end
 
 --- @param rule imm.Dependency.Rule
-function IV:satisfy(rule)
+function IV:satisfiesSingle(rule)
     return  rule.op == "<<" and self < rule.version
         or  rule.op == "<=" and self <= rule.version
         or  rule.op == ">>" and self > rule.version
         or  rule.op == ">=" and self >= rule.version
         or  rule.op == "==" and self == rule.version
+        or  rule.op == "!=" and self ~= rule.version
 end
 
 --- @param rules imm.Dependency.Rule[]
-function IV:satisfies(rules)
+function IV:satisfiesAll(rules)
     for i, rule in ipairs(rules) do
-        if not self:satisfy(rule) then return false end
+        if not self:satisfiesSingle(rule) then return false end
     end
     return true
+end
+
+--- @param rulesList imm.Dependency.Rule[][]
+function IV:satisfiesAllAll(rulesList)
+    for i, rules in ipairs(rulesList) do
+        if not self:satisfiesAll(rules) then return false end
+    end
+    return true
+end
+
+--- @param rulesList imm.Dependency.Rule[][]
+function IV:satisfiesAllAny(rulesList)
+    local checked = false
+    for i, rules in ipairs(rulesList) do
+        checked = true
+        if self:satisfiesAll(rules) then return true end
+    end
+    return not checked
 end
 
 --- @alias imm.Version.C p.Constructor<Version, nil> | fun(ver: string): Version
