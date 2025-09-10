@@ -17,6 +17,7 @@ I recommend that you name your tag based on your mod version, with some conversi
 - Multiple version managing
 - Proper release management
 - Caching
+- Early error mod disabling
 
 ## Included libraries
 
