@@ -389,7 +389,8 @@ function ILoadList:_finalize()
     for k,act in pairs(self.actions) do
         if act.action == 'enable' and actualLoadded[k] then act.action = 'switch' end
 
-        if act.action == 'disable' and actualLoadded[k] then nactions[k] = act
+        if act.impossible then nactions[k] = act
+        elseif act.action == 'disable' and actualLoadded[k] then nactions[k] = act
         elseif (act.action == 'enable' or act.action == 'switch') and actualLoadded[k] ~= act.mod then nactions[k] = act
         end
     end
