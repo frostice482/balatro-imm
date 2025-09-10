@@ -657,20 +657,20 @@ function UIModSes:uiConfirmModify(list, mod, isDisable)
     local hasErr = hasMissing or hasImpossible
 
     local data = { list = list, ses = self.ses, mod = mod }
-    local bconf = { __index = { scale = self.ses.fontscale, ref_table = data, minh = 0.5, minw = 5 } }
+    local bconf = { __index = { scale = self.ses.fontscale, ref_table = data, minh = 0.6, minw = 5 } }
 
     if hasMissing then
-        table.insert(nodes, UIBox_button(setmetatable({ button = funcs.vt_download, label = {'Download missings'} }, bconf)))
+        table.insert(nodes, UIBox_button(setmetatable({ button = funcs.vt_download, label = {'Download missings'}, colour = G.C.BLUE }, bconf)))
     end
-    local labelModifyAll = 'Modify all'
+    local labelModifyAll = 'Confirm'
     local labelOne = string.format('%s JUST %s', tgltext, mod.name)
     if hasErr then
         labelModifyAll = labelModifyAll..' anyway'
         labelOne = labelOne..' anyway'
     end
 
-    table.insert(nodes, UIBox_button(setmetatable({ button = funcs.vt_confirm, label = {labelModifyAll} }, bconf)))
-    table.insert(nodes, UIBox_button(setmetatable({ button = funcs.vt_confirmOne, label = {labelOne} }, bconf)))
+    table.insert(nodes, UIBox_button(setmetatable({ button = funcs.vt_confirm, label = {labelModifyAll}, colour = hasErr and G.C.ORANGE or G.C.BLUE }, bconf)))
+    table.insert(nodes, UIBox_button(setmetatable({ button = funcs.vt_confirmOne, label = {labelOne}, colour = G.C.ORANGE }, bconf)))
     table.insert(nodes, UIBox_button(setmetatable({ button = funcs.vt_cancel, label = {'Cancel'}, colour = G.C.GREY }, bconf)))
 
     return create_UIBox_generic_options({
