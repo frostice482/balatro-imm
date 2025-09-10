@@ -532,7 +532,6 @@ function UISes:_updateModImage(mod, containerId, nocheckUpdate)
     local err, data = self.repo:getImageCo(mod.pathname)
 
     if not data or not nocheckUpdate and self.updateId ~= aid then
-        if err then print(string.format("Error loading thumbnail %s: %s", mod.pathname, err)) end
         return
     end
 
