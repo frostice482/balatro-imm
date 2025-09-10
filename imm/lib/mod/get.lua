@@ -120,21 +120,27 @@ local versionPattern = '[%w_~*.%-]*'
 local versionDepPattern = string.format('([<>=|]+)%%s*(%s)', versionPattern)
 local versionProvidePattern = '%d'..versionPattern
 
+--- @param entry string
+function modlist.parseSmodsDepMod(entry)
+    local s, e, id = entry:find(modPattern)
+    if not id then return end
+
+    --- @type imm.Dependency.Mod
+    local modRules = { mod = id, rules = {} }
+    for op, version in entry:sub(e+1):gmatch(versionDepPattern) do
+        table.insert(modRules.rules, { version = V(modlist.transformVersion(id, version)), op = op })
+    end
+    return modRules
+end
+
 --- @param entryStr string
 function modlist.parseSmodsDep(entryStr)
     --- @type imm.Dependency.Mod[]
     local entries = {}
     local entriesStr = util.strsplit(entryStr, '|', true)
     for i, entry in ipairs(entriesStr) do
-        local s, e, id = entry:find(modPattern)
-        if not id then break end
-
-        --- @type imm.Dependency.Mod
-        local modRules = { mod = id, rules = {} }
-        for op, version in entry:sub(e+1):gmatch(versionDepPattern) do
-            table.insert(modRules.rules, { version = V(modlist.transformVersion(id, version)), op = op })
-        end
-        table.insert(entries, modRules)
+        local d = modlist.parseSmodsDepMod(entry)
+        if d then table.insert(entries, d) end
     end
     return entries
 end
@@ -154,10 +160,10 @@ end
 --- @return string id
 --- @return string version
 --- @return imm.Dependency.List deps
---- @return imm.Dependency.List conflicts
+--- @return imm.Dependency.Mod[] conflicts
 --- @return table<string, string> provides
 function modlist.parseInfo(mod, format)
-    --- @type imm.Dependency.List, imm.Dependency.List, table<string, string>
+    --- @type imm.Dependency.List, imm.Dependency.Mod[], table<string, string>
     local deps, conflicts, provides = {}, {}, {}
     local id, version
 
@@ -177,7 +183,7 @@ function modlist.parseInfo(mod, format)
         end
         if mod.conflicts then
             for i, set in ipairs(mod.conflicts) do
-                table.insert(conflicts, modlist.parseSmodsDep(set))
+                table.insert(conflicts, modlist.parseSmodsDepMod(set))
             end
         end
         if mod.provides then

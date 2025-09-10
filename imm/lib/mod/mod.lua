@@ -25,7 +25,7 @@ end
 --- @field format? imm.ModMetaFormat
 --- @field info? table
 --- @field deps? imm.Dependency.List
---- @field conflicts? imm.Dependency.List
+--- @field conflicts? imm.Dependency.Mod[]
 --- @field provides? table<string, string>
 --- @field pathDepth? number
 --- @field description? string
