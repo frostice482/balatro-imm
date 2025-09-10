@@ -136,4 +136,27 @@ function util.createCo(func, ...)
     return co
 end
 
+--- @param args string[]
+function util.convertCommands(args)
+    --- @type string[]
+    local converted = {}
+    if jit.os == 'Windows' then
+        for i, arg in ipairs(args) do
+            converted[i] = arg:gsub('[&|^<>()% \n\t\v\f]', function (m) return '^'..m end)
+        end
+    else
+        for i, arg in ipairs(args) do
+            converted[i] = "'"..arg:gsub("'", "'\\''").."'"
+        end
+    end
+    return converted
+end
+
+function util.restart()
+    local args = table.concat(util.convertCommands({arg[-2], unpack(arg)}), ' ')
+    local cmd = string.format(jit.os == 'Windows' and 'start /b "" %s' or '%s &', args)
+    os.execute(cmd)
+    love.event.quit()
+end
+
 return util

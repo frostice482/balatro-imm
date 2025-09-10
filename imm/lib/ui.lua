@@ -12,6 +12,7 @@ local ui_def_yes = {
     col = true,
     padding = 0,
     label = {'Yes'},
+    colour = G.C.RED,
 }
 --- @type balatro.UI.ButtonParam
 local ui_def_no = {
@@ -73,7 +74,7 @@ function ui.yesno(button, ref_table, yesButton, noButton)
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
-        config = { align = 'cm' },
+        config = { align = 'cm', padding = 0.2 },
         nodes = {
             UIBox_button(yesButton),
             UIBox_button(noButton)
@@ -82,17 +83,17 @@ function ui.yesno(button, ref_table, yesButton, noButton)
 end
 
 --- Confirmation message. The button callback will receive an additional `confirm: boolean` property
---- @param contentColumns balatro.UIElement.Definition[]
+--- @param contentColumn balatro.UIElement.Definition
 --- @param button string
 --- @param ref_table any
 --- @param yesButton? balatro.UI.ButtonParam
 --- @param noButton? balatro.UI.ButtonParam
-function ui.confirm(contentColumns, button, ref_table, yesButton, noButton)
+function ui.confirm(contentColumn, button, ref_table, yesButton, noButton)
     return create_UIBox_generic_options({
         contents = {{
             n = G.UIT.C,
             nodes = {
-                contentColumns,
+                contentColumn,
                 ui.yesno(button, ref_table, yesButton, noButton)
             }
         }},

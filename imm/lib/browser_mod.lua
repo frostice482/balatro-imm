@@ -2,6 +2,7 @@ local constructor = require("imm.lib.constructor")
 local Repo = require("imm.lib.mod.repo")
 local ui = require("imm.lib.ui")
 
+--- @class imm.ModBrowser.Funcs
 local funcs = {
     v_deleteConfirm       = 'imm_ms_delete_confirm',
     v_delete              = 'imm_ms_delete',
@@ -15,12 +16,6 @@ local funcs = {
     releasesInit          = 'imm_ms_releases_init',
     otherInit             = 'imm_ms_other_init'
 }
-
---- @param elm balatro.UIElement
-G.FUNCS[funcs.v_deleteConfirm] = function (elm)
-    local r = elm.config.ref_table or {}
-    love.system.openURL(r.url)
-end
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.openUrl] = function (elm)
@@ -113,6 +108,7 @@ G.FUNCS[funcs.v_toggle] = function(elm)
 
         ses.errorText = err or ''
         ses:updateSelectedMod(modses.mod)
+        if ok then ses.hasChanges = true end
     else
         G.FUNCS.overlay_menu({definition = modses:uiConfirmModify(test, mod, enabled)})
     end
@@ -128,6 +124,7 @@ G.FUNCS[funcs.v_deleteConfirm] = function(elm)
     if r.confirm then
         local ok, err = ses.ctrl:uninstall(modses.mod.id, r.ver)
         ses.errorText = err or ''
+        if ok then ses.hasChanges = true end
     end
 
     ses:showOverlay(true)
@@ -162,6 +159,7 @@ G.FUNCS[funcs.vt_confirm] = function (elm)
         end
     end
 
+    ses.hasChanges = true
     ses:showOverlay(true)
 end
 
@@ -173,6 +171,7 @@ G.FUNCS[funcs.vt_confirmOne] = function (elm)
     local ok, err = ses.ctrl:enableMod(mod)
     ses.errorText = err or ''
     ses:showOverlay(true)
+    if ok then ses.hasChanges = true end
 end
 
 G.FUNCS[funcs.vt_cancel] = function (elm)
@@ -700,12 +699,7 @@ end
 
 --- @param ver string
 function UIModSes:uiDeleteVersionMessage(ver)
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        config = { padding = 0.2 },
-        nodes = {self.ses:uiText(string.format('Really delete %s %s?', self.mod.title, ver))}
-    }
+    return ui.simpleTextRow(string.format('Really delete %s %s?', self.ses.fontscale * self.mod.title, ver))
 end
 
 --- @param ver string
@@ -717,7 +711,11 @@ function UIModSes:uiDeleteVersion(ver)
     )
 end
 
---- @alias imm.ModBrowser.C p.Constructor<imm.ModBrowser, nil> | fun(ses: imm.Browser, mod: bmi.Meta): imm.ModBrowser
+--- @class imm.ModBrowser.Static
+--- @field funcs imm.ModBrowser.Funcs
+
+--- @alias imm.ModBrowser.C imm.ModBrowser.Static | p.Constructor<imm.ModBrowser, nil> | fun(ses: imm.Browser, mod: bmi.Meta): imm.ModBrowser
 --- @type imm.ModBrowser.C
 local UIModSes = constructor(UIModSes)
+UIModSes.funcs = funcs
 return UIModSes

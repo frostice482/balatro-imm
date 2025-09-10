@@ -1,18 +1,25 @@
 local constructor = require("imm.lib.constructor")
 local ModBrowser = require("imm.lib.browser_mod")
 local LoveMoveable = require("imm.lib.love_moveable")
-local Repo = require("imm.lib.mod.repo")
 local ui = require("imm.lib.ui")
 local util = require("imm.lib.util")
 local logger = require("imm.logger")
 
+--- @class imm.Browser.Funcs
 local funcs = {
     setCategory = 'imm_s_setcat',
     update      = 'imm_s_update',
     cyclePage   = 'imm_s_cycle',
     chooseMod   = 'imm_s_choosemod',
-    refresh     = 'imm_s_refresh'
+    refresh     = 'imm_s_refresh',
+    restart     = 'imm_s_restart'
 }
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.restart] = function(elm)
+    if not elm.config.ref_table.confirm then return G.FUNCS.exit_overlay_menu() end
+    util.restart()
+end
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.setCategory] = function(elm)
@@ -96,6 +103,7 @@ local UISes = {
     noThumbnail = false,
     noAutoDownloadMissing = false,
     taskDone = true,
+    hasChanges = false,
 
     idCycle = 'imm-cycle',
     idCycleCont = 'imm-cycle-cnt',
@@ -803,7 +811,11 @@ function UISes:installModFromZip(data, blacklistState)
     return modlist, list, errlist
 end
 
---- @alias imm.Browser.C p.Constructor<imm.Browser, nil> | fun(modctrl?: imm.ModController, modrepo?: imm.Repo): imm.Browser
+--- @class imm.Browser.Static
+--- @field funcs imm.Browser.Funcs
+
+--- @alias imm.Browser.C imm.Browser.Static | p.Constructor<imm.Browser, nil> | fun(modctrl?: imm.ModController, modrepo?: imm.Repo): imm.Browser
 --- @type imm.Browser.C
 local UISes = constructor(UISes)
+UISes.funcs = funcs
 return UISes

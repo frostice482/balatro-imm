@@ -25,6 +25,15 @@ local function browse_button()
     }
 end
 
+local exit_overlay = G.FUNCS.exit_overlay_menu
+
+function G.FUNCS.exit_overlay_menu()
+    local ses = G.OVERLAY_MENU.config.imm
+    if not ses or not ses.hasChanges then return exit_overlay() end
+
+    G.FUNCS.overlay_menu({ definition = ui.confirm(ui.simpleTextRow('Restart balatro now?', 0.6), Browser.funcs.restart, {}) })
+end
+
 function G.FUNCS.imm_browse()
     di = di or require('imm.dropinstall')
     Browser = Browser or require("imm.lib.browser")
