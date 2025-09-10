@@ -1,6 +1,7 @@
 local ModList = require("imm.lib.mod.list")
 local V = require("imm.lib.version")
 local util = require("imm.lib.util")
+local logger = require("imm.logger")
 
 local get = {}
 
@@ -290,7 +291,8 @@ function get.getModsLow(ctx, base, depth)
         local path = base..'/'..file
         local stat = prov.getInfo(path)
         if stat and stat.type == 'file' then
-            get.processFile(ctx, base, depth, file)
+            local ok, err = pcall(get.processFile, ctx, base, depth, file)
+            if not ok then logger.fmt('error', 'Error processing %s: %s', path, err) end
         else
             local exclusion = depth == 1 and get.excludedDirs or get.excludedSubdirs
             if not exclusion[file:lower()] then
