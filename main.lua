@@ -36,8 +36,7 @@ local function __imm_init()
     local moddir = require('lovely').mod_dir
     for i, item in ipairs(NFS.getDirectoryItems(moddir)) do
         local base = moddir..'/'..item
-        local data = NFS.read(base..'/imm/sig')
-        if data and data == 'balatro-imm' then
+        if not NFS.getInfo(base..'/.lovelyignore') and NFS.read(base..'/imm/sig') == 'balatro-imm' then
             selfdir = base
             break
         end
