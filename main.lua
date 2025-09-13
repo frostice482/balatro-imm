@@ -1,3 +1,5 @@
+--- @diagnostic disable
+
 local function __imm_atlas(base, key, path, px, py)
     local abspath = string.format('%s/assets/%dx/%s', base, G.SETTINGS.GRAPHICS.texture_scaling, path)
     local name = 'imm_'..key

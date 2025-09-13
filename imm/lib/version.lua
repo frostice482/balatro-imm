@@ -13,8 +13,16 @@ local WILDCARD = -2
 --- @protected
 --- @param str string
 function IV:init(str)
-    local major, minor, patch, rev = str:match('^(%d+)%.?([%d%*]*)%.?([%d%*]*)([%w_~*.%-]*)$')
+    local major, minor, patch, rev = str:match('^(%d+)%.?([%d%*]*)%.?([%d%*]*)([%w_~*.%-+]*)$')
     if not major or rev and not patch then error('Illegal version '..str) end
+
+    if rev then
+        local a,b = rev:find('+', 1, true)
+        if a then
+            rev = rev:sub(1, a-1)
+            self.extra = rev:sub(a+1)
+        end
+    end
 
     self.raw = str
     self.major = tonumber(major)

@@ -6,5 +6,6 @@
         "../balatro-lsp"
     ],
     "runtime.version": "LuaJIT",
-    "workspace.checkThirdParty": false
+    "workspace.checkThirdParty": false,
+    "runtime.pathStrict": true
 }

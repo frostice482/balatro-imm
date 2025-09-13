@@ -9,9 +9,10 @@
 --- @field description? string
 
 --- @class bmi.Meta: bmi.MetaInject
---- @field title string
+--- @field format 'bmi'
+--- @field name string
 --- @field categories bmi.Meta.Category[]
---- @field author string
+--- @field owner string
 --- @field version string
+--- @field download_url? string May be undefined in case of locally installed mods
 --- @field repo? string May be undefined in case of locally installed mods
---- @field downloadURL? string May be undefined in case of locally installed mods

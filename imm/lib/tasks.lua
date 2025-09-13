@@ -1,5 +1,5 @@
 local constructor = require("imm.lib.constructor")
-local util        = require("imm.lib.util")
+local co = require("imm.lib.co")
 
 local gid = 0
 --- @type table<number, imm.Tasks>
@@ -73,7 +73,7 @@ function _ITasks:runTask(req, cb)
 end
 
 function _ITasks:runTaskCo(req)
-    return util.co(function (res) self:runTask(req, res) end)
+    return co.wrapCallbackStyle(function (res) self:runTask(req, res) end)
 end
 
 --- @diagnostic disable-next-line

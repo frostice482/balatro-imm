@@ -3,6 +3,7 @@ local ModBrowser = require("imm.lib.browser_mod")
 local LoveMoveable = require("imm.lib.love_moveable")
 local ui = require("imm.lib.ui")
 local util = require("imm.lib.util")
+local co = require("imm.lib.co")
 local logger = require("imm.logger")
 
 --- @class imm.Browser.Funcs
@@ -61,7 +62,7 @@ end
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.chooseMod] = function(elm)
     local r = elm.config.ref_table or {}
-    --- @type imm.Browser, bmi.Meta
+    --- @type imm.Browser, imm.ModMeta
     local ses, mod = r.ses, r.mod
 
     ses:selectMod(mod)
@@ -83,7 +84,7 @@ end
 --- @class imm.Browser
 --- @field uibox balatro.UIBox
 --- @field tags table<string, boolean>
---- @field filteredList bmi.Meta[]
+--- @field filteredList imm.ModMeta[]
 --- @field selectedMod? imm.ModBrowser
 --- @field taskQueues? fun()[]
 --- @field ctrl imm.ModController
@@ -154,7 +155,7 @@ function UISes:queueTask(func)
 end
 
 function UISes:queueTaskCo()
-    util.co(function (res)
+    co.wrapCallbackStyle(function (res)
         if self.taskDone then
             self.taskDone = false
             res()
@@ -317,12 +318,13 @@ function UISes:uiSidebar()
     return { n = G.UIT.C, nodes = categories }
 end
 
---- @param mod bmi.Meta
+--- @param mod imm.ModMeta
 --- @param n number
 function UISes:uiModEntry(mod, n)
     local w, textDescs
-    if mod.description then
-        w, textDescs = G.LANG.font.FONT:getWrap(mod.description, G.TILESCALE * G.TILESIZE * 20 * 4)
+    local desc = mod:description()
+    if desc then
+        w, textDescs = G.LANG.font.FONT:getWrap(desc, G.TILESCALE * G.TILESIZE * 20 * 4)
 
         for i, v in ipairs(textDescs) do
             if i > 5 then textDescs[i] = nil
@@ -351,7 +353,7 @@ function UISes:uiModEntry(mod, n)
         },
         nodes = {
             self:uiImage(id .. self.idImageContSuff),
-            self:uiModText(mod.title, self.thumbW),
+            self:uiModText(mod:title(), self.thumbW),
         }
     }
 end
@@ -498,7 +500,7 @@ function UISes:uiBrowse()
     }
 end
 
---- @param mod? bmi.Meta
+--- @param mod? imm.ModMeta
 function UISes:selectMod(mod)
     if self.selectedMod then self.uibox:remove_group(nil, self.idModSelect) end
     local cnt = self.uibox:get_UIE_by_ID(self.idModSelectCnt)
@@ -510,7 +512,7 @@ function UISes:selectMod(mod)
     modses:update()
 end
 
---- @param ifMod? bmi.Meta
+--- @param ifMod? imm.ModMeta
 function UISes:updateSelectedMod(ifMod)
     local mod = self.selectedMod and self.selectedMod.mod
     if not ifMod or ifMod == mod then
@@ -537,40 +539,37 @@ end
 
 --- @param containerId string
 --- @param img love.Image
-function UISes:uiUpdateImage(containerId, img)
+--- @param box? boolean
+function UISes:uiUpdateImage(containerId, img, box)
     local imgcnt = self.uibox:get_UIE_by_ID(containerId)
     if not imgcnt then return end
 
     self.uibox:add_child({
         n = G.UIT.O,
-        config = { object = LoveMoveable(img, 0, 0, self.thumbW, self.thumbH) }
+        config = { object = LoveMoveable(img, 0, 0, box and self.thumbH or self.thumbW, self.thumbH) }
     }, imgcnt)
 end
 
 --- @protected
---- @param mod bmi.Meta
+--- @param mod imm.ModMeta
 --- @param containerId string
 --- @param nocheckUpdate? boolean
-function UISes:_updateModImage(mod, containerId, nocheckUpdate)
-    if not mod.pathname then return end
+function UISes:_updateModImageCo(mod, containerId, nocheckUpdate)
     local aid = self.updateId
-    local err, data = self.repo:getImageCo(mod.pathname)
-
-    if not data or not nocheckUpdate and self.updateId ~= aid then
-        return
-    end
-
-    self:uiUpdateImage(containerId, data)
+    local box = not not mod.ts
+    local err, data = mod:getImageCo()
+    if not data or not nocheckUpdate and self.updateId ~= aid then return end
+    self:uiUpdateImage(containerId, data, box)
 end
 
---- @param mod bmi.Meta
+--- @param mod imm.ModMeta
 --- @param containerId string
 --- @param nocheckUpdate? boolean
 function UISes:updateModImage(mod, containerId, nocheckUpdate)
-    util.createCo(self._updateModImage, self, mod, containerId, nocheckUpdate)
+    co.create(self._updateModImageCo, self, mod, containerId, nocheckUpdate)
 end
 
---- @param mod? bmi.Meta
+--- @param mod? imm.ModMeta
 --- @param n number
 function UISes:updateMod(mod, n)
     local cont = self.uibox:get_UIE_by_ID(self:getModElmCntId(n))
@@ -595,16 +594,17 @@ end
 --- @field id? boolean
 --- @field search? string
 
---- @param mod bmi.Meta
+--- @param mod imm.ModMeta
 --- @param filter imm.Filter
 function UISes:matchFilter(mod, filter)
-    if filter.installed and not (self.ctrl.mods[mod.id] and next(self.ctrl.mods[mod.id].versions)) then return false end
-    if not (filter.id and mod.id or filter.author and mod.author or mod.title):lower():find(filter.search, 1, true) then return false end
+    local id = mod:id()
+    if filter.installed and not (self.ctrl.mods[id] and next(self.ctrl.mods[id].versions)) then return false end
+    if not (filter.id and id or filter.author and mod:author() or mod:title()):lower():find(filter.search, 1, true) then return false end
 
     local hasCatFilt = false
     local hasCatMatch = false
     local catobj = {}
-    for i, category in ipairs(mod.categories) do
+    for i, category in ipairs(mod:categories()) do
         catobj[category] = true
     end
     for category, filtered in pairs(self.tags) do
@@ -652,18 +652,19 @@ function UISes:updateFilter()
 
     -- filter mods in list
     for k, meta in ipairs(self.repo.list) do
-        ids[meta.id] = true
-        if not addeds[meta.id] and self:matchFilter(meta, filter) then
+        local id = meta:id()
+        ids[id] = true
+        if not addeds[id] and self:matchFilter(meta, filter) then
             table.insert(self.filteredList, meta)
-            addeds[meta.id] = true
+            addeds[id] = true
         end
     end
     -- include local mods
     if filter.installed then
         for mod, list in pairs(self.ctrl.mods) do
-            if not ids[mod] and not list.native then
-                local meta = list:createBmiMeta()
-                if meta and not addeds[mod] and self:matchFilter(meta, filter) then
+            if not (ids[mod] or list.native or addeds[mod]) then
+                local meta = list:createBmiMeta(self.repo)
+                if meta and self:matchFilter(meta, filter) then
                     table.insert(self.filteredList, meta)
                     addeds[mod] = true
                 end
@@ -697,20 +698,35 @@ function UISes:update()
     self.uibox:recalculate()
 end
 
+--- @protected
+function UISes:_prepareCo()
+    co.all(
+        function ()
+            logger.dbg('Getting list for BMI')
+            local err = self.repo.bmi:getListCo()
+            if err then logger.fmt('error', 'Failed getting list for BMI: %s', err) end
+            logger.dbg('Done for BMI')
+        end,
+        function ()
+            logger.dbg('Getting list for TS')
+            local err = self.repo.ts:getListCo()
+            if err then logger.fmt('error', 'Failed getting list for TS: %s', err) end
+            logger.dbg('Done for TS')
+        end
+    )
+    logger.dbg('update')
+    self.prepared = true
+    pseudoshuffle(self.repo.list, math.random())
+    self:update()
+end
+
 function UISes:prepare()
     if self.prepared then
         self:update()
         self:updateSelectedMod()
+        return
     end
-
-    self.prepared = true
-    self.repo:getList(function (err, res)
-        if not res then
-            self.errorText = err
-            return
-        end
-        self:update()
-    end)
+    co.create(self._prepareCo, self)
 end
 
 function UISes:container()
@@ -737,7 +753,7 @@ end
 --- @protected
 --- @param url string
 --- @param extra? imm.ModSession.QueueDownloadExtraInfo
-function UISes:_queueTaskInstall(url, extra)
+function UISes:_queueTaskInstallCo(url, extra)
     extra = extra or {}
     local name = extra.name or 'something'
     local size = extra.size
@@ -767,27 +783,30 @@ end
 --- @param url string
 --- @param extra? imm.ModSession.QueueDownloadExtraInfo
 function UISes:queueTaskInstall(url, extra)
-    util.createCo(self._queueTaskInstall, self, url, extra)
+    co.create(self._queueTaskInstallCo, self, url, extra)
 end
 
 --- @protected
 --- @param id string
 --- @param list imm.Dependency.Rule[][]
 --- @param blacklistState? table<string>
-function UISes:_installMissingModEntry(id, list, blacklistState)
+function UISes:_installMissingModEntryCo(id, list, blacklistState)
     local mod = self.repo:getMod(id)
     if not mod then return logger.fmt('warn', 'Mod id %s does not exist in repo', id) end
-    local title = mod.title
 
-    local err, releases = self.repo:getModReleasesCo(mod)
-    if err then logger:fmt('warn', 'Failed to obtain releases from %s: %s', mod.title, err) end
+    mod:getReleasesCo()
+    local release, pre = mod:findModVersionToDownload(list)
+    if not release then
+        logger.fmt('warn', 'Failed to download missing dependencies %s', mod:title())
+        return
+    end
 
-    local url, rel = self.repo:findModVersionToDownload(id, list)
-    if not url then return logger.fmt('warn', 'Mod %s does not have URL downloads', title) end
-    if not rel then logger.fmt('warn', 'Mod %s is downloading from source', title) end
+    if pre then
+        logger.fmt('warn', 'A prerelease version %s %s is being downloaded', mod:title(), release.version)
+    end
 
-    self:_queueTaskInstall(url, {
-        name = title..' '..mod.version,
+    self:_queueTaskInstallCo(release.url, {
+        name = mod:title()..' '..release.version,
         blacklist = blacklistState
     })
 end
@@ -796,7 +815,7 @@ end
 --- @param list imm.Dependency.Rule[][]
 --- @param blacklistState? table<string>
 function UISes:installMissingModEntry(id, list, blacklistState)
-    util.createCo(self._installMissingModEntry, self, id, list, blacklistState)
+    co.create(self._installMissingModEntryCo, self, id, list, blacklistState)
 end
 
 --- @param mod imm.Mod

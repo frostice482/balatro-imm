@@ -1,7 +1,7 @@
 local constructor = require("imm.lib.constructor")
 local https = require("imm.https_agent")
 local util = require("imm.lib.util")
-local logger = require("imm.logger")
+local co = require("imm.lib.co")
 
 --- @class imm.Fetch<A, T>: balatro.Object, {
 ---     fetch: fun(self, arg: A, cb: fun(err?: string, res?: T), refreshCache?: boolean, useCache?: boolean);
@@ -114,7 +114,7 @@ function IFetch2:fetch(arg, cb, refreshCache, useCache)
 end
 
 function IFetch2:fetchCo(arg, refreshCache, useCache)
-    return util.co(function (res) self:fetch(arg, res, refreshCache, useCache) end)
+    return co.wrapCallbackStyle(function (res) self:fetch(arg, res, refreshCache, useCache) end)
 end
 
 --- @alias imm.Fetch.C p.Constructor<imm.Fetch, nil> | fun(url: string, file: string, isResJson?: boolean, isJson?: boolean): imm.Fetch<any, any>

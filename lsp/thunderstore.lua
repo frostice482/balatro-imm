@@ -1,0 +1,32 @@
+--- @class thunderstore.Package
+--- @field format 'thunderstore'
+--- @field name string
+--- @field owner string
+--- @field package_url string
+--- @field donation_link? string
+--- @field is_deprecated boolean
+--- @field categories string[]
+--- @field versions thunderstore.PackageVersion[]
+--- @field is_pinned boolean
+-- @field full_name string
+-- @field date_created string
+-- @field date_updated string
+-- @field uuid4 string
+-- @field rating_score number
+-- @field has_nsfw_content boolean
+
+--- @class thunderstore.PackageVersion
+--- @field format 'thunderstore'
+--- @field name string
+--- @field description string
+--- @field icon string
+--- @field version_number string
+--- @field dependencies? string[]
+--- @field download_url string
+--- @field website_url string
+--- @field file_size number
+-- @field full_name string
+-- @field downloads number
+-- @field date_created string
+-- @field is_active boolean
+-- @field uuid4 string

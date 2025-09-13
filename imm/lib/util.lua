@@ -109,33 +109,6 @@ function util.slice(list, startPos, endPos)
     return o
 end
 
---- @param init fun(res: fun(...)): boolean?, any[]?
-function util.co(init)
-    local co = coroutine.running()
-    if not co then error('Not in coroutine') end
-
-    local isWaiting = false
-    local earlyRet
-    init(function (...)
-        if not isWaiting then
-            earlyRet = {...}
-        else
-            assert(coroutine.resume(co, ...))
-        end
-    end)
-    if earlyRet then return unpack(earlyRet) end
-
-    isWaiting = true
-    return coroutine.yield()
-end
-
-function util.createCo(func, ...)
-    local obj = {...}
-    local co = coroutine.create(function() return func(unpack(obj)) end)
-    assert(coroutine.resume(co))
-    return co
-end
-
 --- @param args string[]
 function util.convertCommands(args)
     --- @type string[]

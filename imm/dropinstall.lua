@@ -10,12 +10,12 @@ local function dropinstall(browser, file)
 
     local meta
     for i,v in ipairs(browser.repo.list) do
-        if v.id == list.mod then
+        if v:id() == list.mod then
             meta = v
             break
         end
     end
-    meta = meta or list:createBmiMeta()
+    meta = meta or list:createBmiMeta(browser.repo)
     if meta then browser:selectMod(meta) end
 end
 

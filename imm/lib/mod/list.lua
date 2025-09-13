@@ -91,8 +91,8 @@ function IModList:list()
     return self.cachedList
 end
 
---- @return bmi.Meta?
-function IModList:createBmiMeta()
+--- @param repo imm.Repo
+function IModList:createBmiMeta(repo)
     --- @type imm.Mod?
     local mod = self.active
     if not mod then
@@ -100,7 +100,7 @@ function IModList:createBmiMeta()
             if not mod or mod.versionParsed < other.versionParsed then mod = other end
         end
     end
-    return mod and mod:createBmiMeta()
+    return mod and repo:createVirtualEntry(mod)
 end
 
 --- @param rules imm.Dependency.Rule[]

@@ -1,6 +1,9 @@
 local constructor = require("imm.lib.constructor")
-local Repo = require("imm.lib.mod.repo")
 local ui = require("imm.lib.ui")
+local co = require("imm.lib.co")
+
+local betaColor = { 0.78, 0.78, 0.4, 1 }
+local thunderstoreColor = mix_colours(copy_table(G.C.BLUE), {1, 1, 1, 1}, 0.6)
 
 --- @class imm.ModBrowser.Funcs
 local funcs = {
@@ -27,13 +30,13 @@ end
 G.FUNCS[funcs.releasesInit] = function(elm)
     --- @type imm.ModBrowser
     local modses = elm.config.ref_table
-    local ses = modses.ses
     local mod = modses.mod
     elm.config.func = nil
 
-    ses.repo:getModReleases(mod, function (err, res)
+    co.create(function ()
+        local releases = mod:getReleasesCo()
         ui.removeChildrens(elm)
-        modses:updateReleases(elm, err, res)
+        modses:updateReleases(elm, releases)
     end)
 end
 
@@ -41,13 +44,13 @@ end
 G.FUNCS[funcs.otherInit] = function(elm)
     --- @type imm.ModBrowser
     local modses = elm.config.ref_table
-    local ses = modses.ses
     local mod = modses.mod
     elm.config.func = nil
 
-    ses.repo:getModReleases(mod, function (err, res)
+    co.create(function ()
+        local releases = mod:getReleasesCo()
         ui.removeChildrens(elm)
-        modses:updateOther(elm, err ,res)
+        modses:updateOther(elm, releases)
     end)
 end
 
@@ -60,7 +63,7 @@ G.FUNCS[funcs.v_download] = function(elm)
     if not url then return end
 
     modses.ses:queueTaskInstall(url, {
-        name = modses.mod.title..' '..ver,
+        name = modses.mod:title()..' '..ver,
         size = size,
         cb = function (err) if not err then modses.ses:updateSelectedMod(modses.mod) end end
     })
@@ -81,7 +84,7 @@ G.FUNCS[funcs.v_toggle] = function(elm)
     --- @type imm.ModBrowser, string, boolean
     local modses, ver, enabled = r.ses, r.ver, r.toggle
     local ses = modses.ses
-    local modid = modses.mod.id
+    local modid = modses.mod:id()
 
     local mod = ses.ctrl:getMod(modid, ver)
     if not mod then
@@ -90,7 +93,6 @@ G.FUNCS[funcs.v_toggle] = function(elm)
     end
 
     local test = enabled and ses.ctrl:tryDisable(mod) or ses.ctrl:tryEnable(mod)
-    local ll = ses.ctrl.loadlist
 
     local c = 0
     local hasErr
@@ -122,7 +124,7 @@ G.FUNCS[funcs.v_deleteConfirm] = function(elm)
     local ses = modses.ses
 
     if r.confirm then
-        local ok, err = ses.ctrl:uninstall(modses.mod.id, r.ver)
+        local ok, err = ses.ctrl:uninstall(modses.mod:id(), r.ver)
         ses.errorText = err or ''
         if ok then ses.hasChanges = true end
     end
@@ -180,7 +182,7 @@ end
 
 --- @class imm.ModBrowser
 --- @field ses imm.Browser
---- @field mod bmi.Meta
+--- @field mod imm.ModMeta
 local UIModSes = {
     cyclePageSize = 8,
     idListCnt = 'imm-other-cycle',
@@ -193,7 +195,7 @@ local UIModSes = {
 
 --- @protected
 --- @param ses imm.Browser
---- @param mod bmi.Meta
+--- @param mod imm.ModMeta
 function UIModSes:init(ses, mod)
     self.ses = ses
     self.mod = mod
@@ -215,6 +217,9 @@ end
 
 --- @param opts imm.ModSession.VersionParam
 function UIModSes:uiVersionTitle(opts)
+    local downText = opts.downloadUrl
+    if downText and opts.downloadSize then downText = string.format('%s (%.1fMB)', downText, opts.downloadSize / 1048576) end
+
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.C,
@@ -229,8 +234,15 @@ function UIModSes:uiVersionTitle(opts)
                     scale = self.ses.fontscale,
 
                     button = opts.installed and funcs.v_toggle or nil,
-                    ref_table = opts.installed and { ses = self, ver = opts.version, toggle = opts.enabled} or nil,
-                    tooltip = opts.downloadUrl and { text = {{ ref_table = {opts.downloadUrl}, ref_value = 1 }}, text_scale = self.ses.fontscale * 0.6 },
+                    ref_table = opts.installed and {
+                        ses = self,
+                        ver = opts.version,
+                        toggle = opts.enabled
+                    } or nil,
+                    tooltip = opts.downloadUrl and {
+                        text = {{ ref_table = { downText }, ref_value = 1 }},
+                        text_scale = self.ses.fontscale * 0.6
+                    },
                 }
             }}
         }, opts.sub and {
@@ -294,14 +306,10 @@ end
 
 --- @param opts imm.ModSession.VersionParam
 function UIModSes:uiVersion(opts)
-    local l = self.ses.ctrl.mods[self.mod.id]
+    local l = self.ses.ctrl.mods[self.mod:id()]
     if l then
-        if opts.installed == nil then
-            opts.installed = not not l.versions[opts.version]
-        end
-        if opts.enabled == nil then
-            opts.enabled = (l.active and l.active.version) == opts.version
-        end
+        if opts.installed == nil then opts.installed = not not l.versions[opts.version] end
+        if opts.enabled == nil then opts.enabled = (l.active and l.active.version) == opts.version end
     end
 
     --- @type balatro.UIElement.Definition
@@ -320,8 +328,29 @@ function UIModSes:uiVersion(opts)
     }
 end
 
+--- @param ver imm.ModMeta.Release
+function UIModSes:createVersionOpts(ver)
+    local l = self.ses.ctrl.mods[self.mod:id()]
+    local installed, enabled
+    if l then
+        installed = not not l.versions[ver.version]
+        enabled = (l.active and l.active.version) == ver.version
+    end
+    --- @type imm.ModSession.VersionParam
+    return {
+        version = ver.version,
+        color = ver.isPre and betaColor or ver.ts and thunderstoreColor or nil,
+        downloadSize = ver.size,
+        downloadUrl = ver.url,
+        enabled = enabled,
+        installed = installed
+    }
+end
+
+local modsDir = require('imm.config').modsDir
+
 function UIModSes:uiTabInstalled()
-    local l = self.ses.ctrl.mods[self.mod.id]
+    local l = self.ses.ctrl.mods[self.mod:id()]
     if not l or not next(l.versions) then return self.ses:uiText('No installed\nversions', 1.25, G.C.ORANGE) end
 
     --- @type imm.Mod[]
@@ -337,7 +366,7 @@ function UIModSes:uiTabInstalled()
                 local info = versions[i]
                 return info and self:uiVersion({
                     version = info.version,
-                    sub = info.path:sub(require('imm.config').modsDir:len() + 2),
+                    sub = info.path:sub(modsDir:len() + 2),
                     installed = true
                 })
             end),
@@ -362,46 +391,40 @@ function UIModSes:uiReleasesContainer(func)
 end
 
 --- @param elm balatro.UIElement
---- @param err? string
---- @param res? ghapi.Releases[]
-function UIModSes:updateReleases(elm, err, res)
+--- @param res imm.ModMeta.Release[]
+function UIModSes:updateReleases(elm, res)
     --- @type imm.ModSession.VersionParam[]
     local list = {}
 
-    if not res then
-        self.ses.errorText = err or ''
-        return
-    else
+    if res then
+        --- @type imm.ModMeta.Release
         local pre
+        --- @type imm.ModMeta.Release
         local latest
 
         for i,v in ipairs(res) do
-            if v.prerelease then pre = pre or v
+            if v.isPre then pre = pre or v
             else latest = latest or v
             end
-            if latest then break end
+            --if latest then break end
         end
 
         if latest then
-            table.insert(list, {
-                version = Repo.transformTagVersion(latest.tag_name),
-                downloadUrl = latest.zipball_url
-            })
+            table.insert(list, self:createVersionOpts(latest))
         end
         if pre then
-            table.insert(list, {
-                version = Repo.transformTagVersion(pre.tag_name),
-                sub = 'Prerelease',
-                downloadUrl = pre.zipball_url
-            })
+            table.insert(list, self:createVersionOpts(pre))
         end
     end
 
-    table.insert(list, {
-        version = 'Source',
-        sub = self.mod.version..' - Potentially unstable!',
-        downloadUrl = self.mod.downloadURL
-    })
+    if self.mod.bmi then
+        table.insert(list, {
+            version = 'Source',
+            sub = self.mod.bmi.version..' - Potentially unstable!',
+            downloadUrl = self.mod.bmi.download_url,
+            color = betaColor
+        })
+    end
 
     self:uiAdd(elm, #list, function (i)
         local info = list[i]
@@ -410,20 +433,11 @@ function UIModSes:updateReleases(elm, err, res)
 end
 
 --- @param elm balatro.UIElement
---- @param err? string
---- @param res? ghapi.Releases[]
-function UIModSes:updateOther(elm, err, res)
-    if not res then
-        self.ses.errorText = err or ''
-        return
-    end
-
+--- @param res imm.ModMeta.Release[]
+function UIModSes:updateOther(elm, res)
     self:uiAdd(elm, #res, function (i)
         local info = res[i]
-        return info and self:uiVersion({
-            version = Repo.transformTagVersion(info.tag_name),
-            downloadUrl = info.zipball_url
-        })
+        return info and self:uiVersion(self:createVersionOpts(info))
     end)
 end
 
@@ -452,7 +466,7 @@ end
 
 function UIModSes:uiTabs()
     local mod = self.mod
-    local hasVersion = not not ( self.ses.ctrl.mods[mod.id] and next(self.ses.ctrl.mods[mod.id].versions) )
+    local hasVersion = not not ( self.ses.ctrl.mods[mod:id()] and next(self.ses.ctrl.mods[mod:id()].versions) )
 
     --- @type balatro.UIElement.Definition
     return create_tabs({
@@ -498,11 +512,11 @@ function UIModSes:uiRepoButton()
                 padding = 0.1,
                 shadow = true,
                 button = funcs.openUrl,
-                ref_table = { url = self.mod.repo },
+                ref_table = { url = self.mod.bmi.repo },
                 r = true,
                 button_dist = 0.1,
                 tooltip = {
-                    text = { self.mod.repo },
+                    text = { self.mod.bmi.repo },
                     text_scale = self.ses.fontscale * 0.8
                 }
             },
@@ -685,9 +699,9 @@ function UIModSes:container()
         config = { group = self.ses.idModSelect },
         nodes = {
             self.ses:uiImage(self.idImageSelectCnt),
-            self.ses:uiModText(self.mod.title),
-            self.ses:uiModAuthor(self.mod.author),
-            self:uiRepoButton(),
+            self.ses:uiModText(self.mod:title()),
+            self.ses:uiModAuthor(self.mod:author()),
+            self.mod.bmi and self:uiRepoButton(),
             self:uiTabs()
         }
     }
@@ -699,7 +713,7 @@ end
 
 --- @param ver string
 function UIModSes:uiDeleteVersionMessage(ver)
-    return ui.simpleTextRow(string.format('Really delete %s %s?', self.ses.fontscale * self.mod.title, ver))
+    return ui.simpleTextRow(string.format('Really delete %s %s?', self.mod:title(), ver), self.ses.fontscale)
 end
 
 --- @param ver string
@@ -714,7 +728,7 @@ end
 --- @class imm.ModBrowser.Static
 --- @field funcs imm.ModBrowser.Funcs
 
---- @alias imm.ModBrowser.C imm.ModBrowser.Static | p.Constructor<imm.ModBrowser, nil> | fun(ses: imm.Browser, mod: bmi.Meta): imm.ModBrowser
+--- @alias imm.ModBrowser.C imm.ModBrowser.Static | p.Constructor<imm.ModBrowser, nil> | fun(ses: imm.Browser, mod: imm.ModMeta): imm.ModBrowser
 --- @type imm.ModBrowser.C
 local UIModSes = constructor(UIModSes)
 UIModSes.funcs = funcs

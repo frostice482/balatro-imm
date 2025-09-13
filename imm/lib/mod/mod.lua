@@ -61,23 +61,6 @@ function IMod:errNative()
     return false, string.format('Mod %s is native and therefore cannot be edited', self.mod)
 end
 
-function IMod:createBmiMeta()
-    local author = self.info.author
-    local authorStr = type(author) == 'table' and table.concat(author, ', ') or author or '-'
-    --- @type bmi.Meta
-    return {
-        id = self.mod,
-        title = self.info.name or self.mod,
-        author = authorStr,
-        categories = {},
-        metafmt = 'smods',
-        version = self.version,
-        provides = self.provides,
-        repo = self.info.repo,
-        description = self.description
-    }
-end
-
 --- @return boolean ok, string? err
 function IMod:uninstall()
     if self.list.native then return errNative() end

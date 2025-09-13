@@ -118,7 +118,7 @@ function get.parseTsDep(entry)
 end
 
 local modPattern = '^%s*([^%s<>=()!]+)'
-local versionPattern = '[%w_~*.%-]*'
+local versionPattern = '[%w_~*.%-+]*'
 local versionDepPattern = string.format('([<>=!]+)%%s*(%s)', versionPattern)
 local versionProvidePattern = '%d'..versionPattern
 

@@ -1,3 +1,5 @@
+--- @diagnostic disable
+
 local errhand_orig = love.errorhandler or love.errhand
 local hasHandlerOverridden = false
 
