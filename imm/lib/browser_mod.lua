@@ -271,7 +271,7 @@ end
 
 --- @param opts imm.ModSession.VersionParam
 function UIModSes:uiVersionActionBtn(opts)
-    if not (opts.installed or opts.downloadUrl) then return end
+    if opts.enabled or not (opts.installed or opts.downloadUrl) then return end
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.O,
