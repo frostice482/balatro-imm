@@ -161,6 +161,8 @@ end
 --- @param excludedDirs? table<string, boolean>
 --- @return boolean ok, string? err
 function IModCtrl:install(mod, sourceNfs, excludedDirs)
+    if self.mods[mod.mod] and self.mods[mod.mod].native then return mod:errNative() end
+
     local id, ver = mod.mod, mod.version
     if not self.mods[id] then self.mods[id] = ModList(id) end
     local list = self.mods[id]
