@@ -416,7 +416,7 @@ function UIModSes:updateReleases(elm, res)
         if latest then
             table.insert(list, self:createVersionOpts(latest))
         end
-        if pre then
+        if pre and not (pre.versionParsed and latest.versionParsed and pre.versionParsed < latest.versionParsed) then
             table.insert(list, self:createVersionOpts(pre))
         end
     end
