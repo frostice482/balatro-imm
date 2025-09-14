@@ -7,7 +7,8 @@ local fetch_list = Fetch('https://thunderstore.io/c/balatro/api/v1/package/', 'i
 local omitProps = { 'full_name', 'date_created', 'date_updated', 'uuid4', 'rating_score', 'has_nsfw_content'}
 local omitVerProps = { 'full_name', 'downloads', 'date_created', 'is_active', 'uuid4' }
 local blacklistedPackages = {
-    r2modman = true
+    r2modman = true,
+    lovely = true
 }
 
 --- @param str string
