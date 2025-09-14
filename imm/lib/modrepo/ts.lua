@@ -1,5 +1,6 @@
 local Fetch = require("imm.lib.fetch")
 local GRepo = require("imm.lib.modrepo.generic")
+local logger= require("imm.logger")
 
 --- @type imm.Fetch<nil, thunderstore.Package[]>
 local fetch_list = Fetch('https://thunderstore.io/c/balatro/api/v1/package/', 'immcache/thunderstore_list.json', false, true)
@@ -23,7 +24,8 @@ function fetch_list:interpretRes(str)
     --- @type thunderstore.Package[]
     local parsed = JSON.decode(str)
     for i,package in ipairs(parsed) do
-        if blacklistedPackages[package.name] then
+        if blacklistedPackages[package.name] or package.is_deprecated then
+            logger.dbg('Ignored TS package', package.owner, package.name)
             parsed[i] = parsed[#parsed]
             table.remove(parsed)
         else

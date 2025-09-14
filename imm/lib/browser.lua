@@ -545,14 +545,16 @@ end
 
 --- @param containerId string
 --- @param img love.Image
---- @param box? boolean
-function UISes:uiUpdateImage(containerId, img, box)
+function UISes:uiUpdateImage(containerId, img)
     local imgcnt = self.uibox:get_UIE_by_ID(containerId)
     if not imgcnt then return end
 
+    local w, h = img:getDimensions()
+    local aspectRatio = math.max(math.min(w / h, 16/9), 1)
+
     self.uibox:add_child({
         n = G.UIT.O,
-        config = { object = LoveMoveable(img, 0, 0, box and self.thumbH or self.thumbW, self.thumbH) }
+        config = { object = LoveMoveable(img, 0, 0, self.thumbH * aspectRatio, self.thumbH) }
     }, imgcnt)
 end
 
@@ -562,10 +564,9 @@ end
 --- @param nocheckUpdate? boolean
 function UISes:_updateModImageCo(mod, containerId, nocheckUpdate)
     local aid = self.updateId
-    local box = not not mod.ts
     local err, data = mod:getImageCo()
     if not data or not nocheckUpdate and self.updateId ~= aid then return end
-    self:uiUpdateImage(containerId, data, box)
+    self:uiUpdateImage(containerId, data)
 end
 
 --- @param mod imm.ModMeta
@@ -709,10 +710,11 @@ function UISes:update()
     self.uibox:remove_group(nil, self.idCycle)
 
     self:updateFilter()
-    self:updateMods()
 
     local cyclecont = self.uibox:get_UIE_by_ID(self.idCycleCont)
     if cyclecont then self.uibox:add_child(self:uiCycle(), cyclecont) end
+
+    self:updateMods()
 
     self.uibox:recalculate()
 end
