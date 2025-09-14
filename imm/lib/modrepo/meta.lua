@@ -56,6 +56,11 @@ function IMeta:init(repo)
     self.repo = repo
 end
 
+function IMeta:resetReleases()
+    self.tsVersionsCache = nil
+    self.bmiVersionsCache = nil
+end
+
 function IMeta:_assertOne()
     if not self.ts and not self.bmi then error('Bmi / Thunderstore not initialized', 2) end
 end

@@ -3,8 +3,7 @@ local ModMeta = require("imm.lib.modrepo.meta")
 local BMIRepo = require("imm.lib.modrepo.bmi")
 local TSRepo = require("imm.lib.modrepo.ts")
 local Fetch = require("imm.lib.fetch")
-local V = require("imm.lib.version")
-local co = require("imm.lib.co")
+local util = require("imm.lib.util")
 
 --- @type imm.Fetch<string, string>
 local fetch_blob = Fetch('%s', 'immcache/blob/%s')
@@ -37,11 +36,33 @@ function IRepo:init()
 end
 
 function IRepo:clear()
+    self:clearList(true)
+    self.bmi:clear()
+    self.ts:clear()
+end
+
+function IRepo:clearList(justThis)
     self.list = {}
     self.listMapped = {}
     self.listProviders = {}
-    self.bmi:clear()
-    self.ts:clear()
+
+    if justThis then return end
+
+    util.rmdir(self.ts.api.list.cacheFile, false)
+    util.rmdir(self.bmi.api.list.cacheFile, false)
+
+    self.bmi.listDone = false
+    self.ts.listDone = false
+end
+
+function IRepo:clearReleases()
+    util.rmdir(util.dirname(self.bmi.api.releases_generic.cacheFile), false)
+    util.rmdir(util.dirname(self.bmi.api.releases_github.cacheFile), false)
+
+    for i, v in ipairs(self.list) do
+        v:resetReleases()
+    end
+    self.bmi:clearReleases()
 end
 
 --- Gets mod, or looks from provided mods if doesnt exist

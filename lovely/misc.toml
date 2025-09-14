@@ -18,6 +18,13 @@ payload = "G.C.UI.TEXT_DARK, scale = tooltip.text_scale or 0.4"
 times = 3
 
 [[patches]]
+[patches.regex]
+target = "functions/UI_definitions.lua"
+pattern = '''button = back_func'''
+position = "after"
+payload = ", ref_table = args.ref_table"
+
+[[patches]]
 [patches.module]
 source = "include/nativefs.lua"
 before = "main.lua"

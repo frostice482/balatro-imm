@@ -76,6 +76,10 @@ end
 
 function IBMIRepo:clear()
     GRepo.proto.clear(self)
+    self:clearReleases()
+end
+
+function IBMIRepo:clearReleases()
     self.releasesCache = {}
     self.releasesCb = {}
 end

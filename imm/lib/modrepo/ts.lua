@@ -4,6 +4,13 @@ local GRepo = require("imm.lib.modrepo.generic")
 --- @type imm.Fetch<nil, thunderstore.Package[]>
 local fetch_list = Fetch('https://thunderstore.io/c/balatro/api/v1/package/', 'immcache/thunderstore_list.json', false, true)
 
+--- @type imm.Fetch<string, string>
+local fetch_thumb_blob = Fetch('%s', 'immcache/thumb_blob/%s')
+
+function fetch_thumb_blob:getCacheFileName(arg)
+    return self.cacheFile:format(love.data.encode('string', 'hex', love.data.hash('md5', arg)))
+end
+
 local omitProps = { 'full_name', 'date_created', 'date_updated', 'uuid4', 'rating_score', 'has_nsfw_content'}
 local omitVerProps = { 'full_name', 'downloads', 'date_created', 'is_active', 'uuid4' }
 local blacklistedPackages = {
@@ -37,7 +44,8 @@ end
 
 --- @class imm.Repo.TS: imm.Repo.Generic
 local ITSRepo = {
-    listApi = fetch_list
+    listApi = fetch_list,
+    thumbApi = fetch_thumb_blob
 }
 
 --- @alias imm.Repo.TS.C p.Constructor<imm.Repo.TS, nil> | fun(repo: imm.Repo): imm.Repo.TS

@@ -1,3 +1,4 @@
+local browserFuncs = require("imm.browser_funcs")
 local ui = require("imm.lib.ui")
 local di
 
@@ -31,7 +32,7 @@ function G.FUNCS.exit_overlay_menu()
     local ses = G.OVERLAY_MENU.config.imm
     if not ses or not ses.hasChanges then return exit_overlay() end
 
-    G.FUNCS.overlay_menu({ definition = ui.confirm(ui.simpleTextRow('Restart balatro now?', 0.6), Browser.funcs.restart, {}) })
+    G.FUNCS.overlay_menu({ definition = ui.confirm(ui.simpleTextRow('Restart balatro now?', 0.6), browserFuncs.restartConf, {}) })
 end
 
 function G.FUNCS.imm_browse()

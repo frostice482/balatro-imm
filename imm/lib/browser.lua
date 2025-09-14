@@ -2,84 +2,10 @@ local constructor = require("imm.lib.constructor")
 local ModBrowser = require("imm.lib.browser_mod")
 local LoveMoveable = require("imm.lib.love_moveable")
 local ui = require("imm.lib.ui")
-local util = require("imm.lib.util")
 local co = require("imm.lib.co")
 local logger = require("imm.logger")
-
---- @class imm.Browser.Funcs
-local funcs = {
-    setCategory = 'imm_s_setcat',
-    update      = 'imm_s_update',
-    cyclePage   = 'imm_s_cycle',
-    chooseMod   = 'imm_s_choosemod',
-    refresh     = 'imm_s_refresh',
-    restart     = 'imm_s_restart',
-    openModFolder = 'imm_s_open'
-}
-
---- @param elm balatro.UIElement
-G.FUNCS[funcs.restart] = function(elm)
-    if not elm.config.ref_table.confirm then return G.FUNCS.exit_overlay_menu() end
-    util.restart()
-end
-
---- @param elm balatro.UIElement
-G.FUNCS[funcs.openModFolder] = function(elm)
-    love.system.openURL('file:///'..require('imm.config').modsDir:gsub('\\', '/'))
-end
-
---- @param elm balatro.UIElement
-G.FUNCS[funcs.setCategory] = function(elm)
-    local r = elm.config.ref_table or {}
-    --- @type imm.Browser
-    local ses, cat = r.ses, r.cat
-
-    ses.tags[cat] = not ses.tags[cat]
-    elm.config.colour = ses.tags[cat] and G.C.ORANGE or G.C.RED
-    ses:queueUpdate()
-end
-
---- @param elm balatro.UIElement
-G.FUNCS[funcs.update] = function(elm)
-    --- @type imm.Browser
-    local ses = elm.config.ref_table
-
-    if ses.prevSearch ~= ses.search then
-        ses.prevSearch = ses.search
-        ses:queueUpdate()
-    end
-end
-
---- @param elm balatro.UI.CycleCallbackParam
-G.FUNCS[funcs.cyclePage] = function(elm)
-    --- @type imm.Browser
-    local ses = elm.cycle_config._ses
-
-    ses.listPage = elm.to_key
-    ses:updateMods()
-end
-
---- @param elm balatro.UIElement
-G.FUNCS[funcs.chooseMod] = function(elm)
-    local r = elm.config.ref_table or {}
-    --- @type imm.Browser, imm.ModMeta
-    local ses, mod = r.ses, r.mod
-
-    ses:selectMod(mod)
-end
-
---- @param elm balatro.UIElement
-G.FUNCS[funcs.refresh] = function(elm)
-    util.rmdir('immcache', false)
-
-    --- @type imm.Browser
-    local ses = elm.config.ref_table
-    if ses then
-        ses.repo:clear()
-        ses.prepared = false
-        ses:showOverlay(true)
-    end
-end
+local httpsAgent = require("imm.https_agent")
+local funcs = require("imm.browser_funcs")
 
 --- @class imm.Browser
 --- @field uibox balatro.UIBox
@@ -277,11 +203,11 @@ function UISes:uiSidebarHeaderRefresh()
     }
 end
 
-function UISes:uiSidebarHeaderOpenMods()
+function UISes:uiSidebarHeaderOptions()
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.C,
-        config = setmetatable({ tooltip = { text = {'Open Mods Folder'} }, button = funcs.openModFolder, ref_table = self }, {__index = someWeirdBase}),
+        config = setmetatable({ tooltip = { text = {'More Options'} }, button = funcs.options, ref_table = self }, {__index = someWeirdBase}),
         nodes = {self:uiText('O')}
     }
 end
@@ -296,7 +222,7 @@ function UISes:uiSidebarHeader()
             ui.gap('C', self.fontscale / 8),
             self:uiSidebarHeaderRefresh(),
             ui.gap('C', self.fontscale / 8),
-            self:uiSidebarHeaderOpenMods(),
+            self:uiSidebarHeaderOptions(),
         }
     }
 end
@@ -496,6 +422,90 @@ function UISes:uiBrowse()
     }
 end
 
+--- @param commonOpts balatro.UI.ButtonParam
+--- @return balatro.UIElement.Definition[]
+function UISes:uiOptionsA(commonOpts)
+    return {
+        UIBox_button(setmetatable({ button = funcs.refresh, label = {'Refresh'} }, {__index = commonOpts})),
+        UIBox_button(setmetatable({ button = funcs.restart, label = {'Restart'} }, {__index = commonOpts})),
+        UIBox_button(setmetatable({ button = funcs.openModFolder, label = {'Open mods folder'} }, {__index = commonOpts})),
+        UIBox_button(setmetatable({ button = funcs.checkRateLimit, label = {'Check ratelimit'} }, {__index = commonOpts})),
+    }
+end
+
+--- @param commonOpts balatro.UI.ButtonParam
+--- @return balatro.UIElement.Definition[]
+function UISes:uiOptionsB(commonOpts)
+    return {
+        UIBox_button(setmetatable({ button = funcs.clearCache, ref_table = {ses = self, mode = 't'}, label = {'Clear thumbnails cache'} }, {__index = commonOpts})),
+        UIBox_button(setmetatable({ button = funcs.clearCache, ref_table = {ses = self, mode = 'd'}, label = {'Clear downloads'} }, {__index = commonOpts})),
+        UIBox_button(setmetatable({ button = funcs.clearCache, ref_table = {ses = self, mode = 'r'}, label = {'Clear releases cache'} }, {__index = commonOpts})),
+        UIBox_button(setmetatable({ button = funcs.clearCache, ref_table = {ses = self, mode = 'l'}, label = {'Clear list cache'} }, {__index = commonOpts})),
+    }
+end
+
+--- @param commonOpts balatro.UI.ButtonParam
+--- @return balatro.UIElement.Definition[][]
+function UISes:uiOptionsGrid(commonOpts)
+    return {
+        self:uiOptionsA(commonOpts),
+        self:uiOptionsB(commonOpts)
+    }
+end
+
+function UISes:uiOptions()
+    local spacing = 0.2
+    local commonOpts = {  ref_table = self, minw = 4 }
+    return create_UIBox_generic_options({
+        contents = {{
+            n = G.UIT.R,
+            nodes = ui.gapGrid(spacing, spacing, self:uiOptionsGrid(commonOpts), false)
+        }},
+        back_func = funcs.back,
+        ref_table = self
+    })
+end
+
+function UISes:uiOptionsCheckRateLimitExec()
+    local textscale = 0.4
+    local conf = { t = 'Checking...', ref_value = 't', scale = textscale }
+    conf.ref_table = conf
+    local subconf = { t = '', ref_value = 't', scale = textscale * 0.75 }
+    subconf.ref_table = subconf
+
+    local t = os.time()
+    httpsAgent:request('https://api.github.com/rate_limit', nil, function (code, body, headers)
+        if code ~= 200 then
+            conf.t = string.format('Error %d', code)
+            return
+        end
+        --- @type ghapi.Ratelimit
+        local data = JSON.decode(body)
+        local limited = data.rate.remaining == 0
+        conf.t = string.format('%s (%d/%d)', limited and "Ratelimited" or "Not ratelimited", data.rate.remaining, data.rate.limit)
+        conf.colour = limited and G.C.ORANGE or G.C.GREEN
+        subconf.t = string.format('Resets in %d minute(s)', (data.rate.reset - t) / 60)
+    end)
+
+    return create_UIBox_generic_options({
+        contents = {{
+            n = G.UIT.R,
+            config = { align = 'cm' },
+            nodes = {
+                { n = G.UIT.T, config = { text = 'Github API Ratelimit: ', scale = textscale } },
+                { n = G.UIT.T, config = conf },
+            }
+        }, {
+            n = G.UIT.R,
+            config = { align = 'cm' },
+            nodes = {
+                { n = G.UIT.T, config = subconf },
+            }
+        }},
+        back_func = funcs.back,
+        ref_table = self
+    })
+end
 --- @param mod? imm.ModMeta
 function UISes:selectMod(mod)
     if self.selectedMod then self.uibox:remove_group(nil, self.idModSelect) end

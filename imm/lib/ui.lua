@@ -194,6 +194,21 @@ function ui.gapList(mode, size, list)
     return gapped
 end
 
+--- @param rowSize number
+--- @param colSize number
+--- @param list balatro.UIElement.Definition[][]
+--- @param firstRow? boolean
+function ui.gapGrid(rowSize, colSize, list, firstRow)
+    --- @type balatro.UIElement.Definition[]
+    local gappedInside = {}
+    for i,sublist in ipairs(list) do
+        local nodes = firstRow and ui.gapList('C', colSize, sublist) or ui.gapList('R', rowSize, sublist)
+        table.insert(gappedInside, { n = firstRow and G.UIT.R or G.UIT.C, nodes = nodes })
+    end
+    local g = firstRow and ui.gapList('R', rowSize, gappedInside) or ui.gapList('C', colSize, gappedInside)
+    return g
+end
+
 --- @param text string
 --- @param scale? number
 --- @param color? ColorHex

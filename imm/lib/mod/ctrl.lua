@@ -5,6 +5,7 @@ local LoadList = require('imm.lib.mod.loadlist')
 local getmods = require('imm.lib.mod.get')
 local util = require('imm.lib.util')
 local logger = require('imm.logger')
+local modsDir = require('imm.config').modsDir
 
 --- @class imm.ModController
 --- @field provideds imm.ProvidedList
@@ -175,7 +176,7 @@ function IModCtrl:install(mod, sourceNfs, excludedDirs)
 
     -- get target path
     local c = 0
-    local tpath_orig = string.format('%s/%s-%s', require('imm.config').modsDir, id, ver)
+    local tpath_orig = string.format('%s/%s-%s', modsDir, id, ver)
     local tpath = tpath_orig
     if NFS.getInfo(tpath) then
         c = c + 1

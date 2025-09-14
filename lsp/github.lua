@@ -53,3 +53,21 @@
 --- @field reactions any
 --- @field mentions_count number
 --- @field assets ghapi.Releases.Assets[]
+
+--- @class ghapi.Ratelimit.Entry
+--- @field limit number
+--- @field remaining number
+--- @field reset number
+--- @field used number
+--- @field resource string
+
+--- @class ghapi.Ratelimit.Resources
+--- @field code_search ghapi.Ratelimit.Entry
+--- @field core ghapi.Ratelimit.Entry
+--- @field graphql ghapi.Ratelimit.Entry
+--- @field integration_manifest ghapi.Ratelimit.Entry
+--- @field search ghapi.Ratelimit.Entry
+
+--- @class ghapi.Ratelimit
+--- @field resources ghapi.Ratelimit.Resources
+--- @field rate ghapi.Ratelimit.Entry
