@@ -29,7 +29,7 @@ end
 local exit_overlay = G.FUNCS.exit_overlay_menu
 
 function G.FUNCS.exit_overlay_menu()
-    local ses = G.OVERLAY_MENU.config.imm
+    local ses = G.OVERLAY_MENU and G.OVERLAY_MENU.config.imm
     if not ses or not ses.hasChanges then return exit_overlay() end
 
     G.FUNCS.overlay_menu({ definition = ui.confirm(ui.simpleTextRow('Restart balatro now?', 0.6), browserFuncs.restartConf, {}) })
