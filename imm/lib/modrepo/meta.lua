@@ -106,7 +106,6 @@ function IMeta:getReleasesTs()
             version = v,
             versionParsed = vpok and vparsed or nil,
             dependencies = ver.dependencies,
-            isPre = vparsed and vparsed.rev ~= '',
             size = ver.file_size,
             format = 'thunderstore',
             ts = ver
@@ -136,7 +135,7 @@ function IMeta:getReleasesBmiCo()
             url = ver.zipball_url,
             version = v,
             versionParsed = vpok and vparsed or nil,
-            isPre = vparsed and vparsed.rev ~= '' or ver.prerelease or ver.draft,
+            isPre = ver.prerelease or ver.draft,
             format = 'bmi',
             bmi = ver
         }
@@ -171,22 +170,10 @@ end
 --- @return imm.ModMeta.Release? release
 --- @return boolean? pre
 function IMeta:findModVersionToDownload(rulesList)
-    --- @type imm.ModMeta.Release[]
-    local preReleases = {}
-
     local list = self:getReleasesCached()
     for i, release in ipairs(list) do
-        local preRelease = release.versionParsed and release.versionParsed.rev ~= '' or release.bmi and (release.bmi.draft or release.bmi.prerelease)
-        if preRelease then
-            table.insert(preReleases, release)
-        elseif release.versionParsed and release.versionParsed:satisfiesAllAny(rulesList) then
+        if release.versionParsed and release.versionParsed:satisfiesAllAny(rulesList) then
             return release
-        end
-    end
-
-    for i, release in ipairs(preReleases) do
-        if release.versionParsed:satisfiesAllAny(rulesList) then
-            return release, true
         end
     end
 end
