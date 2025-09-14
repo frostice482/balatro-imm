@@ -579,7 +579,31 @@ end
 
 --- @param ver string
 function UIModSes:uiDeleteVersionMessage(ver)
-    return ui.simpleTextRow(string.format('Really delete %s %s?', self.mod:title(), ver), self.ses.fontscale)
+    local mod = self.ses.ctrl:getMod(self.mod:id(), ver)
+    local stat = mod and NFS.getInfo(mod.path)
+
+    local cols = {}
+
+    local main = ui.simpleTextRow(string.format('Really delete %s %s?', self.mod:title(), ver), self.ses.fontscale)
+    main.config = {align = 'cm'}
+    table.insert(cols, main)
+
+    if stat and stat.type == 'symlink' then
+        local sub = ui.simpleTextRow('This mod is symlinked', self.ses.fontscale, G.C.ORANGE)
+        sub.config = {align = 'cm'}
+        table.insert(cols, sub)
+    end
+
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.R,
+        config = {align = 'cm'},
+        nodes = {{
+            n = G.UIT.C,
+            config = {align = 'cm'},
+            nodes = cols
+        }}
+    }
 end
 
 --- @param ver string

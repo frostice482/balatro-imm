@@ -426,7 +426,7 @@ end
 --- @return balatro.UIElement.Definition[]
 function UISes:uiOptionsA(commonOpts)
     return {
-        UIBox_button(setmetatable({ button = funcs.refresh, label = {'Refresh'} }, {__index = commonOpts})),
+        UIBox_button(setmetatable({ button = funcs.disableAll, label = {'Disable all mods'} }, {__index = commonOpts})),
         UIBox_button(setmetatable({ button = funcs.restart, label = {'Restart'} }, {__index = commonOpts})),
         UIBox_button(setmetatable({ button = funcs.openModFolder, label = {'Open mods folder'} }, {__index = commonOpts})),
         UIBox_button(setmetatable({ button = funcs.checkRateLimit, label = {'Check ratelimit'} }, {__index = commonOpts})),
@@ -852,7 +852,7 @@ function UISes:installModFromZip(data, blacklistState)
     local modlist, list, errlist = self.ctrl:installFromZip(data)
 
     local strlist = {}
-    for i,v in ipairs(list) do table.insert(strlist, table.concat({v.mod, v.version}, ' ')) end
+    for i,v in ipairs(list) do table.insert(strlist, v.mod..' '..v.version) end
 
     self.errorText = table.concat(errlist, '\n')
     self.taskText = #strlist ~= 0 and 'Installed '..table.concat(strlist, ', ') or 'Nothing is installed - Check that the zip has a valid metadata file'

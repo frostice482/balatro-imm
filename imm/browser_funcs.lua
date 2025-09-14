@@ -13,9 +13,33 @@ local funcs = {
     openModFolder  = 'imm_s_open',
     clearCache     = 'imm_s_clearcache',
     checkRateLimit = 'imm_s_checkghratelimit',
+    disableAll     = 'imm_s_disableall',
     options        = 'imm_options',
     back           = 'imm_back',
 }
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.disableAll] = function(elm)
+    --- @type imm.Browser
+    local ses = elm.config.ref_table
+
+    local suc = {}
+    local fail = {}
+
+    for k, mod in pairs(ses.ctrl.loadlist.loadedMods) do
+        if not mod.list.native and mod.mod ~= 'balatro_imm' then
+            local ok, err = ses.ctrl:disableMod(mod)
+            if ok then table.insert(suc, mod.mod..' '..mod.version)
+            else table.insert(fail, err)
+            end
+        end
+    end
+
+    --ses.taskText = #suc ~= 0 and 'Disabled '..table.concat(suc, ', ') or 'Nothing is disabled'
+    ses.taskText = ''
+    ses.errorText = table.concat(fail, '\n')
+    ses:showOverlay(true)
+end
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.clearCache] = function(elm)
