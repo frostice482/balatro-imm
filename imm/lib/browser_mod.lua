@@ -184,7 +184,7 @@ end
 --- @field ses imm.Browser
 --- @field mod imm.ModMeta
 local UIModSes = {
-    cyclePageSize = 8,
+    cyclePageSize = 7,
     idListCnt = 'imm-other-cycle',
     idImageSelectCnt = 'imm-slc-imgcnt',
 
@@ -315,16 +315,20 @@ function UIModSes:uiVersion(opts)
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
-        config = {
-            colour = opts.color or opts.enabled and G.C.GREEN or G.C.BLUE,
-            padding = 0.1,
-            r = true,
-            shadow = true,
-        },
-        nodes = {
-            self:uiVersionTitle(opts),
-            self:uiVersionActions(opts)
-        }
+        config = { minh = self.ses.fontscale * 1.8 },
+        nodes = {{
+            n = G.UIT.R,
+            config = {
+                colour = opts.color or opts.enabled and G.C.GREEN or G.C.BLUE,
+                padding = 0.1,
+                r = true,
+                shadow = true,
+            },
+            nodes = {
+                self:uiVersionTitle(opts),
+                self:uiVersionActions(opts)
+            }
+        }}
     }
 end
 
@@ -495,33 +499,50 @@ function UIModSes:uiTabs()
     })
 end
 
+--- @param url string
+--- @param text string
+function UIModSes:uiRepoButtonUrl(url, text)
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.C,
+        config = {
+            colour = G.C.PURPLE,
+            padding = 0.1,
+            shadow = true,
+            button = funcs.openUrl,
+            ref_table = { url = url },
+            r = true,
+            button_dist = 0.1,
+            tooltip = {
+                text = { url },
+                text_scale = self.ses.fontscale * 0.8
+            }
+        },
+        nodes = {self.ses:uiText(text)}
+    }
+end
+
 function UIModSes:uiRepoButton()
-    if not self.mod.repo then
-        --- @type balatro.UIElement.Definition
-        return { n = G.UIT.R, config = {} }
+    local cols = {}
+
+    if self.mod.bmi and self.mod.bmi.repo then
+        table.insert(cols, self:uiRepoButtonUrl(self.mod.bmi.repo, 'Repo'))
+    end
+    if self.mod.ts and self.mod.ts.package_url then
+        table.insert(cols, self:uiRepoButtonUrl(self.mod.ts.package_url, 'Package'))
+    end
+    if self.mod.tsLatest and self.mod.tsLatest.website_url then
+        table.insert(cols, self:uiRepoButtonUrl(self.mod.tsLatest.website_url, 'Website'))
+    end
+    if self.mod.ts and self.mod.ts.donation_link then
+        table.insert(cols, self:uiRepoButtonUrl(self.mod.ts.donation_link, 'Donate'))
     end
 
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
         config = { padding = 0.1, align = 'm' },
-        nodes = {{
-            n = G.UIT.C,
-            config = {
-                colour = G.C.PURPLE,
-                padding = 0.1,
-                shadow = true,
-                button = funcs.openUrl,
-                ref_table = { url = self.mod.bmi.repo },
-                r = true,
-                button_dist = 0.1,
-                tooltip = {
-                    text = { self.mod.bmi.repo },
-                    text_scale = self.ses.fontscale * 0.8
-                }
-            },
-            nodes = {self.ses:uiText('Repo')}
-        }}
+        nodes = cols
     }
 end
 
@@ -720,8 +741,8 @@ function UIModSes:container()
             self.ses:uiImage(self.idImageSelectCnt),
             self.ses:uiModText(self.mod:title()),
             self:uiModAuthor(self.mod:author()),
-            self:uiMoreInfo(),
-            self.mod.bmi and self:uiRepoButton(),
+            --self:uiMoreInfo(),
+            self:uiRepoButton(),
             self:uiTabs()
         }
     }

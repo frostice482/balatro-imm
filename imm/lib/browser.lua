@@ -132,10 +132,12 @@ function UISes:init(modctrl, repo)
         {'Content'},
         {'Joker'},
         {'QoL', 'Quality of Life'},
-        {'Technical'},
         {'Misc', 'Miscellaneous'},
         {'Resources', 'Resource Packs'},
-        {'API'}
+        {'Technical'},
+        {'API'},
+        {'Libraries'},
+        {'Tools'},
     }
     self.taskQueues = {}
 end
@@ -234,19 +236,23 @@ function UISes:uiCategory(label, category)
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
-        config = {
-            align = 'm',
-            colour = self.tags[category] and G.C.ORANGE or G.C.RED,
-            minw = 2,
-            padding = 0.1,
-            shadow = true,
-            hover = true,
-            res = self.fontscale,
-            r = true,
-            button = funcs.setCategory,
-            ref_table = { ses = self, cat = category }
-        },
-        nodes = {self:uiText(label)}
+        config = { minh = self.fontscale * 1.6 },
+        nodes = {{
+            n = G.UIT.R,
+            config = {
+                align = 'm',
+                colour = self.tags[category] and G.C.ORANGE or G.C.RED,
+                minw = 2,
+                padding = 0.1,
+                shadow = true,
+                hover = true,
+                res = self.fontscale,
+                r = true,
+                button = funcs.setCategory,
+                ref_table = { ses = self, cat = category }
+            },
+            nodes = {self:uiText(label)}
+        }}
     }
 end
 

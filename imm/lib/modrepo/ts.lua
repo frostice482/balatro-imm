@@ -14,8 +14,11 @@ local blacklistedPackages = {
 function fetch_list:interpretRes(str)
     --- @type thunderstore.Package[]
     local parsed = JSON.decode(str)
-    for _,package in ipairs(parsed) do
-        if not blacklistedPackages[package.name] then
+    for i,package in ipairs(parsed) do
+        if blacklistedPackages[package.name] then
+            parsed[i] = parsed[#parsed]
+            table.remove(parsed)
+        else
             package.format = 'thunderstore'
             for _, omitProp in ipairs(omitProps) do
                 package[omitProp] = nil
