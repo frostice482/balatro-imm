@@ -2,7 +2,7 @@ local constructor = require("imm.lib.constructor")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
 
-local betaColor = { 0.78, 0.78, 0.4, 1 }
+local betaColor = G.C.ORANGE
 local thunderstoreColor = mix_colours(copy_table(G.C.BLUE), {1, 1, 1, 1}, 0.6)
 
 --- @class imm.ModBrowser.Funcs
