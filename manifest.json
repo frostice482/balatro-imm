@@ -1,7 +1,7 @@
 {
     "name": "balatro_imm",
     "description": "Ingame mod browser",
-    "version_number": "2.0.2",
+    "version_number": "2.0.3",
     "dependencies": [],
     "website_url": "https://github.com/frostice482/balatro-imm"
 }
