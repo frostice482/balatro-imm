@@ -13,11 +13,12 @@ I recommend that you name your tag based on your mod version, with some conversi
 
 ## Features
 
-- Thumbnails
-- Multiple version managing
-- Proper release management
+- Thunderstore support
+- Automatic problematic mod disabling on startup
+- AUtomatic installation of missing dependencies
+- Dependency / Conflict management
 - Caching
-- Early error mod disabling
+- Manage multiple installation versions
 
 ## Included libraries
 
