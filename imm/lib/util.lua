@@ -110,10 +110,11 @@ function util.slice(list, startPos, endPos)
 end
 
 --- @param args string[]
-function util.convertCommands(args)
+function util.convertCommands(args, platform)
+    platform = platform or jit.os
     --- @type string[]
     local converted = {}
-    if jit.os == 'Windows' then
+    if platform == 'Windows' then
         for i, arg in ipairs(args) do
             converted[i] = arg:gsub('[&|^<>()% \n\t\v\f]', function (m) return '^'..m end)
         end
@@ -126,8 +127,10 @@ function util.convertCommands(args)
 end
 
 function util.restart()
-    local args = table.concat(util.convertCommands({arg[-2], unpack(arg)}), ' ')
-    local cmd = string.format(jit.os == 'Windows' and 'start /b "" %s' or '%s &', args)
+    local args = util.convertCommands({arg[-2], unpack(arg)})
+    if jit.os == 'Windows' then args[1] = '"'..arg[-2]..'"' end
+
+    local cmd = string.format(jit.os == 'Windows' and 'start /b "" %s' or '%s &', table.concat(args, ' '))
     os.execute(cmd)
     love.event.quit()
 end
