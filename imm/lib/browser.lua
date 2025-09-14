@@ -225,16 +225,6 @@ function UISes:uiModText(title, maxw)
     }
 end
 
---- @param text string
-function UISes:uiModAuthor(text)
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        config = { align = 'm' },
-        nodes = {self:uiText('By '..text, 0.75)}
-    }
-end
-
 function UISes:uiModSelectContainer()
     return ui.container(self.idModSelectCnt)
 end
@@ -676,13 +666,26 @@ function UISes:updateFilter()
         for providedId, list in pairs(self.repo.listProviders) do
             if providedId:lower():find(filter.search, 1, true) then
                 for i, meta in ipairs(list) do
-                    if not addeds[meta.id] and self:matchFilter(meta, filter) then
+                    local id = meta:id()
+                    if not addeds[id] and self:matchFilter(meta, filter) then
                         table.insert(self.filteredList, meta)
-                        addeds[meta.id] = true
+                        addeds[id] = true
                     end
                 end
             end
         end
+    end
+
+    if filter.installed then
+        table.sort(self.filteredList, function (a, b)
+            local la = self.ctrl.mods[a:id()]
+            local va = la and la.active and 1 or 0
+            local lb = self.ctrl.mods[b:id()]
+            local vb = lb and lb.active and 1 or 0
+
+            if va ~= vb then return va > vb end
+            return a:title() < b:title()
+        end)
     end
 end
 

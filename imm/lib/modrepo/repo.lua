@@ -18,7 +18,7 @@ end
 --- @class imm.Repo
 --- @field list imm.ModMeta[]
 --- @field listMapped table<string, imm.ModMeta>
---- @field listProviders table<string, imm.ModMeta>
+--- @field listProviders table<string, imm.ModMeta[]>
 local IRepo = {}
 
 --- @alias imm.RepoProviderType 'github' | 'generic'
@@ -68,7 +68,7 @@ function IRepo:createVirtualEntry(mod)
         categories = mod.info.categories,
         id = mod.mod,
         name = mod.name,
-        owner = mod.info.author,
+        owner = mod.info.author and table.concat(mod.info.author, ', '),
         version = mod.version,
         description = mod.description,
         provides = mod.info.provides

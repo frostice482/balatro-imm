@@ -78,7 +78,7 @@ function IMeta:categories()
 end
 function IMeta:author()
     self:_assertOne()
-    return self.ts and self.ts.owner or self.bmi and self.bmi.owner
+    return self.ts and self.ts.owner or self.bmi and self.bmi.owner or '-'
 end
 
 --- @return string? err, love.Image? data
@@ -119,7 +119,7 @@ end
 --- @protected
 function IMeta:getReleasesBmiCo()
     if self.bmiVersionsCache then return self.bmiVersionsCache end
-    if not self.bmi then return end
+    if not (self.bmi and self.bmi.repo) then return end
 
     local err, releases = self.repo.bmi:getReleasesCo(self.bmi.repo)
     if not releases then

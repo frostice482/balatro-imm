@@ -377,7 +377,7 @@ end
 
 --- @param func string
 function UIModSes:uiReleasesContainer(func)
-    if not self.mod.repo then return self.ses:uiText("Repo info\nunavailable", 1.25, G.C.ORANGE) end
+    if not (self.mod.bmi and self.mod.bmi.repo or self.mod.ts) then return self.ses:uiText("Repo info\nunavailable", 1.25, G.C.ORANGE) end
 
     --- @type balatro.UIElement.Definition
     return {
@@ -417,7 +417,7 @@ function UIModSes:updateReleases(elm, res)
         end
     end
 
-    if self.mod.bmi then
+    if self.mod.bmi and self.mod.bmi.repo then
         table.insert(list, {
             version = 'Source',
             sub = self.mod.bmi.version..' - Potentially unstable!',
@@ -692,6 +692,25 @@ function UIModSes:uiConfirmModify(list, mod, isDisable)
     })
 end
 
+--- @param text string
+function UIModSes:uiModAuthor(text)
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.R,
+        config = { align = 'm' },
+        nodes = {self.ses:uiText('By '..text, 0.75)}
+    }
+end
+
+function UIModSes:uiMoreInfo()
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.R,
+        config = { align = 'm' },
+        nodes = {self.ses:uiText(self.mod:id(), 0.5)}
+    }
+end
+
 function UIModSes:container()
     --- @type balatro.UIElement.Definition
     return {
@@ -700,7 +719,8 @@ function UIModSes:container()
         nodes = {
             self.ses:uiImage(self.idImageSelectCnt),
             self.ses:uiModText(self.mod:title()),
-            self.ses:uiModAuthor(self.mod:author()),
+            self:uiModAuthor(self.mod:author()),
+            self:uiMoreInfo(),
             self.mod.bmi and self:uiRepoButton(),
             self:uiTabs()
         }
