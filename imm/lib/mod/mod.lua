@@ -71,6 +71,7 @@ function IMod:uninstall()
 
     logger.fmt('log', 'Deleted %s %s (%s)', self.mod, self.version, self.path)
     self.list.versions[self.version] = nil
+    self.list.listRequiresUpdate = true
     return true
 end
 
