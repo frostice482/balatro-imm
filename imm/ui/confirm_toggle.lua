@@ -18,11 +18,7 @@ local actionsRank = {
 
 --- @class imm.UI.ConfirmToggle
 --- @field mod? imm.Mod
-local IUICT = {
-    actFontScaleTitle = 0.3,
-    actFontScale = 0.3,
-    actFontScaleSub = 0.3 * 0.75
-}
+local IUICT = {}
 
 --- @param ses imm.UI.Browser
 --- @param list imm.LoadList
@@ -34,21 +30,25 @@ function IUICT:init(ses, list, mod, isDisable)
     self.mod = mod
     self.isDisable = isDisable
 
-    self.actWhoColor = G.C.WHITE
-    self.actVersionColor = G.C.BLUE
+    self.whoColor = G.C.WHITE
+    self.versionColor = G.C.BLUE
+
+    self.fontscale = ses.fontscale * 0.75
+    self.fontscaleTitle = self.fontscale
+    self.fontscaleVersion = self.fontscale
+    self.fontscaleSub = self.fontscale * 0.75
 end
 
 --- @param act imm.LoadList.ModAction
 function IUICT:partAct(act)
     local name = act.mod.name
     local version = act.mod.version
-    local entryScale = self.actFontScale
-    local entryScaleSub = self.actFontScaleSub
+    local entryScale = self.fontscale
 
     --- @type balatro.UIElement.Definition?
-    local byElm = act.cause and { n = G.UIT.T, config = { text = string.format(' (%s)', act.cause.mod), scale = entryScaleSub, colour = self.actWhoColor } }
+    local byElm = act.cause and { n = G.UIT.T, config = { text = string.format(' (%s)', act.cause.mod), scale = self.fontscaleSub, colour = self.whoColor } }
     --- @type balatro.UIElement.Definition
-    local verElm = { n = G.UIT.T, config = { text = ' '..version, scale = entryScaleSub, colour = self.actVersionColor } }
+    local verElm = { n = G.UIT.T, config = { text = ' '..version, scale = self.fontscaleVersion, colour = self.versionColor } }
     --- @type balatro.UIElement.Definition[]
     local t
 
@@ -61,9 +61,9 @@ function IUICT:partAct(act)
     elseif act.action == 'switch' then
         local from = (self.ses.ctrl.loadlist.loadedMods[act.mod.mod] or {}).version or '?'
         t = {
-            { n = G.UIT.T, config = { text = '/ '..name, scale = entryScale, colour = G.C.YELLOW } },
-            { n = G.UIT.T, config = { text = from, scale = entryScaleSub, colour = self.actVersionColor } },
-            { n = G.UIT.T, config = { text = ' ->', scale = entryScaleSub, colour = G.C.UI.TEXT_LIGHT } },
+            { n = G.UIT.T, config = { text = '/ '..name..' ', scale = entryScale, colour = G.C.YELLOW } },
+            { n = G.UIT.T, config = { text = from, scale = self.fontscaleVersion, colour = self.versionColor } },
+            { n = G.UIT.T, config = { text = ' ->', scale = self.fontscaleVersion, colour = G.C.UI.TEXT_LIGHT } },
         }
     end
 
@@ -99,7 +99,7 @@ function IUICT:partActions(nodes)
 
     for i,act in ipairs(impossibles) do
         if not hasImpossible then
-            table.insert(nodes, ui.simpleTextRow('These mods are in impossible condition to load:', self.actFontScaleTitle))
+            table.insert(nodes, ui.simpleTextRow('These mods are in impossible condition to load:', self.fontscaleTitle))
             hasImpossible = true
         end
         table.insert(nodes, self:partAct(act))
@@ -107,7 +107,7 @@ function IUICT:partActions(nodes)
 
     for i,act in ipairs(actions) do
         if not hasChange then
-            table.insert(nodes, ui.simpleTextRow('These mods will also take effect:', self.actFontScaleTitle))
+            table.insert(nodes, ui.simpleTextRow('These mods will also take effect:', self.fontscaleTitle))
             hasChange = true
         end
         table.insert(nodes, self:partAct(act))
@@ -143,14 +143,14 @@ function IUICT:partMissing(nodes)
 
     for i, entry in ipairs(missings) do
         if not hasMissing then
-            table.insert(nodes, ui.simpleTextRow('These mods have missing dependencies:', self.actFontScaleTitle))
+            table.insert(nodes, ui.simpleTextRow('These mods have missing dependencies:', self.fontscaleTitle))
             hasMissing = true
         end
 
-        local base = ui.simpleTextRow(string.format('? %s', entry[1]), self.actFontScale, G.C.YELLOW)
+        local base = ui.simpleTextRow(string.format('? %s', entry[1]), self.fontscale, G.C.YELLOW)
         table.insert(nodes, base)
         for i, entry in pairs(entry[2]) do
-            table.insert(nodes, ui.simpleTextRow('    '..entry, self.actFontScaleSub))
+            table.insert(nodes, ui.simpleTextRow('    '..entry, self.fontscaleSub))
         end
     end
 
@@ -163,28 +163,42 @@ function IUICT:render()
 
     --- @type balatro.UIElement.Definition[]
     local nodes = {}
-    table.insert(nodes, ui.simpleTextRow(titleText, self.actFontScaleTitle * 1.25))
+    table.insert(nodes, ui.simpleTextRow(titleText, self.fontscaleTitle * 1.25))
 
     local hasMissing = self:partMissing(nodes)
     local hasImpossible, hasChange = self:partActions(nodes)
     local hasErr = hasMissing or hasImpossible
 
     local data = { list = self.list, ses = self.ses, mod = self.mod }
-    local bconf = { __index = { scale = self.ses.fontscale, ref_table = data, minh = 0.6, minw = 5 } }
+    local bconf = { __index = { scale = self.ses.fontscale, ref_table = data, minh = 0.6, minw = 4, col = true } }
 
     if hasMissing then
         table.insert(nodes, UIBox_button(setmetatable({ button = funcs.download, label = {'Download missings'}, colour = G.C.BLUE }, bconf)))
     end
     local labelModifyAll = 'Confirm'
-    local labelOne = self.mod and string.format('%s JUST %s', tgltext, self.mod.name) or ''
-    if hasErr then
-        labelModifyAll = labelModifyAll..' anyway'
-        labelOne = labelOne..' anyway'
-    end
+    if hasErr then labelModifyAll = labelModifyAll..' anyway' end
 
-    table.insert(nodes, UIBox_button(setmetatable({ button = funcs.confirm, label = {labelModifyAll}, colour = hasErr and G.C.ORANGE or G.C.BLUE }, bconf)))
-    if self.mod then table.insert(nodes, UIBox_button(setmetatable({ button = funcs.confirmOne, label = {labelOne}, colour = G.C.ORANGE }, bconf))) end
-    table.insert(nodes, UIBox_button(setmetatable({ button = browser_funcs.back, label = {'Cancel'}, colour = G.C.GREY, ref_table = self.ses }, bconf)))
+    local buttons = {}
+
+    table.insert(buttons, UIBox_button(setmetatable({
+        button = funcs.confirm,
+        label = {labelModifyAll},
+        colour = hasErr and G.C.ORANGE or G.C.BLUE
+    }, bconf)))
+
+    if self.mod then table.insert(buttons, UIBox_button(setmetatable({
+        button = funcs.confirmOne,
+        label = {string.format('JUST %s', self.mod.name)},
+        colour = G.C.ORANGE
+    }, bconf))) end
+
+    table.insert(buttons, UIBox_button(setmetatable({
+        button = browser_funcs.back,
+        label = {'Cancel'},
+        colour = G.C.GREY, ref_table = self.ses
+    }, bconf)))
+
+    table.insert(nodes, { n = G.UIT.R, nodes = ui.gapList('C', 0.1, buttons) })
 
     return create_UIBox_generic_options({
         contents = nodes,
