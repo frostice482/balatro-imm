@@ -1,20 +1,32 @@
 local constructor = require("imm.lib.constructor")
-local ModBrowser = require("imm.lib.browser_mod")
 local LoveMoveable = require("imm.lib.love_moveable")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
 local logger = require("imm.logger")
-local httpsAgent = require("imm.https_agent")
-local funcs = require("imm.browser_funcs")
 
---- @class imm.Browser
+local function UIMod()
+    return require("imm.ui.mod")
+end
+
+--- @class imm.UI.Browser.Funcs
+local funcs = {
+    refresh     = 'imm_b_refresh',
+    setCategory = 'imm_b_setcat',
+    update      = 'imm_b_update',
+    cyclePage   = 'imm_b_cycle',
+    chooseMod   = 'imm_b_choosemod',
+    back        = 'imm_b_back',
+    options     = 'imm_b_opts'
+}
+
+--- @class imm.UI.Browser
 --- @field uibox balatro.UIBox
 --- @field tags table<string, boolean>
 --- @field filteredList imm.ModMeta[]
---- @field selectedMod? imm.ModBrowser
+--- @field selectedMod? imm.UI.Mod
 --- @field taskQueues? fun()[]
 --- @field ctrl imm.ModController
-local UISes = {
+local IUISes = {
     search = '',
     prevSearch = '',
     queueTimer = 0.3,
@@ -49,7 +61,7 @@ local UISes = {
 --- @protected
 --- @param modctrl? imm.ModController
 --- @param repo? imm.Repo
-function UISes:init(modctrl, repo)
+function IUISes:init(modctrl, repo)
     self.ctrl = modctrl or require('imm.modctrl')
     self.repo = repo or require('imm.repo')
     self.tags = {}
@@ -68,7 +80,7 @@ function UISes:init(modctrl, repo)
     self.taskQueues = {}
 end
 
-function UISes:nextTask()
+function IUISes:nextTask()
     self.taskDone = true
     local f = table.remove(self.taskQueues, 1)
     if not f then return end
@@ -77,12 +89,12 @@ function UISes:nextTask()
 end
 
 --- @param func fun()
-function UISes:queueTask(func)
+function IUISes:queueTask(func)
     table.insert(self.taskQueues, func)
     if self.taskDone then self:nextTask() end
 end
 
-function UISes:queueTaskCo()
+function IUISes:queueTaskCo()
     co.wrapCallbackStyle(function (res)
         if self.taskDone then
             self.taskDone = false
@@ -94,19 +106,19 @@ function UISes:queueTaskCo()
 end
 
 --- @param n number
-function UISes:getModElmId(n)
+function IUISes:getModElmId(n)
     return 'imm-mod-'..n
 end
 
 --- @param n number
-function UISes:getModElmCntId(n)
+function IUISes:getModElmCntId(n)
     return 'imm-mod-container-'..n
 end
 
 --- @param text string
 --- @param scale? number
 --- @param col? ColorHex
-function UISes:uiText(text, scale, col)
+function IUISes:uiText(text, scale, col)
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.T,
@@ -115,7 +127,7 @@ function UISes:uiText(text, scale, col)
 end
 
 --- @param id string
-function UISes:uiImage(id)
+function IUISes:uiImage(id)
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
@@ -130,7 +142,7 @@ end
 
 --- @param title string
 --- @param maxw? number
-function UISes:uiModText(title, maxw)
+function IUISes:uiModText(title, maxw)
     local obj = DynaText({
         string = title,
         scale = self.fontscale,
@@ -153,11 +165,11 @@ function UISes:uiModText(title, maxw)
     }
 end
 
-function UISes:uiModSelectContainer()
+function IUISes:uiModSelectContainer()
     return ui.container(self.idModSelectCnt)
 end
 
-function UISes:uiCategory(label, category)
+function IUISes:uiCategory(label, category)
     category = category or label
     --- @type balatro.UIElement.Definition
     return {
@@ -185,7 +197,7 @@ end
 --- @type balatro.UIElement.Config
 local someWeirdBase = { padding = 0.15, r = 0.1, hover = true, shadow = true, colour = G.C.BLUE }
 
-function UISes:uiSidebarHeaderExit()
+function IUISes:uiSidebarHeaderExit()
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.C,
@@ -194,7 +206,7 @@ function UISes:uiSidebarHeaderExit()
     }
 end
 
-function UISes:uiSidebarHeaderRefresh()
+function IUISes:uiSidebarHeaderRefresh()
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.C,
@@ -203,7 +215,7 @@ function UISes:uiSidebarHeaderRefresh()
     }
 end
 
-function UISes:uiSidebarHeaderOptions()
+function IUISes:uiSidebarHeaderOptions()
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.C,
@@ -212,7 +224,7 @@ function UISes:uiSidebarHeaderOptions()
     }
 end
 
-function UISes:uiSidebarHeader()
+function IUISes:uiSidebarHeader()
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
@@ -227,7 +239,7 @@ function UISes:uiSidebarHeader()
     }
 end
 
-function UISes:uiSidebar()
+function IUISes:uiSidebar()
     local categories = {}
 
     table.insert(categories, self:uiSidebarHeader())
@@ -242,7 +254,7 @@ end
 
 --- @param mod imm.ModMeta
 --- @param n number
-function UISes:uiModEntry(mod, n)
+function IUISes:uiModEntry(mod, n)
     local w, textDescs
     local desc = mod:description()
     if desc then
@@ -280,7 +292,7 @@ function UISes:uiModEntry(mod, n)
     }
 end
 
-function UISes:uiHeaderInput()
+function IUISes:uiHeaderInput()
     return create_text_input({
         ref_table = self,
         ref_value = 'search',
@@ -291,7 +303,7 @@ function UISes:uiHeaderInput()
     })
 end
 
-function UISes:uiHeader()
+function IUISes:uiHeader()
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
@@ -302,7 +314,7 @@ function UISes:uiHeader()
     }
 end
 
-function UISes:uiMain()
+function IUISes:uiMain()
     local n = 0
     local col = {}
 
@@ -332,7 +344,7 @@ function UISes:uiMain()
     return { n = G.UIT.C, nodes = col }
 end
 
-function UISes:uiBody()
+function IUISes:uiBody()
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
@@ -344,7 +356,7 @@ function UISes:uiBody()
     }
 end
 
-function UISes:uiCycle()
+function IUISes:uiCycle()
     local n = math.max(math.ceil(#self.filteredList/(self.listW*self.listH)), 1)
     local opts = ui.cycleOptions(n)
     self.listPage = math.min(self.listPage, n)
@@ -362,7 +374,7 @@ function UISes:uiCycle()
     return obj
 end
 
-function UISes:uiCycleContainer()
+function IUISes:uiCycleContainer()
     local w = ui.container(self.idCycleCont, true)
     w.config = {
         align = 'cm',
@@ -371,7 +383,7 @@ function UISes:uiCycleContainer()
     return w
 end
 
-function UISes:uiErrorContainer()
+function IUISes:uiErrorContainer()
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
@@ -387,7 +399,7 @@ function UISes:uiErrorContainer()
     }
 end
 
-function UISes:uiTaskContainer()
+function IUISes:uiTaskContainer()
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
@@ -403,7 +415,7 @@ function UISes:uiTaskContainer()
     }
 end
 
-function UISes:uiBrowse()
+function IUISes:uiBrowse()
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.C,
@@ -422,111 +434,27 @@ function UISes:uiBrowse()
     }
 end
 
---- @param commonOpts balatro.UI.ButtonParam
---- @return balatro.UIElement.Definition[]
-function UISes:uiOptionsA(commonOpts)
-    return {
-        UIBox_button(setmetatable({ button = funcs.disableAll, label = {'Disable all mods'} }, {__index = commonOpts})),
-        UIBox_button(setmetatable({ button = funcs.restart, label = {'Restart'} }, {__index = commonOpts})),
-        UIBox_button(setmetatable({ button = funcs.openModFolder, label = {'Open mods folder'} }, {__index = commonOpts})),
-        UIBox_button(setmetatable({ button = funcs.checkRateLimit, label = {'Check ratelimit'} }, {__index = commonOpts})),
-    }
-end
-
---- @param commonOpts balatro.UI.ButtonParam
---- @return balatro.UIElement.Definition[]
-function UISes:uiOptionsB(commonOpts)
-    return {
-        UIBox_button(setmetatable({ button = funcs.clearCache, ref_table = {ses = self, mode = 't'}, label = {'Clear thumbnails cache'} }, {__index = commonOpts})),
-        UIBox_button(setmetatable({ button = funcs.clearCache, ref_table = {ses = self, mode = 'd'}, label = {'Clear downloads'} }, {__index = commonOpts})),
-        UIBox_button(setmetatable({ button = funcs.clearCache, ref_table = {ses = self, mode = 'r'}, label = {'Clear releases cache'} }, {__index = commonOpts})),
-        UIBox_button(setmetatable({ button = funcs.clearCache, ref_table = {ses = self, mode = 'l'}, label = {'Clear list cache'} }, {__index = commonOpts})),
-    }
-end
-
---- @param commonOpts balatro.UI.ButtonParam
---- @return balatro.UIElement.Definition[][]
-function UISes:uiOptionsGrid(commonOpts)
-    return {
-        self:uiOptionsA(commonOpts),
-        self:uiOptionsB(commonOpts)
-    }
-end
-
-function UISes:uiOptions()
-    local spacing = 0.2
-    local commonOpts = {  ref_table = self, minw = 4 }
-    return create_UIBox_generic_options({
-        contents = {{
-            n = G.UIT.R,
-            nodes = ui.gapGrid(spacing, spacing, self:uiOptionsGrid(commonOpts), false)
-        }},
-        back_func = funcs.back,
-        ref_table = self
-    })
-end
-
-function UISes:uiOptionsCheckRateLimitExec()
-    local textscale = 0.4
-    local conf = { t = 'Checking...', ref_value = 't', scale = textscale }
-    conf.ref_table = conf
-    local subconf = { t = '', ref_value = 't', scale = textscale * 0.75 }
-    subconf.ref_table = subconf
-
-    local t = os.time()
-    httpsAgent:request('https://api.github.com/rate_limit', nil, function (code, body, headers)
-        if code ~= 200 then
-            conf.t = string.format('Error %d', code)
-            return
-        end
-        --- @type ghapi.Ratelimit
-        local data = JSON.decode(body)
-        local limited = data.rate.remaining == 0
-        conf.t = string.format('%s (%d/%d)', limited and "Ratelimited" or "Not ratelimited", data.rate.remaining, data.rate.limit)
-        conf.colour = limited and G.C.ORANGE or G.C.GREEN
-        subconf.t = string.format('Resets in %d minute(s)', (data.rate.reset - t) / 60)
-    end)
-
-    return create_UIBox_generic_options({
-        contents = {{
-            n = G.UIT.R,
-            config = { align = 'cm' },
-            nodes = {
-                { n = G.UIT.T, config = { text = 'Github API Ratelimit: ', scale = textscale } },
-                { n = G.UIT.T, config = conf },
-            }
-        }, {
-            n = G.UIT.R,
-            config = { align = 'cm' },
-            nodes = {
-                { n = G.UIT.T, config = subconf },
-            }
-        }},
-        back_func = funcs.back,
-        ref_table = self
-    })
-end
 --- @param mod? imm.ModMeta
-function UISes:selectMod(mod)
+function IUISes:selectMod(mod)
     if self.selectedMod then self.uibox:remove_group(nil, self.idModSelect) end
     local cnt = self.uibox:get_UIE_by_ID(self.idModSelectCnt)
     if not mod or not cnt then return end
 
-    local modses = ModBrowser(self, mod)
+    local modses = UIMod()(self, mod)
     self.selectedMod = modses
-    self.uibox:add_child(modses:container(), cnt)
+    self.uibox:add_child(modses:render(), cnt)
     modses:update()
 end
 
 --- @param ifMod? imm.ModMeta
-function UISes:updateSelectedMod(ifMod)
+function IUISes:updateSelectedMod(ifMod)
     local mod = self.selectedMod and self.selectedMod.mod
     if not ifMod or ifMod == mod then
         return self:selectMod(mod)
     end
 end
 
-function UISes:queueUpdate()
+function IUISes:queueUpdate()
     self.queueCount = self.queueCount + 1
     G.E_MANAGER:add_event(Event{
         blockable = false,
@@ -537,7 +465,7 @@ function UISes:queueUpdate()
     })
 end
 
-function UISes:queueUpdateNext()
+function IUISes:queueUpdateNext()
     self.queueCount = self.queueCount - 1
     if self.queueCount == 0 then self:update() end
     return true
@@ -545,7 +473,7 @@ end
 
 --- @param containerId string
 --- @param img love.Image
-function UISes:uiUpdateImage(containerId, img)
+function IUISes:uiUpdateImage(containerId, img)
     local imgcnt = self.uibox:get_UIE_by_ID(containerId)
     if not imgcnt then return end
 
@@ -562,7 +490,7 @@ end
 --- @param mod imm.ModMeta
 --- @param containerId string
 --- @param nocheckUpdate? boolean
-function UISes:_updateModImageCo(mod, containerId, nocheckUpdate)
+function IUISes:_updateModImageCo(mod, containerId, nocheckUpdate)
     local aid = self.updateId
     local err, data = mod:getImageCo()
     if not data or not nocheckUpdate and self.updateId ~= aid then return end
@@ -572,13 +500,13 @@ end
 --- @param mod imm.ModMeta
 --- @param containerId string
 --- @param nocheckUpdate? boolean
-function UISes:updateModImage(mod, containerId, nocheckUpdate)
+function IUISes:updateModImage(mod, containerId, nocheckUpdate)
     co.create(self._updateModImageCo, self, mod, containerId, nocheckUpdate)
 end
 
 --- @param mod? imm.ModMeta
 --- @param n number
-function UISes:updateMod(mod, n)
+function IUISes:updateMod(mod, n)
     local cont = self.uibox:get_UIE_by_ID(self:getModElmCntId(n))
     if not cont or not mod then return end
 
@@ -586,7 +514,7 @@ function UISes:updateMod(mod, n)
     self:updateModImage(mod, self:getModElmId(n)..self.idImageContSuff)
 end
 
-function UISes:updateMods()
+function IUISes:updateMods()
     self.updateId = self.updateId + 1
     self.uibox:remove_group(nil, self.idMod)
     local off = (self.listPage - 1) * self.listW * self.listH
@@ -603,7 +531,7 @@ end
 
 --- @param mod imm.ModMeta
 --- @param filter imm.Filter
-function UISes:matchFilter(mod, filter)
+function IUISes:matchFilter(mod, filter)
     local id = mod:id()
     if filter.installed and not (self.ctrl.mods[id] and next(self.ctrl.mods[id].versions)) then return false end
     if not (filter.id and id or filter.author and mod:author() or mod:title()):lower():find(filter.search, 1, true) then return false end
@@ -624,7 +552,7 @@ function UISes:matchFilter(mod, filter)
     return true
 end
 
-function UISes:createFilter()
+function IUISes:createFilter()
     local search = self.search:lower()
     local isAuthor, isInstalled, isId
     local hasFilter = true
@@ -650,7 +578,7 @@ function UISes:createFilter()
     }
 end
 
-function UISes:updateFilter()
+function IUISes:updateFilter()
     self.filteredList = {}
 
     local ids = {}
@@ -706,7 +634,7 @@ function UISes:updateFilter()
     end
 end
 
-function UISes:update()
+function IUISes:update()
     self.uibox:remove_group(nil, self.idCycle)
 
     self:updateFilter()
@@ -720,7 +648,7 @@ function UISes:update()
 end
 
 --- @protected
-function UISes:_prepareCo()
+function IUISes:_prepareCo()
     co.all(
         function ()
             logger.dbg('Getting list for BMI')
@@ -741,7 +669,7 @@ function UISes:_prepareCo()
     self:update()
 end
 
-function UISes:prepare()
+function IUISes:prepare()
     if self.prepared then
         self:update()
         self:updateSelectedMod()
@@ -750,15 +678,16 @@ function UISes:prepare()
     co.create(self._prepareCo, self)
 end
 
-function UISes:container()
+function IUISes:render()
     return create_UIBox_generic_options({
         no_back = true,
         contents = { self:uiBrowse() }
     })
 end
 
-function UISes:showOverlay(update)
-    G.FUNCS.overlay_menu({ definition = self:container() })
+function IUISes:showOverlay(update)
+    ui.overlay(self:render())
+
     self.uibox = G.OVERLAY_MENU
     self.uibox.config.imm = self
     if update then self:prepare() end
@@ -774,7 +703,7 @@ end
 --- @protected
 --- @param url string
 --- @param extra? imm.ModSession.QueueDownloadExtraInfo
-function UISes:_queueTaskInstallCo(url, extra)
+function IUISes:_queueTaskInstallCo(url, extra)
     extra = extra or {}
     local name = extra.name or 'something'
     local size = extra.size
@@ -803,7 +732,7 @@ end
 
 --- @param url string
 --- @param extra? imm.ModSession.QueueDownloadExtraInfo
-function UISes:queueTaskInstall(url, extra)
+function IUISes:queueTaskInstall(url, extra)
     co.create(self._queueTaskInstallCo, self, url, extra)
 end
 
@@ -811,7 +740,7 @@ end
 --- @param id string
 --- @param list imm.Dependency.Rule[][]
 --- @param blacklistState? table<string>
-function UISes:_installMissingModEntryCo(id, list, blacklistState)
+function IUISes:_installMissingModEntryCo(id, list, blacklistState)
     local mod = self.repo:getMod(id)
     if not mod then return logger.fmt('warn', 'Mod id %s does not exist in repo', id) end
 
@@ -835,13 +764,13 @@ end
 --- @param id string
 --- @param list imm.Dependency.Rule[][]
 --- @param blacklistState? table<string>
-function UISes:installMissingModEntry(id, list, blacklistState)
+function IUISes:installMissingModEntry(id, list, blacklistState)
     co.create(self._installMissingModEntryCo, self, id, list, blacklistState)
 end
 
 --- @param mod imm.Mod
 --- @param blacklistState? table<string>
-function UISes:installMissingMods(mod, blacklistState)
+function IUISes:installMissingMods(mod, blacklistState)
     local missings = self.ctrl:getMissingDeps(mod.deps)
     for missingid, missingList in pairs(missings) do
         logger.fmt('log', 'Missing dependency %s by %s', missingid, mod.mod)
@@ -850,7 +779,7 @@ function UISes:installMissingMods(mod, blacklistState)
 end
 
 ---@param blacklistState? table<string>
-function UISes:installModFromZip(data, blacklistState)
+function IUISes:installModFromZip(data, blacklistState)
     local modlist, list, errlist = self.ctrl:installFromZip(data)
 
     local strlist = {}
@@ -868,11 +797,11 @@ function UISes:installModFromZip(data, blacklistState)
     return modlist, list, errlist
 end
 
---- @class imm.Browser.Static
---- @field funcs imm.Browser.Funcs
+--- @class imm.UI.Browser.Static
+--- @field funcs imm.UI.Browser.Funcs
 
---- @alias imm.Browser.C imm.Browser.Static | p.Constructor<imm.Browser, nil> | fun(modctrl?: imm.ModController, modrepo?: imm.Repo): imm.Browser
---- @type imm.Browser.C
-local UISes = constructor(UISes)
+--- @alias imm.UI.Browser.C imm.UI.Browser.Static | p.Constructor<imm.UI.Browser, nil> | fun(modctrl?: imm.ModController, modrepo?: imm.Repo): imm.UI.Browser
+--- @type imm.UI.Browser.C
+local UISes = constructor(IUISes)
 UISes.funcs = funcs
 return UISes

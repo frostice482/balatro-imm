@@ -1,0 +1,267 @@
+local constructor = require("imm.lib.constructor")
+local UIVersion = require('imm.ui.version')
+local ui = require("imm.lib.ui")
+local modsDir = require('imm.config').modsDir
+
+--- @class imm.UI.Mod.Funcs
+local funcs = {
+    openUrl      = 'imm_m_openurl',
+    releasesInit = 'imm_m_releases_init',
+    otherInit    = 'imm_m_other_init'
+}
+
+local betaColor = G.C.ORANGE
+
+--- @class imm.UI.Mod
+--- @field ses imm.UI.Browser
+--- @field mod imm.ModMeta
+local IUIModSes = {
+    cyclePageSize = 7,
+    idListCnt = 'imm-other-cycle',
+    idImageSelectCnt = 'imm-slc-imgcnt',
+}
+
+--- @protected
+--- @param ses imm.UI.Browser
+--- @param mod imm.ModMeta
+function IUIModSes:init(ses, mod)
+    self.ses = ses
+    self.mod = mod
+end
+
+--- @param version string
+--- @param opts imm.UI.Version.Opts
+function IUIModSes:uiVersion(version, opts)
+    return UIVersion(self.ses, self.mod:id(), version, opts)
+end
+
+--- @param release imm.ModMeta.Release
+function IUIModSes:uiVersionRelease(release)
+    return UIVersion.fromRelease(self.ses, self.mod:id(), release)
+end
+
+function IUIModSes:uiTabInstalled()
+    local l = self.ses.ctrl.mods[self.mod:id()]
+    if not l or not next(l.versions) then return self.ses:uiText('No installed\nversions', 1.25, G.C.ORANGE) end
+
+    --- @type imm.UI.Version[]
+    local versions = {}
+    for _, entry in ipairs(l:list()) do
+        local ver = self:uiVersion(entry.version, {
+            sub = entry.path:sub(modsDir:len() + 2),
+            installed = true
+        })
+        table.insert(versions, ver)
+    end
+
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.C,
+        nodes = {
+            self:uiCycle(versions),
+            ui.container(self.idListCnt, true)
+        }
+    }
+end
+
+--- @param func string
+function IUIModSes:uiReleasesContainer(func)
+    if not (self.mod.bmi and self.mod.bmi.repo or self.mod.ts) then return self.ses:uiText("Repo info\nunavailable", 1.25, G.C.ORANGE) end
+
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.C,
+        config = { func = func, ref_table = self },
+        nodes = {{
+            n = G.UIT.R,
+            nodes = {self.ses:uiText('Please wait', 1.25)}
+        }}
+    }
+end
+
+--- @param elm balatro.UIElement
+--- @param res imm.ModMeta.Release[]
+function IUIModSes:updateReleases(elm, res)
+    --- @type imm.UI.Version
+    local list = {}
+
+    if res then
+        --- @type imm.ModMeta.Release
+        local pre
+        --- @type imm.ModMeta.Release
+        local latest
+
+        for i,v in ipairs(res) do
+            if v.isPre then pre = pre or v
+            else latest = latest or v
+            end
+            --if latest then break end
+        end
+
+        if latest then
+            table.insert(list, self:uiVersionRelease(latest))
+        end
+        if pre and not (pre.versionParsed and latest.versionParsed and pre.versionParsed < latest.versionParsed) then
+            table.insert(list, self:uiVersionRelease(pre))
+        end
+    end
+
+    if self.mod.bmi and self.mod.bmi.repo then
+        local ui = self:uiVersion('Source', {
+            sub = self.mod.bmi.version..' - Potentially unstable!',
+            downloadUrl = self.mod.bmi.download_url,
+            color = betaColor
+        })
+        table.insert(list, ui)
+    end
+
+    self:uiAdd(elm, list)
+end
+
+--- @param elm balatro.UIElement
+--- @param res imm.ModMeta.Release[]
+function IUIModSes:updateOther(elm, res)
+    --- @type imm.UI.Version[]
+    local list = {}
+    for k,release in pairs(res) do table.insert(list, self:uiVersionRelease(release)) end
+
+    self:uiAdd(elm, list)
+end
+
+--- @param elm balatro.UIElement
+--- @param list imm.UI.Version[]
+function IUIModSes:uiAdd(elm, list)
+    local uibox = elm.UIBox
+    uibox:add_child(self:uiCycle(list), elm)
+    uibox:add_child(ui.container(self.idListCnt, true), elm)
+    uibox:recalculate()
+    self.ses.uibox:recalculate()
+end
+
+--- @param list imm.UI.Version[]
+function IUIModSes:uiCycle(list)
+    return ui.cycle({
+        func = function (i) return list[i] and list[i]:render() end,
+        length = #list,
+        id = self.idListCnt,
+        pagesize = self.cyclePageSize,
+        onCycle = function () self.ses.uibox:recalculate() end
+    }, { no_pips = true })
+end
+
+function IUIModSes:uiTabs()
+    local mod = self.mod
+    local hasVersion = not not ( self.ses.ctrl.mods[mod:id()] and next(self.ses.ctrl.mods[mod:id()].versions) )
+
+    --- @type balatro.UIElement.Definition
+    return create_tabs({
+        scale = self.ses.fontscale * 1.5,
+        text_scale = self.ses.fontscale,
+        snap_to_nav = true,
+
+        tabs = {{
+            chosen = hasVersion,
+            label = 'Installed',
+            tab_definition_function = function (arg)
+                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiTabInstalled()} }
+            end
+        }, {
+            chosen = not hasVersion,
+            label = 'Releases',
+            tab_definition_function = function (arg)
+                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiReleasesContainer(funcs.releasesInit)} }
+            end
+        }, {
+            label = 'Older',
+            tab_definition_function = function (arg)
+                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiReleasesContainer(funcs.otherInit)} }
+            end
+        }}
+    })
+end
+
+--- @param url string
+--- @param text string
+function IUIModSes:uiRepoButtonUrl(url, text)
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.C,
+        config = {
+            colour = G.C.PURPLE,
+            padding = 0.1,
+            shadow = true,
+            button = funcs.openUrl,
+            ref_table = { url = url },
+            r = true,
+            button_dist = 0.1,
+            tooltip = {
+                text = { url },
+                text_scale = self.ses.fontscale * 0.8
+            }
+        },
+        nodes = {self.ses:uiText(text)}
+    }
+end
+
+function IUIModSes:uiRepoButton()
+    local cols = {}
+
+    if self.mod.bmi and self.mod.bmi.repo then
+        table.insert(cols, self:uiRepoButtonUrl(self.mod.bmi.repo, 'Repo'))
+    end
+    if self.mod.ts and self.mod.ts.package_url then
+        table.insert(cols, self:uiRepoButtonUrl(self.mod.ts.package_url, 'Package'))
+    end
+    if self.mod.tsLatest and self.mod.tsLatest.website_url then
+        table.insert(cols, self:uiRepoButtonUrl(self.mod.tsLatest.website_url, 'Website'))
+    end
+    if self.mod.ts and self.mod.ts.donation_link then
+        table.insert(cols, self:uiRepoButtonUrl(self.mod.ts.donation_link, 'Donate'))
+    end
+
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.R,
+        config = { padding = 0.1, align = 'm' },
+        nodes = cols
+    }
+end
+
+--- @param text string
+function IUIModSes:uiModAuthor(text)
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.R,
+        config = { align = 'm' },
+        nodes = {self.ses:uiText('By '..text, 0.75)}
+    }
+end
+
+function IUIModSes:render()
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.C,
+        config = { group = self.ses.idModSelect },
+        nodes = {
+            self.ses:uiImage(self.idImageSelectCnt),
+            self.ses:uiModText(self.mod:title()),
+            self:uiModAuthor(self.mod:author()),
+            --self:uiMoreInfo(),
+            self:uiRepoButton(),
+            self:uiTabs()
+        }
+    }
+end
+
+function IUIModSes:update()
+    self.ses:updateModImage(self.mod, self.idImageSelectCnt, true)
+end
+
+--- @class imm.UI.Mod.Static
+--- @field funcs imm.UI.Mod.Funcs
+
+--- @alias imm.UI.Mod.C imm.UI.Mod.Static | p.Constructor<imm.UI.Mod, nil> | fun(ses: imm.UI.Browser, mod: imm.ModMeta): imm.UI.Mod
+--- @type imm.UI.Mod.C
+local UIModSes = constructor(IUIModSes)
+UIModSes.funcs = funcs
+return UIModSes

@@ -1,4 +1,4 @@
---- @param browser imm.Browser
+--- @param browser imm.UI.Browser
 --- @param file love.DroppedFile
 local function dropinstall(browser, file)
     local fd = love.filesystem.newFileData(file:read('data'), '')

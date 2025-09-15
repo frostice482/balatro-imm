@@ -16,7 +16,7 @@ local function __imm_postload(selfdir)
     __imm_atlas(selfdir, 'icons', 'icons.png', 19, 19)
     __imm_atlas(selfdir, 'toggle', 'toggle.png', 15, 9)
 
-    require('imm.ui')
+    require('imm.init')
 end
 
 local function __imm_init()

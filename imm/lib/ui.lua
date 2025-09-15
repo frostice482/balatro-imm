@@ -217,4 +217,9 @@ function ui.simpleTextRow(text, scale, color)
     return { n = G.UIT.R, nodes = {{ n = G.UIT.T, config = { text = text, scale = scale or 1, colour = color or G.C.UI.TEXT_LIGHT } }} }
 end
 
+--- @param def balatro.UIElement.Definition
+function ui.overlay(def)
+    G.FUNCS.overlay_menu({definition = def})
+end
+
 return ui

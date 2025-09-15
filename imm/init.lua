@@ -1,6 +1,29 @@
-local browserFuncs = require("imm.browser_funcs")
+local util = require("imm.lib.util")
 local ui = require("imm.lib.ui")
-local di
+
+local funcs = {
+    restartConf = 'imm_s_restart_conf',
+}
+
+local exit_overlay = G.FUNCS.exit_overlay_menu
+G.FUNCS.exit_overlay_menu = function()
+    local ses = G.OVERLAY_MENU and G.OVERLAY_MENU.config.imm
+    if not ses or not ses.hasChanges then return exit_overlay() end
+
+    ui.overlay(
+        ui.confirm(
+            ui.simpleTextRow('Restart balatro now?', 0.6),
+            funcs.restartConf,
+            {}
+        )
+    )
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.restartConf] = function(elm)
+    if not elm.config.ref_table.confirm then return G.FUNCS.exit_overlay_menu() end
+    util.restart()
+end
 
 -- Taken from balamod, modified
 -- https://github.com/balamod/balamod_lua/blob/main/src/balamod_uidefs.lua
@@ -26,18 +49,9 @@ local function browse_button()
     }
 end
 
-local exit_overlay = G.FUNCS.exit_overlay_menu
-
-function G.FUNCS.exit_overlay_menu()
-    local ses = G.OVERLAY_MENU and G.OVERLAY_MENU.config.imm
-    if not ses or not ses.hasChanges then return exit_overlay() end
-
-    G.FUNCS.overlay_menu({ definition = ui.confirm(ui.simpleTextRow('Restart balatro now?', 0.6), browserFuncs.restartConf, {}) })
-end
-
 function G.FUNCS.imm_browse()
-    di = di or require('imm.dropinstall')
-    Browser = Browser or require("imm.lib.browser")
+    require('imm.init_ui')
+    Browser = Browser or require("imm.ui.browser")
 
     G.SETTINGS.paused = true
     Browser():showOverlay(true)
