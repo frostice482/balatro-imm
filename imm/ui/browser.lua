@@ -1,12 +1,9 @@
 local constructor = require("imm.lib.constructor")
 local LoveMoveable = require("imm.lib.love_moveable")
+local UIMod = require("imm.ui.mod")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
 local logger = require("imm.logger")
-
-local function UIMod()
-    return require("imm.ui.mod")
-end
 
 --- @class imm.UI.Browser.Funcs
 local funcs = {
@@ -55,7 +52,7 @@ local IUISes = {
     idModSelect = 'imm-modslc',
     idModSelectCnt = 'imm-modslc-cnt',
     idMod = 'imm-mod',
-    idImageContSuff = '-imgcnt',
+    idImageContSuff = '-imgcnt'
 }
 
 --- @protected
@@ -440,7 +437,7 @@ function IUISes:selectMod(mod)
     local cnt = self.uibox:get_UIE_by_ID(self.idModSelectCnt)
     if not mod or not cnt then return end
 
-    local modses = UIMod()(self, mod)
+    local modses = UIMod(self, mod)
     self.selectedMod = modses
     self.uibox:add_child(modses:render(), cnt)
     modses:update()
@@ -648,25 +645,15 @@ function IUISes:update()
 end
 
 --- @protected
-function IUISes:_prepareCo()
-    co.all(
-        function ()
-            logger.dbg('Getting list for BMI')
-            local err = self.repo.bmi:getListCo()
-            if err then logger.fmt('error', 'Failed getting list for BMI: %s', err) end
-            logger.dbg('Done for BMI')
-        end,
-        function ()
-            logger.dbg('Getting list for TS')
-            local err = self.repo.ts:getListCo()
-            if err then logger.fmt('error', 'Failed getting list for TS: %s', err) end
-            logger.dbg('Done for TS')
-        end
-    )
-    logger.dbg('update')
-    self.prepared = true
-    pseudoshuffle(self.repo.list, math.random())
+--- @param err? string
+function IUISes:_updateList(err)
+    if err then
+        self.errorText = string.format('Failed getting list for BMI: %s', err)
+        logger.fmt('error', self.errorText)
+        return
+    end
     self:update()
+    pseudoshuffle(self.repo.list, math.random())
 end
 
 function IUISes:prepare()
@@ -675,7 +662,14 @@ function IUISes:prepare()
         self:updateSelectedMod()
         return
     end
-    co.create(self._prepareCo, self)
+
+    logger.dbg('Getting list for BMI')
+    self.repo.bmi:getList(function (err) self:_updateList(err) end)
+
+    logger.dbg('Getting list for TS')
+    self.repo.ts:getList(function (err) self:_updateList(err) end)
+
+    self.prepared = true
 end
 
 function IUISes:render()
