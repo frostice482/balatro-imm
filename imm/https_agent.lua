@@ -38,7 +38,8 @@ end
 function agent:requestCo(url, options)
     options = options or {}
     agent.addUa(options)
-    return self.task:runTaskCo({ url = url, options = options})
+    local r = self.task:runTaskCo({ url = url, options = options})
+    return r[1], r[2], r[3]
 end
 
 return agent

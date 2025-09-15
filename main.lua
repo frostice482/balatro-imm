@@ -21,7 +21,6 @@ function _imm.parseconfig(entry)
     if entry:sub(1, 1) == '#' then return end
     local s, e, key = entry:find('^([%w%d_-]+) *= *')
     if not key then return end
-    print('"'..key..'"', '"'..entry:sub(e+1)..'"')
     _imm.configs[key] = entry:sub(e+1)
 end
 

@@ -2,6 +2,7 @@ local constructor = require("imm.lib.constructor")
 local UIBrowser = require("imm.ui.browser")
 local httpsAgent = require('imm.https_agent')
 local ui = require('imm.lib.ui')
+local m = require("imm.config")
 
 --- @class imm.UI.Options.Funcs
 local funcs = {
@@ -72,7 +73,11 @@ function IUIOpts:renderCheckRateLimitExec()
     subconf.ref_table = subconf
 
     local t = os.time()
-    httpsAgent:request('https://api.github.com/rate_limit', nil, function (code, body, headers)
+    httpsAgent:request('https://api.github.com/rate_limit', {
+        headers = {
+            Authorization = m.config.githubToken and 'Bearer '..m.config.githubToken or nil
+        }
+    }, function (code, body, headers)
         if code ~= 200 then
             conf.t = string.format('Error %d', code)
             return
