@@ -1,5 +1,28 @@
 local util = require("imm.lib.util")
 local ui = require("imm.lib.ui")
+local m = require('imm.config')
+
+--- Processing configs
+
+if m.config.nextEnable then
+    local ctrl = require('imm.modctrl')
+    local logger = require('imm.logger')
+
+    local mods = util.strsplit(m.config.nextEnable, '%s*==%s*')
+    for i,entry in ipairs(mods) do
+        local mod, ver = entry:match('^([^=]+)=(.*)')
+        if mod and ver then
+            local ok, err = ctrl:enable(mod, ver)
+            if ok then logger.log('Postenabled:', mod, ver)
+            else logger.err('Failed postenable:', err or '?') end
+        end
+    end
+
+    m.config.nextEnable = nil
+    util.saveconfig()
+end
+
+--- UI-related
 
 local funcs = {
     restartConf = 'imm_s_restart_conf',
@@ -52,7 +75,6 @@ end
 function G.FUNCS.imm_browse()
     require('imm.init_ui')
     Browser = Browser or require("imm.ui.browser")
-
     G.SETTINGS.paused = true
     Browser():showOverlay(true)
 end
@@ -64,4 +86,3 @@ function create_UIBox_main_menu_buttons()
     return r
 end
 
-return ui

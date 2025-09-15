@@ -135,4 +135,15 @@ function util.restart()
     love.event.quit()
 end
 
+function util.saveconfig()
+    local m = require('imm.config')
+
+    local entries = {}
+    for k,v in pairs(m.config) do table.insert(entries, k..' = '..v) end
+    table.sort(entries, function (a, b) return a < b end)
+
+    love.filesystem.createDirectory(util.dirname(m.configFile))
+    love.filesystem.write(m.configFile, table.concat(entries, '\n'))
+end
+
 return util

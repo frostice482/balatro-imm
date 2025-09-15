@@ -4,17 +4,38 @@ local errhand_orig = love.errorhandler or love.errhand
 local hasHandlerOverridden = false
 
 local function __imm_disableAllMods(err)
+    if not _imm then error('imm not available', 0) end
+    assert(_imm.init())
+
     local ctrl = require('imm.modctrl')
+
+    --- @type string?
     local suspect = err:match("^%[SMODS ([^ ]+)")
+    --- @type imm.Mod[]
     local detecteds = {}
-    local list = suspect and ctrl.loadlist.loadedMods[suspect] and {suspect = ctrl.loadlist.loadedMods[suspect]} or ctrl.loadlist.loadedMods
+    --- @type string[]
+    local disableds = {}
+
+    local list = suspect and ctrl.loadlist.loadedMods[suspect]
+        and {suspect = ctrl.loadlist.loadedMods[suspect]}
+        or ctrl.loadlist.loadedMods
+
     for k,mod in pairs(list) do
         if mod.mod ~= 'balatro_imm' and not mod.list.native then
-            table.insert(detecteds, string.format('- %s %s', mod.mod or '?', mod.version or '?'))
+            table.insert(detecteds, string.format('- %s: %s', mod.mod or '?', mod.version or '?'))
             ctrl:disableMod(mod)
+            table.insert(disableds, mod.mod..'='..mod.version)
         end
     end
-    return detecteds
+
+    if not suspect then
+        _imm.initconfig()
+        table.insert(disableds, _imm.configs.nextEnable)
+        _imm.configs.nextEnable = table.concat(disableds, '==')
+        require('imm.lib.util').saveconfig()
+    end
+
+    return detecteds, suspect
 end
 
 local function handler(err)
@@ -52,4 +73,4 @@ function Game.main_menu(...)
     return main_menu_orig(...)
 end
 
-__imm_init()
+_imm.init()
