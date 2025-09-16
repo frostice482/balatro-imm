@@ -19,7 +19,6 @@ G.FUNCS[funcs.releasesInit] = function(elm)
     elm.config.func = nil
 
     co.create(function ()
-        print('...')
         local releases = mod:getReleasesCo()
         ui.removeChildrens(elm)
         modses:updateReleases(elm, releases)
@@ -36,7 +35,6 @@ G.FUNCS[funcs.otherInit] = function(elm)
     elm.config.func = nil
 
     co.create(function ()
-        print('...')
         local releases = mod:getReleasesCo()
         ui.removeChildrens(elm)
         modses:updateOther(elm, releases)

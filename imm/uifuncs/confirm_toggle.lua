@@ -62,7 +62,7 @@ G.FUNCS[funcs.confirmOne] = function (elm)
     Mod:assertInstance(mod, 'r.mod')
 
     local ok, err = ses.ctrl:enableMod(mod)
-    ses.errorText = err or ''
+    ses.tasks:updateStatusImm(nil, err)
     ses:showOverlay(true)
     if ok then ses.hasChanges = true end
 end

@@ -48,11 +48,10 @@ local IUISes = {
     h = 0,
 
     prepared = false,
-    errorText = '',
-    taskText = '',
-    noThumbnail = false,
-    noAutoDownloadMissing = false,
     hasChanges = false,
+
+    noThumbnail = false,
+
 }
 
 --- @protected
@@ -77,7 +76,7 @@ function IUISes:init(modctrl, repo)
     self.tasks = BrowserTask(self)
 end
 
-function IUISes:updateModContainers()
+function IUISes:updateContainers()
     self.contCycle = ui.boxContainer()
     self.contSelect = ui.boxContainer()
     self.contMods = {}
@@ -296,23 +295,11 @@ function IUISes:uiCycle()
     })}
 end
 
-function IUISes:uiErrorContainer()
-    return ui.R{
-        ui.TRef(self, 'errorText', { scale = self.fontscale * 0.8, colour = G.C.ORANGE })
-    }
-end
-
-function IUISes:uiTaskContainer()
-    return ui.R{
-        ui.TRef(self, 'taskText', { scale = self.fontscale * 0.8, colour = G.C.UI.TEXT_LIGHT })
-    }
-end
-
 function IUISes:uiBrowse()
     local uis = {
         self:uiBody(),
-        self:uiTaskContainer(),
-        self:uiErrorContainer(),
+        ui.gap('R', self.spacing),
+        ui.R{self.tasks:render()}
     }
     return ui.C{
         minw = self.w,
@@ -371,6 +358,7 @@ end
 --- @param n number
 --- @param nocheckUpdate? boolean
 function IUISes:updateModImage(mod, n, nocheckUpdate)
+    if self.noThumbnail then return end
     co.create(self._updateModImageCo, self, mod, n, nocheckUpdate)
 end
 
@@ -523,8 +511,7 @@ end
 --- @param err? string
 function IUISes:_updateList(err)
     if err then
-        self.errorText = string.format('Failed getting list for BMI: %s', err)
-        logger.fmt('error', self.errorText)
+        self.tasks:updateStatusImm(nil, string.format('Failed getting list for BMI: %s', err))
         return
     end
     self:update()
@@ -548,8 +535,9 @@ function IUISes:prepare()
 end
 
 function IUISes:render()
-    self:updateModContainers()
+    self:updateContainers()
     return create_UIBox_generic_options({
+        padding = 0.25,
         no_back = true,
         contents = { self:uiBrowse() }
     })

@@ -109,6 +109,17 @@ function util.slice(list, startPos, endPos)
     return o
 end
 
+--- @generic T: any[]
+--- @param list `T`
+--- @param pos number
+--- @return T
+function util.removeswap(list, pos)
+    local v = list[pos]
+    list[pos] = list[#list]
+    list[#list] = nil
+    return v
+end
+
 --- @param args string[]
 function util.convertCommands(args, platform)
     platform = platform or jit.os

@@ -135,6 +135,18 @@ function ui.removeChildrens(elm)
     end
 end
 
+--- @param elm balatro.UIElement
+function ui.removeElement(elm)
+    elm:remove()
+
+    if not elm.parent then return end
+
+    local i = get_index(elm.parent.children, elm)
+
+    if not i then error('unknown child -> parent -> child') end
+    table.remove(elm.parent.children, i)
+end
+
 --- @class imm.UI.CycleOptions
 --- @field func fun(i: number): balatro.UIElement.Definition?
 --- @field length number
@@ -310,11 +322,6 @@ function ui.TRS(text, scale, color)
     return ui.R({ui.TS(text, scale, color)})
 end
 
---- @param def balatro.UIElement.Definition
-function ui.overlay(def)
-    G.FUNCS.overlay_menu({definition = def})
-end
-
 --- @param uibox balatro.UIBox
 --- @param definition balatro.UIElement.Definition
 function ui.changeRoot(uibox, definition)
@@ -325,6 +332,11 @@ end
 
 function ui.boxContainer()
     return UIBox({ definition = { n = G.UIT.ROOT }, config = {} })
+end
+
+--- @param def balatro.UIElement.Definition
+function ui.overlay(def)
+    G.FUNCS.overlay_menu({definition = def})
 end
 
 return ui

@@ -46,7 +46,7 @@ G.FUNCS[funcs.toggle] = function(elm)
 
     local mod = ses.ctrl:getMod(modid, ver)
     if not mod then
-        ses.errorText = string.format("Cannot find %s %s", modid, ver)
+        ses.tasks:updateStatusImm(nil, string.format("Cannot find %s %s", modid, ver))
         return
     end
 
@@ -66,7 +66,7 @@ G.FUNCS[funcs.toggle] = function(elm)
         else ok, err = ses.ctrl:enable(modid, ver)
         end
 
-        ses.errorText = err or ''
+        ses.tasks:updateStatusImm(nil, err)
         ses:updateSelectedMod()
         if ok then ses.hasChanges = true end
     else
@@ -86,8 +86,7 @@ G.FUNCS[funcs.deleteConfirm] = function(elm)
 
     if r.confirm then
         local ok, err = ses.ctrl:uninstall(modses.mod, modses.ver)
-        ses.errorText = err or ''
-        if ok then ses.hasChanges = true end
+        ses.tasks:updateStatusImm(nil, err)
     end
 
     ses:showOverlay(true)

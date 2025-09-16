@@ -25,8 +25,7 @@ G.FUNCS[funcs.disableAll] = function(elm)
     end
 
     --ses.taskText = #suc ~= 0 and 'Disabled '..table.concat(suc, ', ') or 'Nothing is disabled'
-    ses.taskText = ''
-    ses.errorText = table.concat(fail, '\n')
+    ses.tasks:updateStatusImm(nil, table.concat(fail, '\n'))
     ses:showOverlay(true)
 end
 

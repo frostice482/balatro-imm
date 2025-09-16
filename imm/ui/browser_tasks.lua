@@ -2,32 +2,58 @@ local constructor = require("imm.lib.constructor")
 local Queue = require("imm.lib.queue")
 local co = require("imm.lib.co")
 local logger = require("imm.logger")
+local ui = require("imm.lib.ui")
+local util = require("imm.lib.util")
 
-local statusCounter = 0
+local funcs = {
+    statusInit = 'imm_bt_status_link',
+    tasksInit = 'imm_bt_link'
+}
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.statusInit] = function (elm)
+    --- @type imm.Browser.TaskStatus
+    local r = elm.config.ref_table
+    elm.config.func = nil
+    r.elm = elm
+
+    if r.isRemoved then
+        ui.removeElement(elm)
+        elm.UIBox:recalculate()
+    end
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.tasksInit] = function (elm)
+    --- @type imm.Browser.Tasks
+    local r = elm.config.ref_table
+    elm.config.func = nil
+    r.listElm = elm
+end
 
 --- @class imm.Browser.TaskStatus
 --- @field containerCfg balatro.UIElement.Config
 --- @field labelCfg balatro.UIElement.Config
 --- @field textCfg balatro.UIElement.Config
+--- @field elm? balatro.UIElement
 local IUITaskStatus = {
     text = '',
-    isDone = false
+    isDone = false,
+    isRemoved = false
 }
 
 --- @protected
 function IUITaskStatus:init()
-    statusCounter = statusCounter + 1
-    self.id = 'statuscounter-'..statusCounter
-    self.containerCfg = { colout = G.C.CLEAR, id = self.id }
+    self.containerCfg = { colour = G.C.CLEAR, func = funcs.statusInit, ref_table = self }
     self.labelCfg = { colour = G.C.WHITE, minw = 0.1 }
-    self.textCfg = { ref_table = self, ref_value = 'text', padding = 0.05, scale = 1 }
+    self.textCfg = { ref_table = self, ref_value = 'text', scale = 0.3 } --- hardcoded value!
 
     self.doneColor = G.C.GREEN
     self.errorColor = G.C.ORANGE
 end
 
 --- @param text string
-function IUITaskStatus:status(text)
+function IUITaskStatus:update(text)
     self.text = text
 end
 
@@ -45,14 +71,33 @@ function IUITaskStatus:error(text)
     self.isDone = true
 end
 
+--- @param format string
+function IUITaskStatus:updatef(format, ...)
+    self.text = format:format(...)
+end
+
+--- @param format string
+function IUITaskStatus:donef(format, ...)
+    self:done(format:format(...))
+end
+
+--- @param format string
+function IUITaskStatus:errorf(format, ...)
+    self:error(format:format(...))
+end
+
 function IUITaskStatus:render()
+    self.elm = nil
+
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
         config = self.containerCfg,
         nodes = {
             { n = G.UIT.C, config = self.labelCfg },
-            { n = G.UIT.T, config = self.textCfg }
+            --- hardcoded value!
+            ui.C{ padding = 0.05, },
+            ui.C{ padding = 0.05, align = 'cm', { n = G.UIT.T, config = self.textCfg } }
         }
     }
 end
@@ -62,13 +107,75 @@ end
 local UITaskStatus = constructor(IUITaskStatus)
 
 --- @class imm.Browser.Tasks
-local IUITasks = {}
+--- @field statuses imm.Browser.TaskStatus[]
+--- @field listElm? balatro.UIElement
+local IUITasks = {
+    noAutoDownloadMissing = false
+}
 
 --- @protected
 --- @param ses imm.UI.Browser
 function IUITasks:init(ses)
-    self.queues = Queue()
+    self.queues = Queue(3)
     self.ses = ses
+    self.statuses = {}
+end
+
+--- @param i number
+function IUITasks:removeStatus(i)
+    --- @type imm.Browser.TaskStatus
+    local e = util.removeswap(self.statuses, i)
+    if not e then error(string.format('index %d not found', i)) end
+
+    if e.elm and not e.elm.REMOVED then ui.removeElement(e.elm) end
+    e.isRemoved = true
+end
+
+--- @param status imm.Browser.TaskStatus
+function IUITasks:addStatus(status)
+    table.insert(self.statuses, status)
+    if self.listElm then
+        self.listElm.UIBox:add_child(status:render(), self.listElm)
+    end
+end
+
+function IUITasks:removeDoneStatuses()
+    local i = 1
+    while i <= #self.statuses do
+        local entry = self.statuses[i]
+        if entry.isDone then
+            self:removeStatus(i)
+            i = i - 1
+        end
+        i = i + 1
+    end
+end
+
+--- @param noRecalc? boolean
+--- @param noRemoveDone? boolean
+function IUITasks:newStatus(noRecalc, noRemoveDone)
+    if not noRemoveDone then self:removeDoneStatuses() end
+    local status = UITaskStatus()
+    self:addStatus(status)
+    if not noRecalc and self.listElm then self.listElm.UIBox:recalculate() end
+    return status
+end
+
+--- @param suc? string
+--- @param err? string
+function IUITasks:updateStatusImm(suc, err)
+    self:removeDoneStatuses()
+
+    if suc and suc:len() ~= 0 then
+        self:newStatus(true, true):done(suc)
+        logger.log(suc)
+    end
+    if err and err:len() ~= 0 then
+        self:newStatus(true, true):error(err)
+        logger.err(err)
+    end
+
+    if self.listElm then self.listElm.UIBox:recalculate() end
 end
 
 --- @class imm.ModSession.QueueDownloadExtraInfo
@@ -82,23 +189,27 @@ end
 --- @param extra? imm.ModSession.QueueDownloadExtraInfo
 function IUITasks:downloadCo(url, extra)
     extra = extra or {}
+    extra.blacklist = extra.blacklist or {}
+
     local name = extra.name or 'something'
     local size = extra.size
-    extra.blacklist = extra.blacklist or {}
 
     self.queues:queueCo()
 
-    if extra.blacklist[url] then return end
+    if extra.blacklist[url] then
+        self.queues:next()
+        return
+    end
 
-    self.ses.taskText = string.format('Downloading %s (%s%s)', name, url, size and string.format(', %.1fMB', size / 1048576) or '')
-    logger.log(self.ses.taskText)
+    local status = self:newStatus()
+    status:updatef('Downloading %s (%s%s)', name, url, size and string.format(', %.1fMB', size / 1048576) or '')
 
     local err, res = self.ses.repo.api.blob:fetchCo(url)
     if not res then
-        err = err or 'unknown error'
-        self.ses.taskText = string.format('Failed downloading %s: %s', name, err)
+        status:errorf('Failed downloading %s: %s', name, err)
         if extra.cb then extra.cb(err) end
     else
+        status:done('')
         extra.blacklist[url] = true
         self:installModFromZip(love.filesystem.newFileData(res, 'swap'), extra.blacklist)
         if extra.cb then extra.cb(err) end
@@ -161,17 +272,29 @@ function IUITasks:installModFromZip(data, blacklistState)
 
     local strlist = {}
     for i,v in ipairs(list) do table.insert(strlist, v.mod..' '..v.version) end
+    local hasInstall = #strlist ~= 0
 
-    self.ses.errorText = table.concat(errlist, '\n')
-    self.ses.taskText = #strlist ~= 0 and 'Installed '..table.concat(strlist, ', ') or 'Nothing is installed - Check that the zip has a valid metadata file'
+    if not hasInstall and #errlist == 0 then table.insert(errlist, 'Nothing is installed') end
+    self:updateStatusImm( hasInstall and 'Installed '..table.concat(strlist, ', ') or nil, table.concat(errlist, '\n') )
 
-    if not self.ses.noAutoDownloadMissing then
-        for i, mod in ipairs(list) do
-            self:downloadMissings(mod, blacklistState)
-        end
+    if not self.noAutoDownloadMissing then
+        for i, mod in ipairs(list) do self:downloadMissings(mod, blacklistState) end
     end
 
     return modlist, list, errlist
+end
+
+function IUITasks:render()
+    local list = {}
+    for i,v in ipairs(self.statuses) do table.insert(list, v:render()) end
+
+    self.listElm = nil
+
+    return ui.C{
+        func = funcs.tasksInit,
+        ref_table = self,
+        nodes = list
+    }
 end
 
 --- @alias imm.Browser.Tasks.C p.Constructor<imm.Browser.Tasks, nil> | fun(ses: imm.UI.Browser): imm.Browser.Tasks
