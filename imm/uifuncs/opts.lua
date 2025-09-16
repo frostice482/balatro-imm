@@ -47,6 +47,8 @@ G.FUNCS[funcs.clearCache] = function(elm)
     if mode == 't' then
         util.rmdir(util.dirname(ts.thumbApi.cacheFile), false)
         util.rmdir(util.dirname(bmi.thumbApi.cacheFile), false)
+        ts.imageCache = {}
+        bmi.imageCache = {}
     elseif mode == 'd' then
         util.rmdir(util.dirname(repo.api.blob.cacheFile), false)
     elseif mode == 'r' then
@@ -57,6 +59,15 @@ G.FUNCS[funcs.clearCache] = function(elm)
     end
 
     ses:showOverlay(true)
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.clearCacheOpts] = function(elm)
+    --- @type imm.UI.Options
+    local ses = elm.config.ref_table
+    UIOpts:assertInstance(ses, 'ref_table')
+
+    ui.overlay(ses:renderClearCacheOpts())
 end
 
 --- @param elm balatro.UIElement

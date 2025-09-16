@@ -9,60 +9,71 @@ local funcs = {
     restart        = 'imm_o_restart',
     openModFolder  = 'imm_o_open',
     clearCache     = 'imm_o_clearcache',
+    clearCacheOpts = 'imm_o_clearcacheopts',
     checkRateLimit = 'imm_o_checkghratelimit',
-    disableAll     = 'imm_o_disableall'
+    disableAll     = 'imm_o_disableall',
+    updateAll      = 'imm_o_updateall',
 }
 
 --- @class imm.UI.Options
-local IUIOpts = {}
+local IUIOpts = {
+    buttonWidth = 4,
+    optionSpacing = 0.2
+}
 
 --- @param ses imm.UI.Browser
 function IUIOpts:init(ses)
     self.ses = ses
 end
 
---- @param commonOpts balatro.UI.ButtonParam
 --- @return balatro.UIElement.Definition[]
-function IUIOpts:A(commonOpts)
-    return {
-        UIBox_button(setmetatable({ button = funcs.disableAll       , label = {'Disable all mods'}, ref_table = self.ses }, {__index = commonOpts})),
-        UIBox_button(setmetatable({ button = funcs.restart          , label = {'Restart'} }, {__index = commonOpts})),
-        UIBox_button(setmetatable({ button = funcs.openModFolder    , label = {'Open mods folder'} }, {__index = commonOpts})),
-        UIBox_button(setmetatable({ button = funcs.checkRateLimit   , label = {'Check ratelimit'}, ref_table = self }, {__index = commonOpts})),
-    }
+function IUIOpts:gridOptions()
+    return {{
+        UIBox_button({ minw = self.buttonWidth, button = funcs.disableAll       , label = {'Disable all mods'}, ref_table = self.ses }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.restart          , label = {'Restart'} }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.checkRateLimit   , label = {'Check ratelimit'}, ref_table = self }),
+    }, {
+        UIBox_button({ minw = self.buttonWidth, button = funcs.updateAll        , label = {'Update all mods'}, ref_table = self.ses }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.openModFolder    , label = {'Open mods folder'} }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.clearCacheOpts   , label = {'Clear cache...'}, ref_table = self }),
+    }}
 end
 
---- @param commonOpts balatro.UI.ButtonParam
---- @return balatro.UIElement.Definition[]
-function IUIOpts:B(commonOpts)
-    return {
-        UIBox_button(setmetatable({ button = funcs.clearCache, ref_table = {ses = self.ses, mode = 't'}, label = {'Clear thumbnails cache'} }, {__index = commonOpts})),
-        UIBox_button(setmetatable({ button = funcs.clearCache, ref_table = {ses = self.ses, mode = 'd'}, label = {'Clear downloads'} }, {__index = commonOpts})),
-        UIBox_button(setmetatable({ button = funcs.clearCache, ref_table = {ses = self.ses, mode = 'r'}, label = {'Clear releases cache'} }, {__index = commonOpts})),
-        UIBox_button(setmetatable({ button = funcs.clearCache, ref_table = {ses = self.ses, mode = 'l'}, label = {'Clear list cache'} }, {__index = commonOpts})),
-    }
-end
-
---- @param commonOpts balatro.UI.ButtonParam
 --- @return balatro.UIElement.Definition[][]
-function IUIOpts:grid(commonOpts)
+function IUIOpts:gridClearCache()
+    local opts = { __index = { minw = self.buttonWidth, button = funcs.clearCache } }
+    return {{
+        UIBox_button(setmetatable({ ref_table = {ses = self.ses, mode = 't'}, label = {'Clear thumbnails cache'} }, opts)),
+        UIBox_button(setmetatable({ ref_table = {ses = self.ses, mode = 'r'}, label = {'Clear releases cache'} }, opts)),
+    }, {
+        UIBox_button(setmetatable({ ref_table = {ses = self.ses, mode = 'd'}, label = {'Clear downloads'} }, opts)),
+        UIBox_button(setmetatable({ ref_table = {ses = self.ses, mode = 'l'}, label = {'Clear list cache'} }, opts)),
+    }}
+end
+
+--- @param contents balatro.UIElement.Definition[]
+function IUIOpts:optionsContainer(contents)
+    return create_UIBox_generic_options({
+        contents = contents,
+        back_func = UIBrowser.funcs.back,
+        ref_table = self.ses
+    })
+end
+
+--- @param grid balatro.UIElement.Definition[][]
+function IUIOpts:gridRow(grid)
     return {
-        self:A(commonOpts),
-        self:B(commonOpts)
+        n = G.UIT.R,
+        nodes = ui.gapGrid(self.optionSpacing, self.optionSpacing, grid, false)
     }
 end
 
 function IUIOpts:render()
-    local spacing = 0.2
-    local commonOpts = { ref_table = self, minw = 4 }
-    return create_UIBox_generic_options({
-        contents = {{
-            n = G.UIT.R,
-            nodes = ui.gapGrid(spacing, spacing, self:grid(commonOpts), false)
-        }},
-        back_func = UIBrowser.funcs.back,
-        ref_table = self.ses
-    })
+    return self:optionsContainer({self:gridRow(self:gridOptions())})
+end
+
+function IUIOpts:renderClearCacheOpts()
+    return self:optionsContainer({self:gridRow(self:gridClearCache())})
 end
 
 function IUIOpts:renderCheckRateLimitExec()
@@ -90,24 +101,20 @@ function IUIOpts:renderCheckRateLimitExec()
         subconf.t = string.format('Resets in %d minute(s)', (data.rate.reset - t) / 60)
     end)
 
-    return create_UIBox_generic_options({
-        contents = {{
-            n = G.UIT.R,
-            config = { align = 'cm' },
-            nodes = {
-                { n = G.UIT.T, config = { text = 'Github API Ratelimit: ', scale = textscale } },
-                { n = G.UIT.T, config = conf },
-            }
-        }, {
-            n = G.UIT.R,
-            config = { align = 'cm' },
-            nodes = {
-                { n = G.UIT.T, config = subconf },
-            }
-        }},
-        back_func = UIBrowser.funcs.back,
-        ref_table = self.ses
-    })
+    return self:optionsContainer({{
+        n = G.UIT.R,
+        config = { align = 'cm' },
+        nodes = {
+            { n = G.UIT.T, config = { text = 'Github API Ratelimit: ', scale = textscale } },
+            { n = G.UIT.T, config = conf },
+        }
+    }, {
+        n = G.UIT.R,
+        config = { align = 'cm' },
+        nodes = {
+            { n = G.UIT.T, config = subconf },
+        }
+    }})
 end
 
 --- @class imm.UI.Options.Static
