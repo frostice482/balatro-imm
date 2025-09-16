@@ -38,17 +38,21 @@ local function __imm_disableAllMods(err)
     return detecteds, suspect
 end
 
+local attached = true
+
 local function handler(err)
-    err = tostring(err)
-    if not hasHandlerOverridden then err = debug.traceback(err..'\n', 2) end
+    if attached then
+        attached = false
+        err = tostring(err)
+        if not hasHandlerOverridden then err = debug.traceback(err..'\n', 2) end
 
-    local ok, res = pcall(__imm_disableAllMods, err)
-    if not ok then
-        err = err..'\n\nimm failed to disable mods: '..res
-    else
-        err = err..'\n\nimm has disabled detected mods: \n'..table.concat(res, '\n')
+        local ok, res = pcall(__imm_disableAllMods, err)
+        if not ok then
+            err = err..'\n\nimm failed to disable mods: '..res
+        else
+            err = err..'\n\nimm has disabled detected mods: \n'..table.concat(res, '\n')
+        end
     end
-
     return errhand_orig(err)
 end
 
@@ -67,9 +71,10 @@ assert(ok, err)
 
 local main_menu_orig = Game.main_menu
 function Game.main_menu(...)
-    Game.main_menu = main_menu_orig
-    love.errorhandler = errhand_orig
-    print('Pre error detection detached')
+    if attached then
+        attached = false
+        print('Pre error detection detached')
+    end
     return main_menu_orig(...)
 end
 
