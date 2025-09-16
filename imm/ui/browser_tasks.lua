@@ -3,7 +3,65 @@ local Queue = require("imm.lib.queue")
 local co = require("imm.lib.co")
 local logger = require("imm.logger")
 
---- @class imm.BrowserTasks
+local statusCounter = 0
+
+--- @class imm.Browser.TaskStatus
+--- @field containerCfg balatro.UIElement.Config
+--- @field labelCfg balatro.UIElement.Config
+--- @field textCfg balatro.UIElement.Config
+local IUITaskStatus = {
+    text = '',
+    isDone = false
+}
+
+--- @protected
+function IUITaskStatus:init()
+    statusCounter = statusCounter + 1
+    self.id = 'statuscounter-'..statusCounter
+    self.containerCfg = { colout = G.C.CLEAR, id = self.id }
+    self.labelCfg = { colour = G.C.WHITE, minw = 0.1 }
+    self.textCfg = { ref_table = self, ref_value = 'text', padding = 0.05, scale = 1 }
+
+    self.doneColor = G.C.GREEN
+    self.errorColor = G.C.ORANGE
+end
+
+--- @param text string
+function IUITaskStatus:status(text)
+    self.text = text
+end
+
+--- @param text string
+function IUITaskStatus:done(text)
+    self.text = text
+    self.labelCfg.colour = self.doneColor
+    self.isDone = true
+end
+
+--- @param text string
+function IUITaskStatus:error(text)
+    self.text = text
+    self.labelCfg.colour = self.errorColor
+    self.isDone = true
+end
+
+function IUITaskStatus:render()
+    --- @type balatro.UIElement.Definition
+    return {
+        n = G.UIT.R,
+        config = self.containerCfg,
+        nodes = {
+            { n = G.UIT.C, config = self.labelCfg },
+            { n = G.UIT.T, config = self.textCfg }
+        }
+    }
+end
+
+--- @alias imm.Browser.TaskStatus.C p.Constructor<imm.Browser.TaskStatus, nil> | fun(): imm.Browser.TaskStatus
+--- @type imm.Browser.TaskStatus.C
+local UITaskStatus = constructor(IUITaskStatus)
+
+--- @class imm.Browser.Tasks
 local IUITasks = {}
 
 --- @protected
@@ -116,7 +174,7 @@ function IUITasks:installModFromZip(data, blacklistState)
     return modlist, list, errlist
 end
 
---- @alias imm.BrowserTasks.C p.Constructor<imm.UI.Mod, nil> | fun(ses: imm.UI.Browser): imm.BrowserTasks
---- @type imm.BrowserTasks.C
+--- @alias imm.Browser.Tasks.C p.Constructor<imm.Browser.Tasks, nil> | fun(ses: imm.UI.Browser): imm.Browser.Tasks
+--- @type imm.Browser.Tasks.C
 local UIModSes = constructor(IUITasks)
 return UIModSes

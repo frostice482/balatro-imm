@@ -6,37 +6,31 @@ local co = require("imm.lib.co")
 local IQueue = {}
 
 --- @protected
-function IQueue:init()
+--- @param max? number
+function IQueue:init(max)
     self.taskQueues = {}
-    self.taskDone = true
+    self.available = max or 1
 end
 
 function IQueue:next()
-    self.taskDone = true
+    self.available = self.available + 1
     local f = table.remove(self.taskQueues, 1)
     if not f then return end
-    self.taskDone = false
+    self.available = self.available - 1
     f()
 end
 
 --- @param func fun()
 function IQueue:queue(func)
     table.insert(self.taskQueues, func)
-    if self.taskDone then self:next() end
+    if self.available > 0 then self:next() end
 end
 
 function IQueue:queueCo()
-    co.wrapCallbackStyle(function (res)
-        if self.taskDone then
-            self.taskDone = false
-            res()
-            return
-        end
-        table.insert(self.taskQueues, res)
-    end)
+    co.wrapCallbackStyle(function (res) self:queue(res) end)
 end
 
---- @alias imm.Queue.C p.Constructor<imm.Queue> | fun(): imm.Queue
+--- @alias imm.Queue.C p.Constructor<imm.Queue, nil> | fun(max?: number): imm.Queue
 --- @type imm.Queue.C
 local Queue = constructor(IQueue)
 return Queue
