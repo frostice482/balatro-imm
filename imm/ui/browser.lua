@@ -1,6 +1,7 @@
 local constructor = require("imm.lib.constructor")
 local LoveMoveable = require("imm.lib.love_moveable")
 local UIMod = require("imm.ui.mod")
+local BrowserTask = require("imm.ui.browser_tasks")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
 local logger = require("imm.logger")
@@ -21,7 +22,6 @@ local funcs = {
 --- @field tags table<string, boolean>
 --- @field filteredList imm.ModMeta[]
 --- @field selectedMod? imm.UI.Mod
---- @field taskQueues? fun()[]
 --- @field ctrl imm.ModController
 local IUISes = {
     search = '',
@@ -74,32 +74,7 @@ function IUISes:init(modctrl, repo)
         {'Libraries'},
         {'Tools'},
     }
-    self.taskQueues = {}
-end
-
-function IUISes:nextTask()
-    self.taskDone = true
-    local f = table.remove(self.taskQueues, 1)
-    if not f then return end
-    self.taskDone = false
-    f()
-end
-
---- @param func fun()
-function IUISes:queueTask(func)
-    table.insert(self.taskQueues, func)
-    if self.taskDone then self:nextTask() end
-end
-
-function IUISes:queueTaskCo()
-    co.wrapCallbackStyle(function (res)
-        if self.taskDone then
-            self.taskDone = false
-            res()
-            return
-        end
-        table.insert(self.taskQueues, res)
-    end)
+    self.tasks = BrowserTask(self)
 end
 
 --- @param n number
@@ -451,23 +426,6 @@ function IUISes:updateSelectedMod(ifMod)
     end
 end
 
-function IUISes:queueUpdate()
-    self.queueCount = self.queueCount + 1
-    G.E_MANAGER:add_event(Event{
-        blockable = false,
-        trigger = 'after',
-        timer = 'REAL',
-        delay = self.queueTimer,
-        func = function () return self:queueUpdateNext() end
-    })
-end
-
-function IUISes:queueUpdateNext()
-    self.queueCount = self.queueCount - 1
-    if self.queueCount == 0 then self:update() end
-    return true
-end
-
 --- @param containerId string
 --- @param img love.Image
 function IUISes:uiUpdateImage(containerId, img)
@@ -688,107 +646,21 @@ function IUISes:showOverlay(update)
     self.uibox:recalculate()
 end
 
---- @class imm.ModSession.QueueDownloadExtraInfo
---- @field name? string
---- @field size? number
---- @field blacklist? table<string>
---- @field cb? fun(err?: string)
-
---- @protected
---- @param url string
---- @param extra? imm.ModSession.QueueDownloadExtraInfo
-function IUISes:_queueTaskInstallCo(url, extra)
-    extra = extra or {}
-    local name = extra.name or 'something'
-    local size = extra.size
-    extra.blacklist = extra.blacklist or {}
-
-    self:queueTaskCo()
-
-    if extra.blacklist[url] then return end
-
-    self.taskText = string.format('Downloading %s (%s%s)', name, url, size and string.format(', %.1fMB', size / 1048576) or '')
-    logger.log(self.taskText)
-
-    local err, res = self.repo.api.blob:fetchCo(url)
-    if not res then
-        err = err or 'unknown error'
-        self.taskText = string.format('Failed downloading %s: %s', name, err)
-        if extra.cb then extra.cb(err) end
-    else
-        extra.blacklist[url] = true
-        self:installModFromZip(love.filesystem.newFileData(res, 'swap'), extra.blacklist)
-        if extra.cb then extra.cb(err) end
-    end
-
-    return self:nextTask()
-end
-
---- @param url string
---- @param extra? imm.ModSession.QueueDownloadExtraInfo
-function IUISes:queueTaskInstall(url, extra)
-    co.create(self._queueTaskInstallCo, self, url, extra)
-end
-
---- @protected
---- @param id string
---- @param list imm.Dependency.Rule[][]
---- @param blacklistState? table<string>
-function IUISes:_installMissingModEntryCo(id, list, blacklistState)
-    local mod = self.repo:getMod(id)
-    if not mod then return logger.fmt('warn', 'Mod id %s does not exist in repo', id) end
-
-    mod:getReleasesCo()
-    local release, pre = mod:findModVersionToDownload(list)
-    if not release then
-        logger.fmt('warn', 'Failed to download missing dependencies %s', mod:title())
-        return
-    end
-
-    if pre then
-        logger.fmt('warn', 'A prerelease version %s %s is being downloaded', mod:title(), release.version)
-    end
-
-    self:_queueTaskInstallCo(release.url, {
-        name = mod:title()..' '..release.version,
-        blacklist = blacklistState
+function IUISes:queueUpdate()
+    self.queueCount = self.queueCount + 1
+    G.E_MANAGER:add_event(Event{
+        blockable = false,
+        trigger = 'after',
+        timer = 'REAL',
+        delay = self.queueTimer,
+        func = function () return self:queueUpdateNext() end
     })
 end
 
---- @param id string
---- @param list imm.Dependency.Rule[][]
---- @param blacklistState? table<string>
-function IUISes:installMissingModEntry(id, list, blacklistState)
-    co.create(self._installMissingModEntryCo, self, id, list, blacklistState)
-end
-
---- @param mod imm.Mod
---- @param blacklistState? table<string>
-function IUISes:installMissingMods(mod, blacklistState)
-    local missings = self.ctrl:getMissingDeps(mod.deps)
-    for missingid, missingList in pairs(missings) do
-        logger.fmt('log', 'Missing dependency %s by %s', missingid, mod.mod)
-        self:installMissingModEntry(missingid, missingList, blacklistState)
-    end
-end
-
----@param blacklistState? table<string>
-function IUISes:installModFromZip(data, blacklistState)
-    local modlist, list, errlist = self.ctrl:installFromZip(data)
-
-    local strlist = {}
-    for i,v in ipairs(list) do table.insert(strlist, v.mod..' '..v.version) end
-
-    self.errorText = table.concat(errlist, '\n')
-    self.taskText = #strlist ~= 0 and 'Installed '..table.concat(strlist, ', ') or 'Nothing is installed - Check that the zip has a valid metadata file'
-
-    if not self.noAutoDownloadMissing then
-        for i, mod in ipairs(list) do
-            self:installMissingMods(mod, blacklistState)
-        end
-    end
-
-    return modlist, list, errlist
+function IUISes:queueUpdateNext()
+    self.queueCount = self.queueCount - 1
+    if self.queueCount == 0 then self:update() end
+    return true
 end
 
 --- @class imm.UI.Browser.Static

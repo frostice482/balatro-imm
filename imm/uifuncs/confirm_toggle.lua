@@ -20,7 +20,7 @@ G.FUNCS[funcs.download] = function (elm)
     for id,entries in pairs(list.missingDeps) do
         local rules = {}
         for mod, rule in pairs(entries) do table.insert(rules, rule) end
-        ses:installMissingModEntry(id, rules)
+        ses.tasks:downloadMissingEntry(id, rules)
     end
 end
 

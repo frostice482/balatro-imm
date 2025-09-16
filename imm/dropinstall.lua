@@ -4,7 +4,7 @@ local function dropinstall(browser, file)
     local fd = love.filesystem.newFileData(file:read('data'), '')
     file:close()
 
-    local ml = browser:installModFromZip(fd)
+    local ml = browser.tasks:installModFromZip(fd)
     local _, list = next(ml)
     if not list then return end
 
