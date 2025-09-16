@@ -54,13 +54,9 @@ function IUIModSes:uiTabInstalled()
         table.insert(versions, ver)
     end
 
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.C,
-        nodes = {
-            self:uiCycle(versions),
-            ui.container(self.idListCnt, true)
-        }
+    return ui.C{
+        self:uiCycle(versions),
+        ui.container(self.idListCnt, true)
     }
 end
 
@@ -68,14 +64,10 @@ end
 function IUIModSes:uiReleasesContainer(func)
     if not (self.mod.bmi and self.mod.bmi.repo or self.mod.ts) then return self.ses:uiText("Repo info\nunavailable", 1.25, G.C.ORANGE) end
 
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.C,
-        config = { func = func, ref_table = self },
-        nodes = {{
-            n = G.UIT.R,
-            nodes = {self.ses:uiText('Please wait', 1.25)}
-        }}
+    return ui.C{
+        func = func,
+        ref_table = self,
+        ui.R{self.ses:uiText('Please wait', 1.25)}
     }
 end
 
@@ -153,7 +145,6 @@ function IUIModSes:uiTabs()
     local mod = self.mod
     local hasVersion = not not ( self.ses.ctrl.mods[mod:id()] and next(self.ses.ctrl.mods[mod:id()].versions) )
 
-    --- @type balatro.UIElement.Definition
     return create_tabs({
         scale = self.ses.fontscale * 1.5,
         text_scale = self.ses.fontscale,
@@ -183,23 +174,19 @@ end
 --- @param url string
 --- @param text string
 function IUIModSes:uiRepoButtonUrl(url, text)
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.C,
-        config = {
-            colour = G.C.PURPLE,
-            padding = 0.1,
-            shadow = true,
-            button = funcs.openUrl,
-            ref_table = { url = url },
-            r = true,
-            button_dist = 0.1,
-            tooltip = {
-                text = { url },
-                text_scale = self.ses.fontscale * 0.8
-            }
+    return ui.C{
+        colour = G.C.PURPLE,
+        padding = 0.1,
+        shadow = true,
+        button = funcs.openUrl,
+        ref_table = { url = url },
+        r = true,
+        button_dist = 0.1,
+        tooltip = {
+            text = { url },
+            text_scale = self.ses.fontscale * 0.8
         },
-        nodes = {self.ses:uiText(text)}
+        self.ses:uiText(text)
     }
 end
 
@@ -219,37 +206,33 @@ function IUIModSes:uiRepoButton()
         table.insert(cols, self:uiRepoButtonUrl(self.mod.ts.donation_link, 'Donate'))
     end
 
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        config = { padding = 0.1, align = 'm' },
+    return ui.R{
+        padding = 0.1,
+        align = 'm',
         nodes = cols
     }
 end
 
 --- @param text string
 function IUIModSes:uiModAuthor(text)
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        config = { align = 'm' },
-        nodes = {self.ses:uiText('By '..text, 0.75)}
+    return ui.R{
+        align = 'm',
+        self.ses:uiText('By '..text, 0.75)
     }
 end
 
 function IUIModSes:render()
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.C,
-        config = { group = self.ses.idModSelect },
-        nodes = {
-            self.ses:uiImage(self.idImageSelectCnt),
-            self.ses:uiModText(self.mod:title()),
-            self:uiModAuthor(self.mod:author()),
-            --self:uiMoreInfo(),
-            self:uiRepoButton(),
-            self:uiTabs()
-        }
+    local uis = {
+        self.ses:uiImage(self.idImageSelectCnt),
+        self.ses:uiModText(self.mod:title()),
+        self:uiModAuthor(self.mod:author()),
+        --self:uiMoreInfo(),
+        self:uiRepoButton(),
+        self:uiTabs()
+    }
+    return ui.C{
+        group = self.ses.idModSelect,
+        nodes = uis
     }
 end
 

@@ -45,33 +45,30 @@ function IUICT:partAct(act)
     local version = act.mod.version
     local entryScale = self.fontscale
 
-    --- @type balatro.UIElement.Definition?
-    local byElm = act.cause and { n = G.UIT.T, config = { text = string.format(' (%s)', act.cause.mod), scale = self.fontscaleSub, colour = self.whoColor } }
-    --- @type balatro.UIElement.Definition
-    local verElm = { n = G.UIT.T, config = { text = ' '..version, scale = self.fontscaleVersion, colour = self.versionColor } }
-    --- @type balatro.UIElement.Definition[]
+    local byElm = act.cause and ui.TS(string.format(' (%s)', act.cause.mod), self.fontscaleSub, self.whoColor)
+    local verElm = ui.TS(' '..version, self.fontscaleVersion, self.versionColor)
+
     local t
 
     if act.impossible then
-        t = {{ n = G.UIT.T, config = { text = '! '..name, scale = entryScale, colour = G.C.RED } }}
+        t = { ui.TS('! '..name, entryScale,G.C.RED) }
     elseif act.action == 'enable' then
-        t = {{ n = G.UIT.T, config = { text = '+ '..name, scale = entryScale, colour = G.C.GREEN } }}
+        t = { ui.TS('+ '..name, entryScale,G.C.GREEN) }
     elseif act.action == 'disable' then
-        t = {{ n = G.UIT.T, config = { text = '- '..name, scale = entryScale, colour = G.C.ORANGE } }}
+        t = { ui.TS('- '..name, entryScale,G.C.ORANGE) }
     elseif act.action == 'switch' then
         local from = (self.ses.ctrl.loadlist.loadedMods[act.mod.mod] or {}).version or '?'
         t = {
-            { n = G.UIT.T, config = { text = '/ '..name..' ', scale = entryScale, colour = G.C.YELLOW } },
-            { n = G.UIT.T, config = { text = from, scale = self.fontscaleVersion, colour = self.versionColor } },
-            { n = G.UIT.T, config = { text = ' ->', scale = self.fontscaleVersion, colour = G.C.UI.TEXT_LIGHT } },
+            ui.TS('/ '..name..' ', entryScale, G.C.YELLOW),
+            ui.TS(from, self.fontscaleVersion, self.versionColor),
+            ui.TS(' ->', self.fontscaleVersion, G.C.UI.TEXT_LIGHT),
         }
     end
 
     table.insert(t, verElm)
     table.insert(t, byElm)
 
-    --- @type balatro.UIElement.Definition
-    return { n = G.UIT.R, nodes = t }
+    return ui.R(t)
 end
 
 --- @param nodes balatro.UIElement.Definition[]
@@ -99,7 +96,7 @@ function IUICT:partActions(nodes)
 
     for i,act in ipairs(impossibles) do
         if not hasImpossible then
-            table.insert(nodes, ui.simpleTextRow('These mods are in impossible condition to load:', self.fontscaleTitle))
+            table.insert(nodes, ui.TRS('These mods are in impossible condition to load:', self.fontscaleTitle))
             hasImpossible = true
         end
         table.insert(nodes, self:partAct(act))
@@ -107,7 +104,7 @@ function IUICT:partActions(nodes)
 
     for i,act in ipairs(actions) do
         if not hasChange then
-            table.insert(nodes, ui.simpleTextRow('These mods will also take effect:', self.fontscaleTitle))
+            table.insert(nodes, ui.TRS('These mods will also take effect:', self.fontscaleTitle))
             hasChange = true
         end
         table.insert(nodes, self:partAct(act))
@@ -143,14 +140,14 @@ function IUICT:partMissing(nodes)
 
     for i, entry in ipairs(missings) do
         if not hasMissing then
-            table.insert(nodes, ui.simpleTextRow('These mods have missing dependencies:', self.fontscaleTitle))
+            table.insert(nodes, ui.TRS('These mods have missing dependencies:', self.fontscaleTitle))
             hasMissing = true
         end
 
-        local base = ui.simpleTextRow(string.format('? %s', entry[1]), self.fontscale, G.C.YELLOW)
+        local base = ui.TRS(string.format('? %s', entry[1]), self.fontscale, G.C.YELLOW)
         table.insert(nodes, base)
         for i, entry in pairs(entry[2]) do
-            table.insert(nodes, ui.simpleTextRow('    '..entry, self.fontscaleSub))
+            table.insert(nodes, ui.TRS('    '..entry, self.fontscaleSub))
         end
     end
 
@@ -163,7 +160,7 @@ function IUICT:render()
 
     --- @type balatro.UIElement.Definition[]
     local nodes = {}
-    table.insert(nodes, ui.simpleTextRow(titleText, self.fontscaleTitle * 1.25))
+    table.insert(nodes, ui.TRS(titleText, self.fontscaleTitle * 1.25))
 
     local hasMissing = self:partMissing(nodes)
     local hasImpossible, hasChange = self:partActions(nodes)
@@ -198,7 +195,7 @@ function IUICT:render()
         colour = G.C.GREY, ref_table = self.ses
     }, bconf)))
 
-    table.insert(nodes, { n = G.UIT.R, nodes = ui.gapList('C', 0.1, buttons) })
+    table.insert(nodes, ui.R(ui.gapList('C', 0.1, buttons)))
 
     return create_UIBox_generic_options({
         contents = nodes,

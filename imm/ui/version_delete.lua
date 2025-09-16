@@ -20,25 +20,22 @@ function IUIVerDel:uiDeleteVersionMessage()
 
     local cols = {}
 
-    local main = ui.simpleTextRow(string.format('Really delete %s %s?', mod.name, self.ver), self.ses.fontscale)
+    local main = ui.TRS(string.format('Really delete %s %s?', mod.name, self.ver), self.ses.fontscale)
     main.config = {align = 'cm'}
     table.insert(cols, main)
 
     if stat and stat.type == 'symlink' then
-        local sub = ui.simpleTextRow('This mod is symlinked', self.ses.fontscale, G.C.ORANGE)
+        local sub = ui.TRS('This mod is symlinked', self.ses.fontscale, G.C.ORANGE)
         sub.config = {align = 'cm'}
         table.insert(cols, sub)
     end
 
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        config = {align = 'cm'},
-        nodes = {{
-            n = G.UIT.C,
-            config = {align = 'cm'},
+    return ui.R{
+        align = 'cm',
+        ui.C{
+            align = 'cm',
             nodes = cols
-        }}
+        }
     }
 end
 

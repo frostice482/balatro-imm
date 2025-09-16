@@ -91,24 +91,16 @@ end
 --- @param scale? number
 --- @param col? ColorHex
 function IUISes:uiText(text, scale, col)
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.T,
-        config = { text = text, scale = self.fontscale * (scale or 1), colour = col or G.C.UI.TEXT_LIGHT }
-    }
+    return ui.T(text, { scale = (scale or 1) * self.fontscale, colour = col })
 end
 
 --- @param id string
 function IUISes:uiImage(id)
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        config = {
-            align = 'm',
-            id = id,
-            minw = self.thumbW,
-            minh = self.thumbH,
-        }
+    return ui.R{
+        align = 'm',
+        id = id,
+        minw = self.thumbW,
+        minh = self.thumbH
     }
 end
 
@@ -124,16 +116,10 @@ function IUISes:uiModText(title, maxw)
     })
     obj:pulse()
 
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        config = { align = 'cm', minh = self.fontscale * 0.8 },
-        nodes = {{
-            n = G.UIT.O,
-            config = {
-                object = obj
-            }
-        }}
+    return ui.R{
+        align = 'cm',
+        minh = self.fontscale * 0.8,
+        ui.O(obj)
     }
 end
 
@@ -143,26 +129,21 @@ end
 
 function IUISes:uiCategory(label, category)
     category = category or label
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        config = { minh = self.fontscale * 1.6 },
-        nodes = {{
-            n = G.UIT.R,
-            config = {
-                align = 'm',
-                colour = self.tags[category] and G.C.ORANGE or G.C.RED,
-                minw = 2,
-                padding = 0.1,
-                shadow = true,
-                hover = true,
-                res = self.fontscale,
-                r = true,
-                button = funcs.setCategory,
-                ref_table = { ses = self, cat = category }
-            },
-            nodes = {self:uiText(label)}
-        }}
+    return ui.R{
+        minh = self.fontscale * 1.6,
+        ui.R{
+            align = 'm',
+            colour = self.tags[category] and G.C.ORANGE or G.C.RED,
+            minw = 2,
+            padding = 0.1,
+            shadow = true,
+            hover = true,
+            res = self.fontscale,
+            r = true,
+            button = funcs.setCategory,
+            ref_table = { ses = self, cat = category },
+            self:uiText(label)
+        }
     }
 end
 
@@ -170,44 +151,44 @@ end
 local someWeirdBase = { padding = 0.15, r = 0.1, hover = true, shadow = true, colour = G.C.BLUE }
 
 function IUISes:uiSidebarHeaderExit()
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.C,
-        config = setmetatable({ tooltip = { text = {'Exit'} }, button = 'exit_overlay_menu' }, {__index = someWeirdBase}),
-        nodes = {self:uiText('X')}
-    }
+    return ui.C({
+        tooltip = { text = {'Exit'} },
+        button = 'exit_overlay_menu',
+
+        self:uiText('X')
+    }, someWeirdBase)
 end
 
 function IUISes:uiSidebarHeaderRefresh()
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.C,
-        config = setmetatable({ tooltip = { text = {'Refresh'} }, button = funcs.refresh, ref_table = self }, {__index = someWeirdBase}),
-        nodes = {self:uiText('R')}
-    }
+    return ui.C({
+        tooltip = { text = {'Refresh'} },
+        button = funcs.refresh,
+        ref_table = self,
+
+        self:uiText('R')
+    }, someWeirdBase)
 end
 
 function IUISes:uiSidebarHeaderOptions()
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.C,
-        config = setmetatable({ tooltip = { text = {'More Options'} }, button = funcs.options, ref_table = self }, {__index = someWeirdBase}),
-        nodes = {self:uiText('O')}
-    }
+    return ui.C({
+        tooltip = { text = {'More Options'} },
+        button = funcs.options,
+        ref_table = self,
+
+        self:uiText('O')
+    }, someWeirdBase)
 end
 
 function IUISes:uiSidebarHeader()
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        config = { padding = 0.1, align = 'm' },
-        nodes = {
-            self:uiSidebarHeaderExit(),
-            ui.gap('C', self.fontscale / 8),
-            self:uiSidebarHeaderRefresh(),
-            ui.gap('C', self.fontscale / 8),
-            self:uiSidebarHeaderOptions(),
-        }
+    local uis = {
+        self:uiSidebarHeaderExit(),
+        self:uiSidebarHeaderRefresh(),
+        self:uiSidebarHeaderOptions(),
+    }
+    return ui.R{
+        padding = 0.1,
+        align = 'm',
+        nodes = ui.gapList('C', self.fontscale / 10, uis)
     }
 end
 
@@ -220,8 +201,7 @@ function IUISes:uiSidebar()
         table.insert(categories, self:uiCategory(entry[1], entry[2]))
     end
 
-    --- @type balatro.UIElement.Definition
-    return { n = G.UIT.C, nodes = categories }
+    return ui.C(categories)
 end
 
 --- @param mod imm.ModMeta
@@ -240,22 +220,18 @@ function IUISes:uiModEntry(mod, n)
     end
 
     local id = self:getModElmId(n)
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.C,
-        config = {
-            colour = G.C.RED,
-            group = self.idMod,
-            hover = true,
-            shadow = true,
-            r = true,
-            button = funcs.chooseMod,
-            ref_table = { ses = self, mod = mod },
-            padding = 0.15,
-            on_demand_tooltip = textDescs and {
-                text = textDescs,
-                text_scale = self.fontscale
-            }
+    return ui.C{
+        colour = G.C.RED,
+        group = self.idMod,
+        hover = true,
+        shadow = true,
+        r = true,
+        button = funcs.chooseMod,
+        ref_table = { ses = self, mod = mod },
+        padding = 0.15,
+        on_demand_tooltip = textDescs and {
+            text = textDescs,
+            text_scale = self.fontscale
         },
         nodes = {
             self:uiImage(id .. self.idImageContSuff),
@@ -276,13 +252,10 @@ function IUISes:uiHeaderInput()
 end
 
 function IUISes:uiHeader()
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        config = { align = 'cm', padding = 0.1 },
-        nodes = {
-            self:uiHeaderInput()
-        }
+    return ui.R{
+        align = 'cm',
+        padding = 0.1,
+        self:uiHeaderInput()
     }
 end
 
@@ -296,36 +269,28 @@ function IUISes:uiMain()
         local row = {}
         for j=1, self.listW, 1 do
             n = n + 1
-            --- @type balatro.UIElement.Definition
-            local t = {
-                n = G.UIT.C,
-                nodes = {{
-                    n = G.UIT.R, config = { id = self:getModElmCntId(n), padding = 0.1 }
-                }}
-            }
+            local t = ui.C{ui.R{
+                id = self:getModElmCntId(n),
+                padding = 0.1
+            }}
             table.insert(row, t)
         end
-        --- @type balatro.UIElement.Definition
-        local t = { n = G.UIT.R, nodes = row }
+        local t = ui.R(row)
         table.insert(col, t)
     end
 
     table.insert(col, self:uiCycleContainer())
 
-    --- @type balatro.UIElement.Definition
-    return { n = G.UIT.C, nodes = col }
+    return ui.C(col)
 end
 
 function IUISes:uiBody()
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        nodes = {
-            self:uiSidebar(),
-            self:uiMain(),
-            self:uiModSelectContainer()
-        }
+    local uis = {
+        self:uiSidebar(),
+        self:uiMain(),
+        self:uiModSelectContainer()
     }
+    return ui.R(uis)
 end
 
 function IUISes:uiCycle()
@@ -348,61 +313,35 @@ end
 
 function IUISes:uiCycleContainer()
     local w = ui.container(self.idCycleCont, true)
-    w.config = {
-        align = 'cm',
-        padding = 0.1
-    }
+    w.config = { align = 'cm', padding = 0.1 }
     return w
 end
 
 function IUISes:uiErrorContainer()
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        nodes = {{
-            n = G.UIT.T,
-            config = {
-                ref_table = self,
-                ref_value = 'errorText',
-                scale = self.fontscale * 0.8,
-                colour = G.C.ORANGE
-            }
-        }}
+    return ui.R{
+        ui.TRef(self, 'errorText', { scale = self.fontscale * 0.8, colour = G.C.ORANGE })
     }
 end
 
 function IUISes:uiTaskContainer()
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        nodes = {{
-            n = G.UIT.T,
-            config = {
-                ref_table = self,
-                ref_value = 'taskText',
-                scale = self.fontscale * 0.8,
-                colour = G.C.UI.TEXT_LIGHT
-            }
-        }}
+    return ui.R{
+        ui.TRef(self, 'taskText', { scale = self.fontscale * 0.8, colour = G.C.UI.TEXT_LIGHT })
     }
 end
 
 function IUISes:uiBrowse()
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.C,
-        config = {
-            minw = self.w,
-            minh = self.h,
-            align = 'cr',
-            func = funcs.update,
-            ref_table = self
-        },
-        nodes = {
-            self:uiBody(),
-            self:uiTaskContainer(),
-            self:uiErrorContainer(),
-        }
+    local uis = {
+        self:uiBody(),
+        --self:uiTaskContainer(),
+        --self:uiErrorContainer(),
+    }
+    return ui.C{
+        minw = self.w,
+        minh = self.h,
+        align = 'cr',
+        func = funcs.update,
+        ref_table = self,
+        nodes = uis
     }
 end
 
@@ -435,10 +374,7 @@ function IUISes:uiUpdateImage(containerId, img)
     local w, h = img:getDimensions()
     local aspectRatio = math.max(math.min(w / h, 16/9), 1)
 
-    self.uibox:add_child({
-        n = G.UIT.O,
-        config = { object = LoveMoveable(img, 0, 0, self.thumbH * aspectRatio, self.thumbH) }
-    }, imgcnt)
+    self.uibox:add_child(ui.O(LoveMoveable(img, 0, 0, self.thumbH * aspectRatio, self.thumbH)), imgcnt)
 end
 
 --- @protected

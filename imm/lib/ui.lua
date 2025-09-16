@@ -135,19 +135,6 @@ function ui.removeChildrens(elm)
     end
 end
 
---- @param mode 'R' | 'C'
---- @param size number
-function ui.gap(mode, size)
-    --- @type balatro.UIElement.Definition
-    return {
-        n = mode == 'R' and G.UIT.R or G.UIT.C,
-        config = {
-            minw = mode == 'C' and size or nil,
-            minh = mode == 'R' and size or nil
-        }
-    }
-end
-
 --- @class imm.UI.CycleOptions
 --- @field func fun(i: number): balatro.UIElement.Definition?
 --- @field length number
@@ -182,6 +169,19 @@ end
 
 --- @param mode 'R' | 'C'
 --- @param size number
+function ui.gap(mode, size)
+    --- @type balatro.UIElement.Definition
+    return {
+        n = mode == 'R' and G.UIT.R or G.UIT.C,
+        config = {
+            minw = mode == 'C' and size or nil,
+            minh = mode == 'R' and size or nil
+        }
+    }
+end
+
+--- @param mode 'R' | 'C'
+--- @param size number
 --- @param list balatro.UIElement.Definition[]
 function ui.gapList(mode, size, list)
     local gapElm = ui.gap(mode, size)
@@ -209,12 +209,91 @@ function ui.gapGrid(rowSize, colSize, list, firstRow)
     return g
 end
 
+--- @alias imm.UI.ConfigMix balatro.UIElement.Config | balatro.UIElement.Definition[] | { nodes?: balatro.UIElement.Definition[] }
+
+--- @param config? imm.UI.ConfigMix
+--- @param inherits? balatro.UIElement.Config
+--- @param type number
+function ui._T(config, inherits, type)
+    config = config or {}
+    if inherits then setmetatable(config, { __index = inherits }) end
+
+    local nodes = {}
+    if config.nodes then
+        nodes = config.nodes
+        config.nodes = nil
+    else
+        for i,v in ipairs(config) do
+            nodes[i] = v
+            config[i] = nil
+        end
+    end
+
+    --- @type balatro.UIElement.Definition
+    return { n = type, config = config, nodes = nodes }
+end
+
+--- @param config? imm.UI.ConfigMix
+--- @param inherits? balatro.UIElement.Config
+function ui.R(config, inherits)
+    return ui._T(config, inherits, G.UIT.R)
+end
+
+--- @param config? imm.UI.ConfigMix
+--- @param inherits? balatro.UIElement.Config
+function ui.C(config, inherits)
+    return ui._T(config, inherits, G.UIT.C)
+end
+
+--- Text
+--- @param text string
+--- @param config? balatro.UIElement.Config
+function ui.T(text, config)
+    config = config or {}
+    config.text = text
+    config.scale = config.scale or 1
+    return { n = G.UIT.T, config = config }
+end
+
+--- Simple text
 --- @param text string
 --- @param scale? number
 --- @param color? ColorHex
-function ui.simpleTextRow(text, scale, color)
-    --- @type balatro.UIElement.Definition
-    return { n = G.UIT.R, nodes = {{ n = G.UIT.T, config = { text = text, scale = scale or 1, colour = color or G.C.UI.TEXT_LIGHT } }} }
+function ui.TS(text, scale, color)
+    local config = {}
+    config.text = text
+    config.scale = scale or 1
+    config.colour = color
+    return { n = G.UIT.T, config = config }
+end
+
+--- Text with reftable
+--- @param reftable any
+--- @param refvalue any
+--- @param config? balatro.UIElement.Config
+function ui.TRef(reftable, refvalue, config)
+    config = config or {}
+    config.ref_table = reftable
+    config.ref_value = refvalue
+    config.scale = config.scale or 1
+    return { n = G.UIT.T, config = config }
+end
+
+--- Object
+--- @param obj balatro.Moveable
+--- @param config? balatro.UIElement.Config
+function ui.O(obj, config)
+    config = config or {}
+    config.object = obj
+    return { n = G.UIT.O, config = config }
+end
+
+--- Simple Row text
+--- @param text string
+--- @param scale? number
+--- @param color? ColorHex
+function ui.TRS(text, scale, color)
+    return ui.R({ui.TS(text, scale, color)})
 end
 
 --- @param def balatro.UIElement.Definition

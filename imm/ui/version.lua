@@ -40,34 +40,25 @@ function IUIVer:partTitle()
     local downText = opts.downloadUrl
     if downText and opts.downloadSize then downText = string.format('%s (%.1fMB)', downText, opts.downloadSize / 1048576) end
 
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.C,
-        config = { minw = self.ses.fontscale * 10 },
-        nodes = {{
-            n = G.UIT.R,
-            nodes = {{
-                n = G.UIT.T,
-                config = {
-                    text = self.ver,
-                    colour = G.C.UI.TEXT_LIGHT,
-                    scale = self.ses.fontscale,
+    return ui.C{
+        minw = self.ses.fontscale * 10,
+        ui.R{
+            ui.T(self.ver, {
+                colour = G.C.UI.TEXT_LIGHT,
+                scale = self.ses.fontscale,
 
-                    button = opts.installed and funcs.toggle or nil,
-                    ref_table = opts.installed and {
-                        ses = self,
-                        toggle = opts.enabled
-                    } or nil,
-                    tooltip = opts.downloadUrl and {
-                        text = {{ ref_table = { downText }, ref_value = 1 }},
-                        text_scale = self.ses.fontscale * 0.6
-                    },
-                }
-            }}
-        }, opts.sub and {
-            n = G.UIT.R,
-            nodes = {self.ses:uiText(opts.sub, 0.5)}
-        }},
+                button = opts.installed and funcs.toggle or nil,
+                ref_table = opts.installed and {
+                    ses = self,
+                    toggle = opts.enabled
+                } or nil,
+                tooltip = opts.downloadUrl and {
+                    text = {{ ref_table = { downText }, ref_value = 1 }},
+                    text_scale = self.ses.fontscale * 0.6
+                },
+            })
+        },
+        opts.sub and ui.R{self.ses:uiText(opts.sub, 0.5)}
     }
 end
 
@@ -75,32 +66,24 @@ function IUIVer:partSwitchButton()
     local opts = self.opts
     if not opts.installed then return end
 
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.O,
-        config = {
-            object = Sprite(0, 0, self.ses.fontscale * 15/9, self.ses.fontscale, G.ASSET_ATLAS.imm_toggle, opts.enabled and { x = 1, y = 0 } or { x = 0, y = 0 }),
-            button = funcs.toggle,
-            button_dist = 0.4,
-            ref_table = { ses = self, toggle = opts.enabled }
-        }
-    }
+    local spr = Sprite(0, 0, self.ses.fontscale * 15/9, self.ses.fontscale, G.ASSET_ATLAS.imm_toggle, opts.enabled and { x = 1, y = 0 } or { x = 0, y = 0 })
+    return ui.O(spr, {
+        button = funcs.toggle,
+        button_dist = 0.4,
+        ref_table = { ses = self, toggle = opts.enabled }
+    })
 end
 
 function IUIVer:partActionsButton()
     local opts = self.opts
     if opts.enabled or not (opts.installed or opts.downloadUrl) then return end
 
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.O,
-        config = {
-            object = Sprite(0, 0, self.ses.fontscale, self.ses.fontscale, G.ASSET_ATLAS.imm_icons, opts.installed and { x = 0, y = 0 } or { x = 1, y = 0 }),
-            button = opts.installed and funcs.delete or funcs.download,
-            button_dist = 0.4,
-            ref_table = self
-        }
-    }
+    local spr = Sprite(0, 0, self.ses.fontscale, self.ses.fontscale, G.ASSET_ATLAS.imm_icons, opts.installed and { x = 0, y = 0 } or { x = 1, y = 0 })
+    return ui.O(spr, {
+        button = opts.installed and funcs.delete or funcs.download,
+        button_dist = 0.4,
+        ref_table = self
+    })
 end
 
 function IUIVer:partActions()
@@ -110,15 +93,13 @@ function IUIVer:partActions()
     local action = self:partActionsButton()
     if action then table.insert(list, action) end
 
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.C,
-        config = { minw = self.ses.fontscale * (15/9 + 1 + 1/5), align = 'cr' },
-        nodes = {{
-            n = G.UIT.R,
-            config = { align = 'c' },
+    return ui.C{
+        minw = self.ses.fontscale * (15/9 + 1 + 1/5),
+        align = 'cr',
+        ui.R{
+            align = 'c',
             nodes = ui.gapList('C', self.ses.fontscale / 5, list)
-        }}
+        }
     }
 end
 
@@ -130,23 +111,20 @@ function IUIVer:render()
         if opts.enabled == nil then opts.enabled = (l.active and l.active.version) == self.ver end
     end
 
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.R,
-        config = { minh = self.ses.fontscale * 1.8 },
-        nodes = {{
-            n = G.UIT.R,
-            config = {
-                colour = opts.color or opts.enabled and G.C.GREEN or G.C.BLUE,
-                padding = 0.1,
-                r = true,
-                shadow = true,
-            },
-            nodes = {
-                self:partTitle(),
-                self:partActions()
-            }
-        }}
+    local uis = {
+        self:partTitle(),
+        self:partActions()
+    }
+
+    return ui.R{
+        minh = self.ses.fontscale * 1.8,
+        ui.R{
+            colour = opts.color or opts.enabled and G.C.GREEN or G.C.BLUE,
+            padding = 0.1,
+            r = true,
+            shadow = true,
+            nodes = uis
+        }
     }
 end
 
