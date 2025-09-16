@@ -101,20 +101,17 @@ function IUIOpts:renderCheckRateLimitExec()
         subconf.t = string.format('Resets in %d minute(s)', (data.rate.reset - t) / 60)
     end)
 
-    return self:optionsContainer({{
-        n = G.UIT.R,
-        config = { align = 'cm' },
-        nodes = {
-            { n = G.UIT.T, config = { text = 'Github API Ratelimit: ', scale = textscale } },
-            { n = G.UIT.T, config = conf },
+    return self:optionsContainer({
+        ui.R{
+            align = 'cm',
+            ui.TS('Github API Ratelimit: ', textscale),
+            ui.TC(conf)
+        },
+        ui.R{
+            align = 'cm',
+            ui.TC(subconf)
         }
-    }, {
-        n = G.UIT.R,
-        config = { align = 'cm' },
-        nodes = {
-            { n = G.UIT.T, config = subconf },
-        }
-    }})
+    })
 end
 
 --- @class imm.UI.Options.Static

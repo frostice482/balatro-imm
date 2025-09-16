@@ -58,7 +58,7 @@ function IUIVer:partTitle()
                 },
             })
         },
-        opts.sub and ui.R{self.ses:uiText(opts.sub, 0.5)}
+        opts.sub and self.ses:uiTextRow(opts.sub, 0.5)
     }
 end
 

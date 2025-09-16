@@ -1,6 +1,8 @@
 local constructor = require("imm.lib.constructor")
 local UIVersion = require('imm.ui.version')
+local LoveMoveable = require("imm.lib.love_moveable")
 local ui = require("imm.lib.ui")
+local co = require("imm.lib.co")
 local modsDir = require('imm.config').modsDir
 
 --- @class imm.UI.Mod.Funcs
@@ -15,10 +17,11 @@ local betaColor = G.C.ORANGE
 --- @class imm.UI.Mod
 --- @field ses imm.UI.Browser
 --- @field mod imm.ModMeta
+---
+--- @field contImage imm.LoveMoveable
 local IUIModSes = {
     cyclePageSize = 7,
-    idListCnt = 'imm-other-cycle',
-    idImageSelectCnt = 'imm-slc-imgcnt',
+    idListCnt = 'imm-other-cycle'
 }
 
 --- @protected
@@ -67,7 +70,7 @@ function IUIModSes:uiReleasesContainer(func)
     return ui.C{
         func = func,
         ref_table = self,
-        ui.R{self.ses:uiText('Please wait', 1.25)}
+        self.ses:uiTextRow('Please wait', 1.25)
     }
 end
 
@@ -137,7 +140,10 @@ function IUIModSes:uiCycle(list)
         length = #list,
         id = self.idListCnt,
         pagesize = self.cyclePageSize,
-        onCycle = function () self.ses.uibox:recalculate() end
+        onCycle = function ()
+            self.ses.contSelect:recalculate()
+            self.ses.uibox:recalculate()
+        end
     }, { no_pips = true })
 end
 
@@ -154,18 +160,18 @@ function IUIModSes:uiTabs()
             chosen = hasVersion,
             label = 'Installed',
             tab_definition_function = function (arg)
-                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiTabInstalled()} }
+                return ui.ROOT{self:uiTabInstalled()}
             end
         }, {
             chosen = not hasVersion,
             label = 'Releases',
             tab_definition_function = function (arg)
-                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiReleasesContainer(funcs.releasesInit)} }
+                return ui.ROOT{self:uiReleasesContainer(funcs.releasesInit)}
             end
         }, {
             label = 'Older',
             tab_definition_function = function (arg)
-                return { n = G.UIT.ROOT, config = {colour = G.C.CLEAR}, nodes = {self:uiReleasesContainer(funcs.otherInit)} }
+                return ui.ROOT{self:uiReleasesContainer(funcs.otherInit)}
             end
         }}
     })
@@ -206,38 +212,43 @@ function IUIModSes:uiRepoButton()
         table.insert(cols, self:uiRepoButtonUrl(self.mod.ts.donation_link, 'Donate'))
     end
 
-    return ui.R{
-        padding = 0.1,
-        align = 'm',
-        nodes = cols
-    }
+    return ui.R{ align = 'm', padding = 0.1, nodes = cols }
 end
 
 --- @param text string
 function IUIModSes:uiModAuthor(text)
-    return ui.R{
-        align = 'm',
-        self.ses:uiText('By '..text, 0.75)
-    }
+    return ui.R{ align = 'm', self.ses:uiText('By '..text, 0.75) }
+end
+
+function IUIModSes:uiImageContainer()
+    self.contImage = LoveMoveable(nil, 0, 0, self.ses.thumbW, self.ses.thumbH)
+    return ui.R{ align = 'm', ui.O(self.contImage) }
 end
 
 function IUIModSes:render()
     local uis = {
-        self.ses:uiImage(self.idImageSelectCnt),
+        self:uiImageContainer(),
         self.ses:uiModText(self.mod:title()),
         self:uiModAuthor(self.mod:author()),
-        --self:uiMoreInfo(),
         self:uiRepoButton(),
         self:uiTabs()
     }
-    return ui.C{
-        group = self.ses.idModSelect,
-        nodes = uis
-    }
+    return ui.ROOT(uis)
+end
+
+function IUIModSes:updateImageCo()
+    local err, img = self.mod:getImageCo()
+    if not img then return end
+
+    local w, h = img:getDimensions()
+    local aspectRatio = math.max(math.min(w / h, 16/9), 1)
+
+    self.contImage.T.w = self.ses.thumbH * aspectRatio
+    self.contImage.drawable = img
 end
 
 function IUIModSes:update()
-    self.ses:updateModImage(self.mod, self.idImageSelectCnt, true)
+    co.create(self.updateImageCo, self)
 end
 
 --- @class imm.UI.Mod.Static

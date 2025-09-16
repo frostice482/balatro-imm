@@ -17,42 +17,42 @@ local funcs = {
     options     = 'imm_b_opts'
 }
 
+--- @class imm.UI.Container: balatro.UIElement.Config
+--- @field object balatro.UIBox
+
 --- @class imm.UI.Browser
 --- @field uibox balatro.UIBox
 --- @field tags table<string, boolean>
 --- @field filteredList imm.ModMeta[]
---- @field selectedMod? imm.UI.Mod
---- @field ctrl imm.ModController
+--- @field selectedMod? imm.ModMeta
+---
+--- @field contMods balatro.UIBox[]
+--- @field contCycle balatro.UIBox
+--- @field contSelect balatro.UIBox
 local IUISes = {
     search = '',
     prevSearch = '',
     queueTimer = 0.3,
     queueCount = 0,
 
+    maxPage = 1,
     listPage = 1,
     listW = 3,
     listH = 3,
+    fontscale = 0.4,
+    spacing = 0.1,
     updateId = 0,
     thumbW = 16 * .2,
     thumbH = 9 * .2,
     w = 0,
     h = 0,
-    fontscale = 0.4,
 
     prepared = false,
     errorText = '',
     taskText = '',
     noThumbnail = false,
     noAutoDownloadMissing = false,
-    taskDone = true,
     hasChanges = false,
-
-    idCycle = 'imm-cycle',
-    idCycleCont = 'imm-cycle-cnt',
-    idModSelect = 'imm-modslc',
-    idModSelectCnt = 'imm-modslc-cnt',
-    idMod = 'imm-mod',
-    idImageContSuff = '-imgcnt'
 }
 
 --- @protected
@@ -77,14 +77,16 @@ function IUISes:init(modctrl, repo)
     self.tasks = BrowserTask(self)
 end
 
---- @param n number
-function IUISes:getModElmId(n)
-    return 'imm-mod-'..n
-end
-
---- @param n number
-function IUISes:getModElmCntId(n)
-    return 'imm-mod-container-'..n
+function IUISes:updateModContainers()
+    self.contCycle = ui.boxContainer()
+    self.contSelect = ui.boxContainer()
+    self.contMods = {}
+    for i_col=1, self.listH, 1 do
+        for i_row=1, self.listW, 1 do
+            local i = (i_col - 1) * self.listW + i_row
+            self.contMods[i] = ui.boxContainer()
+        end
+    end
 end
 
 --- @param text string
@@ -94,14 +96,11 @@ function IUISes:uiText(text, scale, col)
     return ui.T(text, { scale = (scale or 1) * self.fontscale, colour = col })
 end
 
---- @param id string
-function IUISes:uiImage(id)
-    return ui.R{
-        align = 'm',
-        id = id,
-        minw = self.thumbW,
-        minh = self.thumbH
-    }
+--- @param text string
+--- @param scale? number
+--- @param col? ColorHex
+function IUISes:uiTextRow(text, scale, col)
+    return ui.TRS(text, (scale or 1) * self.fontscale, col)
 end
 
 --- @param title string
@@ -123,32 +122,25 @@ function IUISes:uiModText(title, maxw)
     }
 end
 
-function IUISes:uiModSelectContainer()
-    return ui.container(self.idModSelectCnt)
-end
-
 function IUISes:uiCategory(label, category)
     category = category or label
     return ui.R{
-        minh = self.fontscale * 1.6,
-        ui.R{
-            align = 'm',
-            colour = self.tags[category] and G.C.ORANGE or G.C.RED,
-            minw = 2,
-            padding = 0.1,
-            shadow = true,
-            hover = true,
-            res = self.fontscale,
-            r = true,
-            button = funcs.setCategory,
-            ref_table = { ses = self, cat = category },
-            self:uiText(label)
-        }
+        align = 'm',
+        colour = self.tags[category] and G.C.ORANGE or G.C.RED,
+        minw = 2,
+        padding = 0.1,
+        shadow = true,
+        hover = true,
+        res = self.fontscale,
+        r = true,
+        button = funcs.setCategory,
+        ref_table = { ses = self, cat = category },
+        self:uiText(label)
     }
 end
 
 --- @type balatro.UIElement.Config
-local someWeirdBase = { padding = 0.15, r = 0.1, hover = true, shadow = true, colour = G.C.BLUE }
+local someWeirdBase = { padding = 0.15, r = true, hover = true, shadow = true, colour = G.C.BLUE }
 
 function IUISes:uiSidebarHeaderExit()
     return ui.C({
@@ -186,27 +178,20 @@ function IUISes:uiSidebarHeader()
         self:uiSidebarHeaderOptions(),
     }
     return ui.R{
-        padding = 0.1,
         align = 'm',
-        nodes = ui.gapList('C', self.fontscale / 10, uis)
+        nodes = ui.gapList('C', self.spacing, uis)
     }
 end
 
 function IUISes:uiSidebar()
     local categories = {}
-
     table.insert(categories, self:uiSidebarHeader())
-
-    for i,entry in ipairs(self.categories) do
-        table.insert(categories, self:uiCategory(entry[1], entry[2]))
-    end
-
-    return ui.C(categories)
+    for i,entry in ipairs(self.categories) do table.insert(categories, self:uiCategory(entry[1], entry[2])) end
+    return ui.C(ui.gapList('R', self.spacing, categories))
 end
 
 --- @param mod imm.ModMeta
---- @param n number
-function IUISes:uiModEntry(mod, n)
+function IUISes:uiModEntry(mod)
     local w, textDescs
     local desc = mod:description()
     if desc then
@@ -219,22 +204,26 @@ function IUISes:uiModEntry(mod, n)
         end
     end
 
-    local id = self:getModElmId(n)
-    return ui.C{
-        colour = G.C.RED,
-        group = self.idMod,
-        hover = true,
-        shadow = true,
-        r = true,
-        button = funcs.chooseMod,
-        ref_table = { ses = self, mod = mod },
-        padding = 0.15,
-        on_demand_tooltip = textDescs and {
-            text = textDescs,
-            text_scale = self.fontscale
-        },
-        nodes = {
-            self:uiImage(id .. self.idImageContSuff),
+    local thumb = LoveMoveable(nil, 0, 0, self.thumbW, self.thumbH)
+
+    return ui.ROOT{
+        ref_table = { thumb = thumb },
+        padding = self.spacing / 2,
+
+        ui.C{
+            padding = 0.1,
+            colour = G.C.RED,
+            hover = true,
+            shadow = true,
+            r = true,
+            button = funcs.chooseMod,
+            ref_table = { ses = self, mod = mod },
+            on_demand_tooltip = textDescs and {
+                text = textDescs,
+                text_scale = self.fontscale
+            },
+
+            ui.R{ align = 'cm', minw = self.thumbW, ui.O(thumb) },
             self:uiModText(mod:title(), self.thumbW),
         }
     }
@@ -252,35 +241,37 @@ function IUISes:uiHeaderInput()
 end
 
 function IUISes:uiHeader()
-    return ui.R{
-        align = 'cm',
-        padding = 0.1,
-        self:uiHeaderInput()
+    return ui.R{ align = 'cm', self:uiHeaderInput()
     }
 end
 
-function IUISes:uiMain()
-    local n = 0
+function IUISes:uiCycleContainer()
+    return ui.R{ align = 'cm', ui.O(self.contCycle) }
+end
+
+function IUISes:uiModGrid()
     local col = {}
 
-    table.insert(col, self:uiHeader())
-
-    for i=1, self.listH, 1 do
+    for i_col=1, self.listH, 1 do
         local row = {}
-        for j=1, self.listW, 1 do
-            n = n + 1
-            local t = ui.C{ui.R{
-                id = self:getModElmCntId(n),
-                padding = 0.1
-            }}
+        for i_row=1, self.listW, 1 do
+            local i = (i_col - 1) * self.listW + i_row
+            local t = ui.O(self.contMods[i])
             table.insert(row, t)
         end
         local t = ui.R(row)
         table.insert(col, t)
     end
 
-    table.insert(col, self:uiCycleContainer())
+    return ui.R{ padding = self.spacing / 2, ui.C(col) }
+end
 
+function IUISes:uiMain()
+    local col = {
+        self:uiHeader(),
+        self:uiModGrid(),
+        self:uiCycleContainer()
+    }
     return ui.C(col)
 end
 
@@ -288,33 +279,21 @@ function IUISes:uiBody()
     local uis = {
         self:uiSidebar(),
         self:uiMain(),
-        self:uiModSelectContainer()
+        ui.C{ui.O(self.contSelect)}
     }
     return ui.R(uis)
 end
 
 function IUISes:uiCycle()
-    local n = math.max(math.ceil(#self.filteredList/(self.listW*self.listH)), 1)
-    local opts = ui.cycleOptions(n)
-    self.listPage = math.min(self.listPage, n)
-
-    local obj = create_option_cycle({
-        options = opts,
+    return ui.ROOT{create_option_cycle({
+        options = ui.cycleOptions(self.maxPage),
         current_option = self.listPage,
         ref_table = self,
         ref_value = 'listPage',
         _ses = self,
         opt_callback = funcs.cyclePage,
         no_pips = true
-    })
-    obj.config.group = self.idCycle
-    return obj
-end
-
-function IUISes:uiCycleContainer()
-    local w = ui.container(self.idCycleCont, true)
-    w.config = { align = 'cm', padding = 0.1 }
-    return w
+    })}
 end
 
 function IUISes:uiErrorContainer()
@@ -332,8 +311,8 @@ end
 function IUISes:uiBrowse()
     local uis = {
         self:uiBody(),
-        --self:uiTaskContainer(),
-        --self:uiErrorContainer(),
+        self:uiTaskContainer(),
+        self:uiErrorContainer(),
     }
     return ui.C{
         minw = self.w,
@@ -347,67 +326,70 @@ end
 
 --- @param mod? imm.ModMeta
 function IUISes:selectMod(mod)
-    if self.selectedMod then self.uibox:remove_group(nil, self.idModSelect) end
-    local cnt = self.uibox:get_UIE_by_ID(self.idModSelectCnt)
-    if not mod or not cnt then return end
-
-    local modses = UIMod(self, mod)
-    self.selectedMod = modses
-    self.uibox:add_child(modses:render(), cnt)
-    modses:update()
+    self.selectedMod = mod
+    if mod then
+        local modses = UIMod(self, mod)
+        ui.changeRoot(self.contSelect, modses:render())
+        modses:update()
+    else
+        ui.changeRoot(self.contSelect, ui.ROOT())
+    end
+    self.uibox:recalculate()
 end
 
 --- @param ifMod? imm.ModMeta
 function IUISes:updateSelectedMod(ifMod)
-    local mod = self.selectedMod and self.selectedMod.mod
+    local mod = self.selectedMod and self.selectedMod
     if not ifMod or ifMod == mod then
         return self:selectMod(mod)
     end
 end
 
---- @param containerId string
---- @param img love.Image
-function IUISes:uiUpdateImage(containerId, img)
-    local imgcnt = self.uibox:get_UIE_by_ID(containerId)
-    if not imgcnt then return end
+--- @protected
+--- @param mod imm.ModMeta
+--- @param n number
+--- @param nocheckUpdate? boolean
+function IUISes:_updateModImageCo(mod, n, nocheckUpdate)
+    local root = self.contMods[n]
+    if not root then return end
+
+    local aid = self.updateId
+    local err, img = mod:getImageCo()
+    if not img or not nocheckUpdate and self.updateId ~= aid then return end
 
     local w, h = img:getDimensions()
     local aspectRatio = math.max(math.min(w / h, 16/9), 1)
 
-    self.uibox:add_child(ui.O(LoveMoveable(img, 0, 0, self.thumbH * aspectRatio, self.thumbH)), imgcnt)
-end
-
---- @protected
---- @param mod imm.ModMeta
---- @param containerId string
---- @param nocheckUpdate? boolean
-function IUISes:_updateModImageCo(mod, containerId, nocheckUpdate)
-    local aid = self.updateId
-    local err, data = mod:getImageCo()
-    if not data or not nocheckUpdate and self.updateId ~= aid then return end
-    self:uiUpdateImage(containerId, data)
+    --- @type imm.LoveMoveable
+    local thumb = root.UIRoot.config.ref_table.thumb
+    thumb.T.w = self.thumbH * aspectRatio
+    thumb.drawable = img
+    root:recalculate()
 end
 
 --- @param mod imm.ModMeta
---- @param containerId string
+--- @param n number
 --- @param nocheckUpdate? boolean
-function IUISes:updateModImage(mod, containerId, nocheckUpdate)
-    co.create(self._updateModImageCo, self, mod, containerId, nocheckUpdate)
+function IUISes:updateModImage(mod, n, nocheckUpdate)
+    co.create(self._updateModImageCo, self, mod, n, nocheckUpdate)
 end
 
 --- @param mod? imm.ModMeta
 --- @param n number
 function IUISes:updateMod(mod, n)
-    local cont = self.uibox:get_UIE_by_ID(self:getModElmCntId(n))
-    if not cont or not mod then return end
+    local root = self.contMods[n]
+    if not root then return end
 
-    self.uibox:add_child(self:uiModEntry(mod, n), cont)
-    self:updateModImage(mod, self:getModElmId(n)..self.idImageContSuff)
+    if mod then
+        ui.changeRoot(root, self:uiModEntry(mod))
+        self:updateModImage(mod, n)
+    else
+        ui.changeRoot(root, ui.ROOT())
+    end
 end
 
 function IUISes:updateMods()
     self.updateId = self.updateId + 1
-    self.uibox:remove_group(nil, self.idMod)
     local off = (self.listPage - 1) * self.listW * self.listH
     for i=1, self.listH * self.listW, 1 do
         self:updateMod(self.filteredList[i+off], i)
@@ -526,12 +508,11 @@ function IUISes:updateFilter()
 end
 
 function IUISes:update()
-    self.uibox:remove_group(nil, self.idCycle)
-
     self:updateFilter()
 
-    local cyclecont = self.uibox:get_UIE_by_ID(self.idCycleCont)
-    if cyclecont then self.uibox:add_child(self:uiCycle(), cyclecont) end
+    self.maxPage = math.max(math.ceil(#self.filteredList/(self.listW*self.listH)), 1)
+    self.listPage = math.min(self.listPage, self.maxPage)
+    ui.changeRoot(self.contCycle, self:uiCycle())
 
     self:updateMods()
 
@@ -567,6 +548,7 @@ function IUISes:prepare()
 end
 
 function IUISes:render()
+    self:updateModContainers()
     return create_UIBox_generic_options({
         no_back = true,
         contents = { self:uiBrowse() }

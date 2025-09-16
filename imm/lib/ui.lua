@@ -241,6 +241,14 @@ end
 
 --- @param config? imm.UI.ConfigMix
 --- @param inherits? balatro.UIElement.Config
+function ui.ROOT(config, inherits)
+    config = config or {}
+    config.colour = config.colour or G.C.CLEAR
+    return ui._T(config, inherits, G.UIT.ROOT)
+end
+
+--- @param config? imm.UI.ConfigMix
+--- @param inherits? balatro.UIElement.Config
 function ui.C(config, inherits)
     return ui._T(config, inherits, G.UIT.C)
 end
@@ -265,6 +273,12 @@ function ui.TS(text, scale, color)
     config.scale = scale or 1
     config.colour = color
     return { n = G.UIT.T, config = config }
+end
+
+--- Text with config
+--- @param conf balatro.UIElement.Config
+function ui.TC(conf)
+    return { n = G.UIT.T, config = conf }
 end
 
 --- Text with reftable
@@ -299,6 +313,18 @@ end
 --- @param def balatro.UIElement.Definition
 function ui.overlay(def)
     G.FUNCS.overlay_menu({definition = def})
+end
+
+--- @param uibox balatro.UIBox
+--- @param definition balatro.UIElement.Definition
+function ui.changeRoot(uibox, definition)
+    uibox.UIRoot:remove()
+    uibox:set_parent_child(definition)
+    uibox:recalculate()
+end
+
+function ui.boxContainer()
+    return UIBox({ definition = { n = G.UIT.ROOT }, config = {} })
 end
 
 return ui

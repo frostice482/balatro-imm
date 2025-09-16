@@ -1,7 +1,7 @@
 --- @class imm.LoveMoveable: balatro.Moveable
 local ILoveMoveable = Moveable:extend()
 
---- @param drawable love.Texture | love.Canvas
+--- @param drawable? love.Texture | love.Canvas
 function ILoveMoveable:init(drawable, X, Y, W, H)
     Moveable.init(self, X, Y, W, H)
     self.drawable = drawable
@@ -11,6 +11,8 @@ function ILoveMoveable:init(drawable, X, Y, W, H)
 end
 
 function ILoveMoveable:draw()
+    if not self.drawable then return end
+
     local w, h = self.drawable:getDimensions()
     prep_draw(self, 1)
     love.graphics.setColor(self.color)
@@ -20,6 +22,6 @@ function ILoveMoveable:draw()
     Moveable.draw(self)
 end
 
---- @type imm.LoveMoveable | fun(drawable: love.Texture | love.Canvas, X, Y, W, H): imm.LoveMoveable
+--- @type imm.LoveMoveable | fun(drawable?: love.Texture | love.Canvas, X, Y, W, H): imm.LoveMoveable
 local LoveMoveable = ILoveMoveable
 return LoveMoveable
