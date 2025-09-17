@@ -2,7 +2,8 @@ local a = require("imm.lib.assert")
 local ConfirmToggle = require('imm.ui.confirm_toggle')
 local UIVerDel = require('imm.ui.version_delete')
 local UIVersion = require("imm.ui.version")
-local ui        = require("imm.lib.ui")
+local ui = require("imm.lib.ui")
+local co = require("imm.lib.co")
 local funcs = UIVersion.funcs
 
 --- @param elm balatro.UIElement
@@ -13,11 +14,13 @@ G.FUNCS[funcs.download] = function(elm)
 
     if not r.opts.downloadUrl then return end
 
-    r.ses.tasks:createDownloadSes():download(r.opts.downloadUrl, {
-        name = r.mod..' '..r.ver,
-        size = r.opts.downloadSize,
-        cb = function (err) if not err then r.ses:updateSelectedMod(r.ses.repo.listMapped[r.mod]) end end
-    })
+    co.create(function ()
+        r.ses.tasks:createDownloadCoSes():download(r.opts.downloadUrl, {
+            name = r.mod..' '..r.ver,
+            size = r.opts.downloadSize,
+            cb = function (err) if not err then r.ses:updateSelectedMod(r.ses.repo.listMapped[r.mod]) end end
+        })
+    end)
 end
 
 --- @param elm balatro.UIElement

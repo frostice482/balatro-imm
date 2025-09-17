@@ -33,6 +33,7 @@ function agent:request(url, options, cb)
     self.task:runTask({ url = url, options = options}, function (res) cb(res[1], res[2], res[3]) end)
 end
 
+--- @async
 --- @param url string
 --- @param options? luahttps.Options
 function agent:requestCo(url, options)

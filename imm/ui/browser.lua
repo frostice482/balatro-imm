@@ -332,6 +332,7 @@ function IUISes:updateSelectedMod(ifMod)
     end
 end
 
+--- @async
 --- @protected
 --- @param mod imm.ModMeta
 --- @param n number

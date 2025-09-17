@@ -1,7 +1,7 @@
 local constructor = require("imm.lib.constructor")
 local Queue = require("imm.lib.queue")
 local UITaskStatusReg = require("imm.btasks.status")
-local TaskDownload = require("imm.btasks.download")
+local TaskDownloadCo = require("imm.btasks.download_co")
 local co = require("imm.lib.co")
 local logger = require("imm.logger")
 
@@ -16,8 +16,8 @@ function IBTasks:init(ses)
     self.status = UITaskStatusReg()
 end
 
-function IBTasks:createDownloadSes()
-    return TaskDownload(self)
+function IBTasks:createDownloadCoSes()
+    return TaskDownloadCo(self)
 end
 
 ---@param data love.Data
@@ -58,12 +58,6 @@ function IBTasks:getModUpdate(modlist, meta)
     end
 
     return latest
-end
-
---- @param modlist imm.ModList
---- @param meta imm.ModMeta
-function IBTasks:updateModCo(modlist, meta)
-    local nver = self:getModUpdate(modlist, meta)
 end
 
 function IBTasks:updateAllMods()

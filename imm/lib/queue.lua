@@ -1,8 +1,10 @@
 local constructor = require("imm.lib.constructor")
 local co = require("imm.lib.co")
 
+--- @alias imm.Queue.Cb fun(done: fun())
+
 --- @class imm.Queue
---- @field taskQueues fun()[]
+--- @field taskQueues imm.Queue.Cb[]
 local IQueue = {}
 
 --- @protected
@@ -14,20 +16,23 @@ end
 
 function IQueue:next()
     self.available = self.available + 1
+    --- @type imm.Queue.Cb
     local f = table.remove(self.taskQueues, 1)
     if not f then return end
     self.available = self.available - 1
-    f()
+    f(function() self:next() end)
 end
 
---- @param func fun()
+--- @param func imm.Queue.Cb
 function IQueue:queue(func)
     table.insert(self.taskQueues, func)
     if self.available > 0 then self:next() end
 end
 
+--- @async
+--- @return fun() done
 function IQueue:queueCo()
-    co.wrapCallbackStyle(function (res) self:queue(res) end)
+    return co.wrapCallbackStyle(function (res) self:queue(res) end)
 end
 
 --- @alias imm.Queue.C p.Constructor<imm.Queue, nil> | fun(max?: number): imm.Queue

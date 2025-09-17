@@ -42,10 +42,13 @@ function IGRepo:getList(cb)
     self.listApi:fetch(nil, cb)
 end
 
+--- @async
 --- @return string? err
 function IGRepo:getListCo()
     return co.wrapCallbackStyle(function (res) self:getList(res) end)
 end
+
+--- @async
 --- @param url string
 --- @param cacheKey? string
 --- @return string? err, love.Image? data

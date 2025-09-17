@@ -126,6 +126,7 @@ function IBMIRepo:getReleases(repoUrl, cb, cacheKey)
     end
 end
 
+--- @async
 --- @param repoUrl string
 --- @param cacheKey? string
 --- @return string? err, ghapi.Releases[]? releases

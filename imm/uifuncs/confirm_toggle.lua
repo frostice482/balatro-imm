@@ -3,6 +3,7 @@ local UIBrowser = require("imm.ui.browser")
 local LoadList = require("imm.lib.mod.loadlist")
 local Mod = require("imm.lib.mod.mod")
 local UICT = require("imm.ui.confirm_toggle")
+local co = require("imm.lib.co")
 local funcs = UICT.funcs
 
 --- @param elm balatro.UIElement
@@ -16,14 +17,16 @@ G.FUNCS[funcs.download] = function (elm)
     UIBrowser:assertInstance(ses, 'r.ses')
     LoadList:assertInstance(list, 'r.list')
 
-    local down = ses.tasks:createDownloadSes()
+    co.create(function ()
+        local down = ses.tasks:createDownloadCoSes()
 
-    ses:showOverlay(true)
-    for id,entries in pairs(list.missingDeps) do
-        local rules = {}
-        for mod, rule in pairs(entries) do table.insert(rules, rule) end
-        down:downloadMissingEntry(id, rules)
-    end
+        ses:showOverlay(true)
+        for id,entries in pairs(list.missingDeps) do
+            local rules = {}
+            for mod, rule in pairs(entries) do table.insert(rules, rule) end
+            down:downloadMissingModEntry(id, rules)
+        end
+    end)
 end
 
 --- @param elm balatro.UIElement

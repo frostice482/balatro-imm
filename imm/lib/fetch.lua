@@ -5,7 +5,7 @@ local co = require("imm.lib.co")
 
 --- @class imm.Fetch<A, T>: balatro.Object, {
 ---     fetch: fun(self, arg: A, cb: fun(err?: string, res?: T), refreshCache?: boolean, useCache?: boolean);
----     fetchCo: fun(self, arg: A, refreshCache?: boolean, useCache?: boolean): string?, T;
+---     fetchCo: async fun(self, arg: A, refreshCache?: boolean, useCache?: boolean): string?, T;
 --- }
 local IFetch = {}
 
@@ -80,6 +80,7 @@ end
 --- @field opts? luahttps.Options
 --- @field n number
 
+--- @async
 --- @param state imm.Fetch.ReqState
 --- @return string? err, any? res
 function IFetch:runreqCo(state)
@@ -109,6 +110,7 @@ end
 --- @type imm.Fetch<any, any>
 local IFetch2 = IFetch
 
+--- @async
 function IFetch2:fetchCo(arg, refreshCache, useCache)
     local cachefile = self:getCacheFileName(arg)
     local cache = not refreshCache and love.filesystem.read(cachefile)

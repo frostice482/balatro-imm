@@ -236,6 +236,7 @@ function IUIModSes:render()
     return ui.ROOT(uis)
 end
 
+--- @async
 function IUIModSes:updateImageCo()
     local err, img = self.mod:getImageCo()
     if not img then return end

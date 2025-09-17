@@ -86,6 +86,7 @@ function IMeta:author()
     return self.ts and self.ts.owner or self.bmi and self.bmi.owner or '-'
 end
 
+--- @async
 --- @return string? err, love.Image? data
 function IMeta:getImageCo()
     if self.tsLatest and self.tsLatest.icon then
@@ -120,6 +121,7 @@ function IMeta:getReleasesTs()
     return self.tsVersionsCache
 end
 
+--- @async
 --- @protected
 function IMeta:getReleasesBmiCo()
     if self.bmiVersionsCache then return self.bmiVersionsCache end
@@ -149,6 +151,7 @@ function IMeta:getReleasesBmiCo()
     return self.bmiVersionsCache
 end
 
+--- @async
 --- @return imm.ModMeta.Release[]
 function IMeta:getReleasesCo()
     self:getReleasesTs()
