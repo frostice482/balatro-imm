@@ -18,6 +18,7 @@ local actionsRank = {
 
 --- @class imm.UI.ConfirmToggle
 --- @field mod? imm.Mod
+--- @field uiButtonConf balatro.UI.ButtonParam
 local IUICT = {}
 
 --- @param ses imm.UI.Browser
@@ -37,6 +38,18 @@ function IUICT:init(ses, list, mod, isDisable)
     self.fontscaleTitle = self.fontscale
     self.fontscaleVersion = self.fontscale
     self.fontscaleSub = self.fontscale * 0.75
+
+    self.uiButtonConf = {
+        minh = 0.6,
+        minw = 4,
+        scale = self.ses.fontscale,
+        col = true,
+        ref_table = {
+            list = self.list,
+            ses = self.ses,
+            mod = self.mod
+        }
+    }
 end
 
 --- @param act imm.LoadList.ModAction
@@ -104,7 +117,7 @@ function IUICT:partActions(nodes)
 
     for i,act in ipairs(actions) do
         if not hasChange then
-            table.insert(nodes, ui.TRS('These mods will also take effect:', self.fontscaleTitle))
+            table.insert(nodes, ui.TRS('These mods will take effect:', self.fontscaleTitle))
             hasChange = true
         end
         table.insert(nodes, self:partAct(act))
@@ -154,9 +167,49 @@ function IUICT:partMissing(nodes)
     return hasMissing
 end
 
-function IUICT:render()
+function IUICT:uiButtonOptions(hasMissing, hasErr)
+    local buttonOpts = {}
+
+    if hasMissing then table.insert(buttonOpts, {
+        button = funcs.download,
+        label = {'Download missings'},
+        colour = G.C.BLUE
+    }) end
+
+    table.insert(buttonOpts, {
+        button = funcs.confirm,
+        label = {hasErr and 'Confirm anyway' or 'Confirm'},
+        colour = hasErr and G.C.ORANGE or G.C.BLUE
+    })
+
+    table.insert(buttonOpts, self.mod and {
+        button = funcs.confirmOne,
+        label = {'JUST '..self.mod.name},
+        colour = G.C.ORANGE
+    } or nil)
+
+    table.insert(buttonOpts, {
+        button = browser_funcs.back,
+        label = {'Cancel'},
+        colour = G.C.GREY, ref_table = self.ses
+    })
+
+    return buttonOpts
+end
+
+function IUICT:uiButtons(hasMissing, hasErr)
+    --- @type balatro.UIElement.Definition[]
+    local buttons = {}
+    local buttonOpts = self:uiButtonOptions(hasMissing, hasErr)
+    for i,v in ipairs(buttonOpts) do
+        table.insert(buttons, UIBox_button(setmetatable(v, { __index = self.uiButtonConf })))
+    end
+    return buttons
+end
+
+function IUICT:renderContent()
     local tgltext = self.isDisable and 'Disable' or 'Enable'
-    local titleText = self.mod and string.format('%s %s %s, but..', tgltext, self.mod.name, self.mod.version) or string.format('%s, but...', tgltext)
+    local titleText = self.mod and string.format('%s %s %s?', tgltext, self.mod.name, self.mod.version) or string.format('%s?', tgltext)
 
     --- @type balatro.UIElement.Definition[]
     local nodes = {}
@@ -165,40 +218,15 @@ function IUICT:render()
     local hasMissing = self:partMissing(nodes)
     local hasImpossible, hasChange = self:partActions(nodes)
     local hasErr = hasMissing or hasImpossible
-
-    local data = { list = self.list, ses = self.ses, mod = self.mod }
-    local bconf = { __index = { scale = self.ses.fontscale, ref_table = data, minh = 0.6, minw = 4, col = true } }
-
-    if hasMissing then
-        table.insert(nodes, UIBox_button(setmetatable({ button = funcs.download, label = {'Download missings'}, colour = G.C.BLUE }, bconf)))
-    end
-    local labelModifyAll = 'Confirm'
-    if hasErr then labelModifyAll = labelModifyAll..' anyway' end
-
-    local buttons = {}
-
-    table.insert(buttons, UIBox_button(setmetatable({
-        button = funcs.confirm,
-        label = {labelModifyAll},
-        colour = hasErr and G.C.ORANGE or G.C.BLUE
-    }, bconf)))
-
-    if self.mod then table.insert(buttons, UIBox_button(setmetatable({
-        button = funcs.confirmOne,
-        label = {string.format('JUST %s', self.mod.name)},
-        colour = G.C.ORANGE
-    }, bconf))) end
-
-    table.insert(buttons, UIBox_button(setmetatable({
-        button = browser_funcs.back,
-        label = {'Cancel'},
-        colour = G.C.GREY, ref_table = self.ses
-    }, bconf)))
-
+    local buttons = self:uiButtons(hasMissing, hasErr)
     table.insert(nodes, ui.R(ui.gapList('C', 0.1, buttons)))
 
+    return nodes
+end
+
+function IUICT:render()
     return create_UIBox_generic_options({
-        contents = nodes,
+        contents = self:renderContent(),
         no_back = true
     })
 end
