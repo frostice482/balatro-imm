@@ -5,7 +5,6 @@ local UIBrowser = require("imm.ui.browser")
 local UIOpts = require("imm.ui.options")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
-local logger = require("imm.logger")
 local funcs = UIOpts.funcs
 
 --- @param elm balatro.UIElement
@@ -18,7 +17,7 @@ G.FUNCS[funcs.disableAll] = function(elm)
     local fail = {}
 
     for k, mod in pairs(ses.ctrl.loadlist.loadedMods) do
-        if not mod.list.native and mod.mod ~= 'balatro_imm' then
+        if not mod:isExcluded() then
             local ok, err = ses.ctrl:disableMod(mod)
             if ok then table.insert(suc, mod.mod..' '..mod.version)
             else table.insert(fail, err)
@@ -99,5 +98,34 @@ G.FUNCS[funcs.updateAll] = function(elm)
     co.create(function ()
         ses.tasks:createUpdaterCoSes():updateAll()
     end)
+    ses:showOverlay(true)
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.deleteOld] = function(elm)
+    --- @type imm.UI.Options
+    local r = elm.config.ref_table
+    UIOpts:assertInstance(r, 'ref_table')
+
+    local list = r.ses.ctrl:getOlderMods()
+    if #list == 0 then return r.ses:showOverlay(true) end
+
+    ui.overlay(r:uiRenderRemoveMods(list))
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.deleteConf] = function(elm)
+    local r = elm.config.ref_table or {}
+
+    --- @type imm.UI.Browser, imm.Mod[]
+    local ses, list = r.ses, r.list
+    UIBrowser:assertInstance(ses, 'r.ses')
+
+    if r.confirm then
+        for i,mod in ipairs(list) do
+            ses.ctrl:deleteEntry(mod)
+        end
+    end
+
     ses:showOverlay(true)
 end

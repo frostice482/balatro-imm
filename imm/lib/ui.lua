@@ -279,8 +279,9 @@ end
 --- @param text string
 --- @param scale? number
 --- @param color? ColorHex
-function ui.TS(text, scale, color)
-    local config = {}
+--- @param config? balatro.UIElement.Config
+function ui.TS(text, scale, color, config)
+    config = config or {}
     config.text = text
     config.scale = scale or 1
     config.colour = color

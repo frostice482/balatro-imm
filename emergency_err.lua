@@ -27,7 +27,7 @@ local function __imm_disableAllMods(err)
 
     -- disable mods
     for k,mod in pairs(list) do
-        if mod.mod ~= 'balatro_imm' and not mod.list.native then
+        if not mod:isExcluded() then
             table.insert(detecteds, string.format('- %s: %s', mod.mod or '?', mod.version or '?'))
             ctrl:disableMod(mod)
             table.insert(disableds, mod.mod..'='..mod.version)

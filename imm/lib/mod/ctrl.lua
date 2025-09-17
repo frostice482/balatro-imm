@@ -72,6 +72,21 @@ function IModCtrl:getMod(modid, version)
     return self.mods[modid] and self.mods[modid].versions[version]
 end
 
+function IModCtrl:getOlderMods()
+    --- @type imm.Mod[]
+    local list = {}
+    for id, modlist in pairs(self.mods) do
+        local old = false
+        for i, mod in ipairs(modlist:list()) do
+            if not mod:isExcluded() then
+                if old and not mod:isActive() then table.insert(list, mod) end
+                old = true
+            end
+        end
+    end
+    return list
+end
+
 --- @param modid string
 --- @return boolean ok, string? err
 function IModCtrl:disable(modid)
@@ -139,7 +154,7 @@ end
 function IModCtrl:addEntry(info)
     logger.fmt('debug', 'Added %s %s to registry', info.mod, info.version)
     self.provideds:add(info)
-    if info.list.active == info then return self.loadlist:enable(info, true) end
+    if info:isActive() then return self.loadlist:enable(info, true) end
     return true
 end
 

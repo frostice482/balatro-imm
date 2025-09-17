@@ -13,6 +13,8 @@ local funcs = {
     checkRateLimit = 'imm_o_checkghratelimit',
     disableAll     = 'imm_o_disableall',
     updateAll      = 'imm_o_updateall',
+    deleteOld      = 'imm_o_deleteold',
+    deleteConf     = 'imm_o_delete_conf',
 }
 
 --- @class imm.UI.Options
@@ -31,6 +33,7 @@ function IUIOpts:gridOptions()
     return {{
         UIBox_button({ minw = self.buttonWidth, button = funcs.disableAll       , label = {'Disable all mods'}, ref_table = self.ses }),
         UIBox_button({ minw = self.buttonWidth, button = funcs.restart          , label = {'Restart'} }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.deleteOld        , label = {'Delete old versions'}, ref_table = self }),
         UIBox_button({ minw = self.buttonWidth, button = funcs.checkRateLimit   , label = {'Check ratelimit'}, ref_table = self }),
     }, {
         UIBox_button({ minw = self.buttonWidth, button = funcs.updateAll        , label = {'Update all mods'}, ref_table = self.ses }),
@@ -70,6 +73,33 @@ end
 
 function IUIOpts:render()
     return self:optionsContainer({self:gridRow(self:gridOptions())})
+end
+
+--- @param mods? imm.Mod[]
+function IUIOpts:uiRenderRemoveMods(mods)
+    mods = mods or self.ses.ctrl:getOlderMods()
+    local scale = self.ses.fontscale
+
+    --- @type balatro.UIElement.Definition[]
+    local uis = { ui.R{ align = 'cm', ui.TS('These mods will be DELETED:', scale) } }
+
+    --- @type balatro.UIElement.Definition[]
+    local r = {}
+    local rc = 1
+    for i, mod in ipairs(mods) do
+        table.insert(r, ui.C{ minw = 2.5, align = 'r', ui.TRS(mod.name, scale) })
+        table.insert(r, ui.C{ minw = 1, align = 'l', ui.TRS(mod.version, scale, G.C.BLUE) })
+
+        rc = rc + 1
+        if rc > 3 then
+            rc = 1
+            table.insert(uis, ui.R{ padding = 0.1, nodes = r })
+            r = {}
+        end
+    end
+    table.insert(uis, ui.R{ padding = 0.1, nodes = r })
+
+    return ui.confirm(ui.R{ui.C(uis)}, funcs.deleteConf, { list = mods, ses = self.ses })
 end
 
 function IUIOpts:renderClearCacheOpts()

@@ -1,7 +1,4 @@
 local a = require("imm.lib.assert")
-local UIBrowser = require("imm.ui.browser")
-local LoadList = require("imm.lib.mod.loadlist")
-local Mod = require("imm.lib.mod.mod")
 local UICT = require("imm.ui.confirm_toggle")
 local co = require("imm.lib.co")
 local funcs = UICT.funcs
