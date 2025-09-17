@@ -4,9 +4,6 @@ local errhand_orig = love.errorhandler or love.errhand
 local hasHandlerOverridden = false
 
 local function __imm_disableAllMods(err)
-    if not _imm then error('imm not available', 0) end
-    assert(_imm.init())
-
     local ctrl = require('imm.modctrl')
 
     --- @type string?
@@ -20,6 +17,15 @@ local function __imm_disableAllMods(err)
         and {suspect = ctrl.loadlist.loadedMods[suspect]}
         or ctrl.loadlist.loadedMods
 
+    if not next(list) then return end
+
+    -- detect multiple smods installation
+    local smods = list.Steamodded
+    if smods and smods.list:list() ~= 1 then
+        err = err..'\n\nMultiple Steamodded version detected - Remove the older ones!'
+    end
+
+    -- disable mods
     for k,mod in pairs(list) do
         if mod.mod ~= 'balatro_imm' and not mod.list.native then
             table.insert(detecteds, string.format('- %s: %s', mod.mod or '?', mod.version or '?'))
@@ -27,15 +33,18 @@ local function __imm_disableAllMods(err)
             table.insert(disableds, mod.mod..'='..mod.version)
         end
     end
+    err = err..'\n\nimm has disabled detected mods: \n'..table.concat(detecteds, '\n')
 
+    -- make all disabled mods temporary
     if not suspect then
         _imm.initconfig()
         table.insert(disableds, _imm.configs.nextEnable)
         _imm.configs.nextEnable = table.concat(disableds, '==')
         require('imm.lib.util').saveconfig()
+        err = err..'\nThese mods are disabled temporarily - it will be reenabled on next startup'
     end
 
-    return detecteds, suspect
+    return err
 end
 
 local attached = true
@@ -43,15 +52,9 @@ local attached = true
 local function handler(err)
     if attached then
         attached = false
-        err = tostring(err)
-        if not hasHandlerOverridden then err = debug.traceback(err..'\n', 2) end
-
-        local ok, res = pcall(__imm_disableAllMods, err)
-        if not ok then
-            err = err..'\n\nimm failed to disable mods: '..res
-        else
-            err = err..'\n\nimm has disabled detected mods: \n'..table.concat(res, '\n')
-        end
+        err = type(err) == 'string' and err or tostring(err)
+        local ok, nerr = pcall(__imm_disableAllMods, err)
+        err = ok and (nerr or err) or ('\n\nimm failed to disable mods: '..err)
     end
     return errhand_orig(err)
 end
