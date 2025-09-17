@@ -1,12 +1,11 @@
 local constructor = require("imm.lib.constructor")
-local UIConfirmToggle
+local UICT
 local co = require("imm.lib.co")
 local logger = require("imm.logger")
 local ui = require("imm.lib.ui")
 
 --- @class imm.Browser.Task.Update
 --- @field newMods imm.Mod[]
---- @field toUpdate imm.ModMeta.Release[]
 --- @field status? imm.Browser.Task.UI.Status
 local IUpdateCo = {
     allowNoReleaseUSeCommit = false,
@@ -80,20 +79,22 @@ function IUpdateCo:updateMod(installed, meta)
         latest = { format = 'bmi', url = meta.bmi.download_url, version = 'Source' }
     end
 
-    logger.fmt('Updating %s from %s to %s', meta:title(), installed.version, latest.version)
+    logger.fmt('log', 'Updating %s from %s to %s', meta:title(), installed.version, latest.version)
     self.down:download(latest.url, { name = meta:title()..' '..latest.version, size = latest.size })
     self:statusAddDone()
 end
 
 function IUpdateCo:enableAll()
-    UIConfirmToggle = UIConfirmToggle or require("imm.ui.confirm_toggle")
+    UICT = UICT or require("imm.ui.confirm_toggle")
 
     local ll = self.tasks.ses.ctrl:createLoadList()
     for i,v in ipairs(self.down.modlist) do
         if v.list.active then ll:tryEnable(v) end
     end
+
     if next(ll.actions) then
-        ui.overlay(UIConfirmToggle(self.tasks.ses, ll):render())
+        local confirm = UICT(self.tasks.ses, ll)
+        ui.overlay(confirm:render())
     end
 end
 

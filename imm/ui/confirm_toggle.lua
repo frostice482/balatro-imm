@@ -19,7 +19,9 @@ local actionsRank = {
 --- @class imm.UI.ConfirmToggle
 --- @field mod? imm.Mod
 --- @field uiButtonConf balatro.UI.ButtonParam
-local IUICT = {}
+local IUICT = {
+    allowDownloadMissing = true
+}
 
 --- @param ses imm.UI.Browser
 --- @param list imm.LoadList
@@ -44,11 +46,7 @@ function IUICT:init(ses, list, mod, isDisable)
         minw = 4,
         scale = self.ses.fontscale,
         col = true,
-        ref_table = {
-            list = self.list,
-            ses = self.ses,
-            mod = self.mod
-        }
+        ref_table = self
     }
 end
 
@@ -168,9 +166,10 @@ function IUICT:partMissing(nodes)
 end
 
 function IUICT:uiButtonOptions(hasMissing, hasErr)
+    --- @type balatro.UI.ButtonParam[]
     local buttonOpts = {}
 
-    if hasMissing then table.insert(buttonOpts, {
+    if hasMissing and self.allowDownloadMissing then table.insert(buttonOpts, {
         button = funcs.download,
         label = {'Download missings'},
         colour = G.C.BLUE

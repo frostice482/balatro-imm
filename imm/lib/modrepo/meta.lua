@@ -16,7 +16,7 @@ local logger = require("imm.logger")
 --- @field ts? thunderstore.PackageVersion
 
 local function transformVersion(tag)
-    if tag:sub(1, 1) == "v" then tag = tag:sub(2) end
+    if tag:sub(1, 1) == "v" or tag:sub(1, 1) == "V" then tag = tag:sub(2) end
     return tag
 end
 
