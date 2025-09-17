@@ -4,6 +4,8 @@ local co = require("imm.lib.co")
 
 --- @class imm.Browser.Task.Download.Co
 --- @field blacklistUrls? table<string>
+--- @field modlist imm.Mod[]
+--- @field errors string[]
 local IBTaskDownCo = {
     installMissings = true
 }
@@ -18,6 +20,9 @@ function IBTaskDownCo:init(tasks)
     self.tasks = tasks
     self.ses = tasks.ses
     self.blacklistUrls = {}
+    self.modlistSets = {}
+    self.modlist = {}
+    self.errors = {}
 end
 
 --- @async
@@ -40,7 +45,9 @@ function IBTaskDownCo:download(url, extra)
     local err, res = self.ses.repo.api.blob:fetchCo(url)
     if not res then
         self.blacklistUrls[url] = false
-        status:errorf('Failed downloading %s: %s', name, err)
+        local errfmt = string.format('Failed downloading %s: %s', name, err)
+        status:error(errfmt)
+        table.insert(self.errors, errfmt)
         done()
     else
         status:done('')
@@ -88,7 +95,7 @@ end
 --- @async
 --- @param data love.Data
 function IBTaskDownCo:installModFromZip(data)
-    local modlist, list, errlist = self.tasks:installModFromZip(data)
+    local modlistSet, list, errlist = self.tasks:installModFromZip(data)
 
     if self.installMissings then
         local queues = {}
@@ -96,7 +103,10 @@ function IBTaskDownCo:installModFromZip(data)
         co.all(queues)
     end
 
-    return modlist, list, errlist
+    for i,v in ipairs(list) do table.insert(self.modlist, v) end
+    for i,v in ipairs(errlist) do table.insert(self.errors, v) end
+
+    return modlistSet, list, errlist
 end
 
 --- @alias imm.Browser.Task.Download.Co.C p.Constructor<imm.Browser.Task.Download.Co, nil> | fun(tasks: imm.Browser.Tasks): imm.Browser.Task.Download.Co

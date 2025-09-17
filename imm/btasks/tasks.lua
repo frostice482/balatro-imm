@@ -13,11 +13,14 @@ function IBTasks:init(ses)
     self.queues = Queue(3)
     self.ses = ses
     self.status = UITaskStatusReg()
-    self.updaterCo = TaskUpdateCo(self)
 end
 
 function IBTasks:createDownloadCoSes()
     return TaskDownloadCo(self)
+end
+
+function IBTasks:createUpdaterCoSes()
+    return TaskUpdateCo(self)
 end
 
 ---@param data love.Data

@@ -112,6 +112,13 @@ function IModCtrl:enableMod(mod)
     return ok, err
 end
 
+--- @param noCopy? boolean
+function IModCtrl:createLoadList(noCopy)
+    local ll = LoadList(self)
+    if not noCopy then ll:simpleCopyFrom(self.loadlist) end
+    return ll
+end
+
 --- @param mod imm.Mod
 function IModCtrl:tryEnable(mod)
     local ll = LoadList(self)

@@ -97,7 +97,7 @@ G.FUNCS[funcs.updateAll] = function(elm)
     UIBrowser:assertInstance(ses, 'ref_table')
 
     co.create(function ()
-        ses.tasks.updaterCo:updateAll()
+        ses.tasks:createUpdaterCoSes():updateAll()
     end)
     ses:showOverlay(true)
 end
