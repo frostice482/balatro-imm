@@ -20,7 +20,8 @@ local betaColor = G.C.ORANGE
 ---
 --- @field contImage imm.LoveMoveable
 local IUIModSes = {
-    cyclePageSize = 7,
+    thumbScale = 1.25,
+    cyclePageSize = 5,
     idListCnt = 'imm-other-cycle'
 }
 
@@ -221,7 +222,7 @@ function IUIModSes:uiModAuthor(text)
 end
 
 function IUIModSes:uiImageContainer()
-    self.contImage = LoveMoveable(nil, 0, 0, self.ses.thumbW, self.ses.thumbH)
+    self.contImage = LoveMoveable(nil, 0, 0, self.ses.thumbW * self.thumbScale, self.ses.thumbH * self.thumbScale)
     return ui.R{ align = 'm', ui.O(self.contImage) }
 end
 
@@ -244,7 +245,7 @@ function IUIModSes:updateImageCo()
     local w, h = img:getDimensions()
     local aspectRatio = math.max(math.min(w / h, 16/9), 1)
 
-    self.contImage.T.w = self.ses.thumbH * aspectRatio
+    self.contImage.T.w = self.ses.thumbH * self.thumbScale * aspectRatio
     self.contImage.drawable = img
 end
 

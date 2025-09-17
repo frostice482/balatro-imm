@@ -41,6 +41,24 @@ end
 --- @type imm.Fetch<string, string>
 local fetch_thumb = Fetch('https://raw.githubusercontent.com/skyline69/balatro-mod-index/main/mods/%s/thumbnail.jpg', 'immcache/thumb/%s')
 
+function fetch_thumb:interpretRes(data)
+    local img = love.graphics.newImage(love.data.newByteData(data)) --- @diagnostic disable-line
+    local scale = 240 / img:getHeight()
+    local wd, hd = math.floor(img:getWidth() * scale), math.floor(img:getHeight() * scale)
+
+    local canv = love.graphics.newCanvas(wd, hd)
+    local prevcanv = love.graphics.getCanvas()
+
+    love.graphics.push()
+    love.graphics.reset()
+    love.graphics.setCanvas(canv)
+    love.graphics.draw(img, 0, 0, 0, scale, scale)
+    love.graphics.setCanvas(prevcanv)
+    love.graphics.pop()
+
+    return canv:newImageData():encode('png')
+end
+
 --- @class imm.Repo.BMI: imm.Repo.Generic
 --- @field releasesCache table<string, ghapi.Releases[]>
 --- @field releasesCb table<string, imm.Repo.ReleasesCb[]>
