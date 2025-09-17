@@ -90,11 +90,11 @@ function IUpdateCo:enableAll()
 
     local ll = self.tasks.ses.ctrl:createLoadList()
     for i,v in ipairs(self.down.modlist) do
-        if v.list.active then
-            ll:tryEnable(v)
-        end
+        if v.list.active then ll:tryEnable(v) end
     end
-    ui.overlay(UIConfirmToggle(self.tasks.ses, ll):render())
+    if next(ll.actions) then
+        ui.overlay(UIConfirmToggle(self.tasks.ses, ll):render())
+    end
 end
 
 --- @async

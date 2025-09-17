@@ -57,20 +57,19 @@ function IFetch:getReqOpts(arg) end
 
 --- @param body string
 --- @return string? error
---- @return any? list
+--- @return any? res
 function IFetch:handleRes(body)
     local ok, res
+
     if self.isResJson then
-        --- @type boolean, ghapi.Contents[]
         ok, res = pcall(JSON.decode, body)
-        if not ok then
-            return res --- @diagnostic disable-line
-        end
     else
-        res = body
+        ok, res = pcall(self.interpretRes, self, body)
     end
 
-    return nil, self:interpretRes(res)
+    if ok then return nil, res
+    else return res, nil
+    end
 end
 
 --- @class imm.Fetch.ReqState

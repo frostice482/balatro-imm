@@ -515,8 +515,8 @@ function IUISes:_updateList(err)
         self.tasks.status:update(nil, string.format('Failed getting list for BMI: %s', err))
         return
     end
-    self:update()
     pseudoshuffle(self.repo.list, math.random())
+    self:update()
 end
 
 function IUISes:prepare()
