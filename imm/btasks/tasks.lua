@@ -2,8 +2,7 @@ local constructor = require("imm.lib.constructor")
 local Queue = require("imm.lib.queue")
 local UITaskStatusReg = require("imm.btasks.status")
 local TaskDownloadCo = require("imm.btasks.download_co")
-local co = require("imm.lib.co")
-local logger = require("imm.logger")
+local TaskUpdateCo = require("imm.btasks.update_co")
 
 --- @class imm.Browser.Tasks
 local IBTasks = {}
@@ -14,6 +13,7 @@ function IBTasks:init(ses)
     self.queues = Queue(3)
     self.ses = ses
     self.status = UITaskStatusReg()
+    self.updaterCo = TaskUpdateCo(self)
 end
 
 function IBTasks:createDownloadCoSes()
@@ -34,43 +34,7 @@ function IBTasks:installModFromZip(data)
     return modlist, list, errlist
 end
 
---- @param modlist imm.ModList
---- @param meta imm.ModMeta
-function IBTasks:getModUpdate(modlist, meta)
-    local lastInstalled = modlist:list()[1]
-    if not lastInstalled then return end
-
-    local rel = meta:getReleasesCo()
-    --- @type imm.ModMeta.Release
-    local latest
-    for i, v in ipairs(rel) do if not v.isPre then latest = v break end end
-    -- does not have release info
-    if not latest then
-        return
-    end
-    -- have invalid release info
-    if not latest.versionParsed then
-        return logger.warn('Latest version of mod %s has invalid version %s, ignored', meta:title(), latest.version)
-    end
-    -- installed version is already latest
-    if lastInstalled.versionParsed >= latest.versionParsed then
-        return
-    end
-
-    return latest
-end
-
-function IBTasks:updateAllMods()
-    local s = self.status:new()
-    s:update('Updating all mods')
-
-    for id, modlist in pairs(self.ses.ctrl.mods) do
-        local meta = self.ses.repo.listMapped[id]
-        if meta then co.create(self.updateModCo, self, modlist, meta) end
-    end
-end
-
 --- @alias imm.Browser.Tasks.C p.Constructor<imm.Browser.Tasks, nil> | fun(ses: imm.UI.Browser): imm.Browser.Tasks
 --- @type imm.Browser.Tasks.C
-local IBtasks = constructor(IBTasks)
-return IBtasks
+local BTasks = constructor(IBTasks)
+return BTasks

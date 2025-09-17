@@ -23,6 +23,7 @@ end
 --- @async
 --- @param url string
 --- @param extra? imm.Brower.Task.Download.Extra
+--- @return string? err
 function IBTaskDownCo:download(url, extra)
     extra = extra or {}
     local name = extra.name or 'something'
@@ -30,21 +31,20 @@ function IBTaskDownCo:download(url, extra)
 
     local done = self.tasks.queues:queueCo()
 
-    if self.blacklistUrls[url] then
-        done()
-        return
-    end
+    if self.blacklistUrls[url] then return done() end
+    self.blacklistUrls[url] = true
 
     local status = self.tasks.status:new()
     status:updatef('Downloading %s (%s%s)', name, url, size and string.format(', %.1fMB', size / 1048576) or '')
 
     local err, res = self.ses.repo.api.blob:fetchCo(url)
-    done()
     if not res then
+        self.blacklistUrls[url] = false
         status:errorf('Failed downloading %s: %s', name, err)
+        done()
     else
         status:done('')
-        self.blacklistUrls[url] = true
+        done()
         self:installModFromZip(love.data.newByteData(res))
     end
 

@@ -186,5 +186,5 @@ end
 
 --- @alias imm.Browser.Task.UI.Status.Reg.C p.Constructor<imm.Browser.Task.UI.Status.Reg, nil> | fun(): imm.Browser.Task.UI.Status.Reg
 --- @type imm.Browser.Task.UI.Status.Reg.C
-local UITaskStatusReg = constructor(IUITaskStatus)
+local UITaskStatusReg = constructor(ITaskStatusReg)
 return UITaskStatusReg

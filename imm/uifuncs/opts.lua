@@ -27,7 +27,7 @@ G.FUNCS[funcs.disableAll] = function(elm)
     end
 
     --ses.taskText = #suc ~= 0 and 'Disabled '..table.concat(suc, ', ') or 'Nothing is disabled'
-    ses.tasks:updateStatusImm(nil, table.concat(fail, '\n'))
+    ses.tasks.status:update(nil, table.concat(fail, '\n'))
     ses:showOverlay(true)
 end
 
@@ -96,6 +96,8 @@ G.FUNCS[funcs.updateAll] = function(elm)
     local ses = elm.config.ref_table
     UIBrowser:assertInstance(ses, 'ref_table')
 
-    ses.tasks:updateAllMods()
+    co.create(function ()
+        ses.tasks.updaterCo:updateAll()
+    end)
     ses:showOverlay(true)
 end
