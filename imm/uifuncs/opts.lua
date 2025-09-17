@@ -4,6 +4,8 @@ local modsDir = require('imm.config').modsDir
 local UIBrowser = require("imm.ui.browser")
 local UIOpts = require("imm.ui.options")
 local ui = require("imm.lib.ui")
+local co = require("imm.lib.co")
+local logger = require("imm.logger")
 local funcs = UIOpts.funcs
 
 --- @param elm balatro.UIElement
@@ -86,4 +88,14 @@ end
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.openModFolder] = function(elm)
     love.system.openURL('file:///'..modsDir:gsub('\\', '/'))
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.updateAll] = function(elm)
+    --- @type imm.UI.Browser
+    local ses = elm.config.ref_table
+    UIBrowser:assertInstance(ses, 'ref_table')
+
+    ses.tasks:updateAllMods()
+    ses:showOverlay(true)
 end

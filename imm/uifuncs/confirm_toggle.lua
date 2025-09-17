@@ -16,11 +16,13 @@ G.FUNCS[funcs.download] = function (elm)
     UIBrowser:assertInstance(ses, 'r.ses')
     LoadList:assertInstance(list, 'r.list')
 
+    local down = ses.tasks:createDownloadSes()
+
     ses:showOverlay(true)
     for id,entries in pairs(list.missingDeps) do
         local rules = {}
         for mod, rule in pairs(entries) do table.insert(rules, rule) end
-        ses.tasks:downloadMissingEntry(id, rules)
+        down:downloadMissingEntry(id, rules)
     end
 end
 
@@ -62,7 +64,7 @@ G.FUNCS[funcs.confirmOne] = function (elm)
     Mod:assertInstance(mod, 'r.mod')
 
     local ok, err = ses.ctrl:enableMod(mod)
-    ses.tasks:updateStatusImm(nil, err)
+    ses.tasks.status:update(nil, err)
     ses:showOverlay(true)
     if ok then ses.hasChanges = true end
 end

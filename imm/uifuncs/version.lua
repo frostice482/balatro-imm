@@ -13,7 +13,7 @@ G.FUNCS[funcs.download] = function(elm)
 
     if not r.opts.downloadUrl then return end
 
-    r.ses.tasks:download(r.opts.downloadUrl, {
+    r.ses.tasks:createDownloadSes():download(r.opts.downloadUrl, {
         name = r.mod..' '..r.ver,
         size = r.opts.downloadSize,
         cb = function (err) if not err then r.ses:updateSelectedMod(r.ses.repo.listMapped[r.mod]) end end
@@ -46,7 +46,7 @@ G.FUNCS[funcs.toggle] = function(elm)
 
     local mod = ses.ctrl:getMod(modid, ver)
     if not mod then
-        ses.tasks:updateStatusImm(nil, string.format("Cannot find %s %s", modid, ver))
+        ses.tasks.status:update(nil, string.format("Cannot find %s %s", modid, ver))
         return
     end
 
@@ -66,7 +66,7 @@ G.FUNCS[funcs.toggle] = function(elm)
         else ok, err = ses.ctrl:enable(modid, ver)
         end
 
-        ses.tasks:updateStatusImm(nil, err)
+        ses.tasks.status:update(nil, err)
         ses:updateSelectedMod()
         if ok then ses.hasChanges = true end
     else
@@ -86,7 +86,7 @@ G.FUNCS[funcs.deleteConfirm] = function(elm)
 
     if r.confirm then
         local ok, err = ses.ctrl:uninstall(modses.mod, modses.ver)
-        ses.tasks:updateStatusImm(nil, err)
+        ses.tasks.status:update(nil, err)
     end
 
     ses:showOverlay(true)

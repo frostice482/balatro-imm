@@ -1,7 +1,7 @@
 local constructor = require("imm.lib.constructor")
 local LoveMoveable = require("imm.lib.love_moveable")
 local UIMod = require("imm.ui.mod")
-local BrowserTask = require("imm.ui.browser_tasks")
+local BrowserTask = require("imm.btasks.tasks")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
 local logger = require("imm.logger")
@@ -299,7 +299,7 @@ function IUISes:uiBrowse()
     local uis = {
         self:uiBody(),
         ui.gap('R', self.spacing),
-        ui.R{self.tasks:render()}
+        ui.R{self.tasks.status:render()}
     }
     return ui.C{
         minw = self.w,
@@ -511,7 +511,7 @@ end
 --- @param err? string
 function IUISes:_updateList(err)
     if err then
-        self.tasks:updateStatusImm(nil, string.format('Failed getting list for BMI: %s', err))
+        self.tasks.status:update(nil, string.format('Failed getting list for BMI: %s', err))
         return
     end
     self:update()
