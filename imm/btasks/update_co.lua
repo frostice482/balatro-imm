@@ -68,6 +68,7 @@ end
 function IUpdateCo:updateMod(installed, meta)
     --- @type imm.ModMeta.Release
     local latest
+    meta:resetReleases()
     local rel = meta:getReleasesCo()
     for i, v in ipairs(rel) do if not v.isPre then latest = v break end end
 
