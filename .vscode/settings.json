@@ -1,0 +1,10 @@
+{
+    "search.exclude": {
+        "/balatro/resources": true,
+        "/balatro/localization": true,
+        "/include": true,
+        "/test": true,
+        "/assets": true,
+        "/icon.png": true,
+    }
+}
