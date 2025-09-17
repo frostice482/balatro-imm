@@ -12,6 +12,28 @@ The mod sources are taken from [balatro-mod-index](https://github.com/skyline69/
 - Caching
 - Manage multiple installation versions
 
+## Config
+
+Make a configuration file in `<Balatro>/config/config/imm.txt`.
+Config is formatted in a `key=value` pair.
+
+### `githubToken`
+
+Allows player to specify the GitHub API token.
+This is used to increase the 60/hour ratelimit, when getting mod releases in Balatro Mod Index.
+
+### `nextEnable`
+
+Determines what mod to load at the next loading.
+The entry is mod ID and version separated by `=` (includes surrounding whitespaces).
+The list is separated by `==` (includes surrounding whitespaces).
+e.g. `Steamodded=1.0.0~beta-0827c == Cryptid=0.5.12a`
+
+Changes won't be applied with the next restart.
+
+Used for when Balatro crashes at loading and it disables all mods.
+This config can be used to re-enable all disabled mods during loading crash.
+
 ## Developers
 
 If your mod is not included, make sure your mod exists in `balatro-mod-index` and that your repo contains a valid metadata file.

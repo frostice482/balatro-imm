@@ -2,7 +2,7 @@
 
 --- @class imm.ParsedConfig: { [string]: string }
 --- Determines what mod to load at the next loading.\
---- The entry is mod ID and version (optional) separated by `=` (includes surrounding whitespaces).\
+--- The entry is mod ID and version separated by `=` (includes surrounding whitespaces).\
 --- The list is separated by `==` (includes surrounding whitespaces).\
 --- e.g. `Steamodded=1.0.0~beta-0827c == Cryptid=0.5.12a`
 ---
