@@ -48,12 +48,11 @@ function coutil.create(func, ...)
     return co
 end
 
---- @param ... fun()
-function coutil.all(...)
+--- @param list fun()[]
+function coutil.all(list)
     local co = coroutine.running()
     if not co then error('Not in coroutine') end
 
-    local list = {...}
     local returns = {}
     local remainings = #list
     local isWaiting = false
@@ -63,7 +62,7 @@ function coutil.all(...)
             local ret = func()
             returns[i] = ret
             remainings = remainings - 1
-            if remainings == 0 and isWaiting then coroutine.resume(co, returns) end
+            if remainings == 0 and isWaiting then assert(coroutine.resume(co, returns)) end
         end)
     end
 

@@ -72,6 +72,21 @@ function IModCtrl:getMod(modid, version)
     return self.mods[modid] and self.mods[modid].versions[version]
 end
 
+function IModCtrl:getOlderMods()
+    --- @type imm.Mod[]
+    local list = {}
+    for id, modlist in pairs(self.mods) do
+        local old = false
+        for i, mod in ipairs(modlist:list()) do
+            if not mod:isExcluded() then
+                if old and not mod:isActive() then table.insert(list, mod) end
+                old = true
+            end
+        end
+    end
+    return list
+end
+
 --- @param modid string
 --- @return boolean ok, string? err
 function IModCtrl:disable(modid)
@@ -112,6 +127,13 @@ function IModCtrl:enableMod(mod)
     return ok, err
 end
 
+--- @param noCopy? boolean
+function IModCtrl:createLoadList(noCopy)
+    local ll = LoadList(self)
+    if not noCopy then ll:simpleCopyFrom(self.loadlist) end
+    return ll
+end
+
 --- @param mod imm.Mod
 function IModCtrl:tryEnable(mod)
     local ll = LoadList(self)
@@ -132,7 +154,7 @@ end
 function IModCtrl:addEntry(info)
     logger.fmt('debug', 'Added %s %s to registry', info.mod, info.version)
     self.provideds:add(info)
-    if info.list.active == info then return self.loadlist:enable(info, true) end
+    if info:isActive() then return self.loadlist:enable(info, true) end
     return true
 end
 
@@ -254,11 +276,11 @@ end
 
 local mnttmp = 0
 
---- @param zipData love.FileData
+--- @param zipData love.Data
 function IModCtrl:installFromZip(zipData)
     mnttmp = mnttmp + 1
     local tmpdir = 'tmp-'..mnttmp
-    local ok = love.filesystem.mount(zipData, tmpdir)
+    local ok = love.filesystem.mount(zipData, "tmp.zip", tmpdir)
     if not ok then return {}, {}, { 'Mount failed - is the file a zip?' } end
 
     local a, b, c = self:installFromDir(tmpdir, false)

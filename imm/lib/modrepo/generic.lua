@@ -42,10 +42,13 @@ function IGRepo:getList(cb)
     self.listApi:fetch(nil, cb)
 end
 
+--- @async
 --- @return string? err
 function IGRepo:getListCo()
     return co.wrapCallbackStyle(function (res) self:getList(res) end)
 end
+
+--- @async
 --- @param url string
 --- @param cacheKey? string
 --- @return string? err, love.Image? data
@@ -56,7 +59,7 @@ function IGRepo:getImageCo(url, cacheKey)
 
     --- @type boolean, any?
     local ok, img = false, err
-    if res then ok, img = pcall(love.graphics.newImage, love.filesystem.newFileData(res, url)) end
+    if res then ok, img = pcall(love.graphics.newImage, love.data.newByteData(res)) end
     if not ok then
         self.imageCache[cacheKey] = false
         return img, nil

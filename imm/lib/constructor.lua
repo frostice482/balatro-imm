@@ -1,3 +1,5 @@
+local assert_instance = require("imm.lib.assert").instance
+
 --- @class p.Constructor<Proto, Super>: {
 --- proto: Proto;
 --- super: Super;
@@ -11,6 +13,10 @@
 local createConstructor
 
 local Proto = {}
+
+function Proto:assertInstance(var, varname)
+    return assert_instance(var, self.proto, self.className or "?", varname)
+end
 
 function Proto:new(...)
     local proto = self.proto

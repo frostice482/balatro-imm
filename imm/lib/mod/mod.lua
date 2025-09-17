@@ -65,7 +65,7 @@ end
 --- @return boolean ok, string? err
 function IMod:uninstall()
     if self.list.native then return self:errNative() end
-    if self.list.active == self then return self:errActiveUninstall() end
+    if self:isActive() then return self:errActiveUninstall() end
 
     local ok = util.rmdir(self.path, true)
     if not ok then return false, 'Failed deleting moddir' end
@@ -87,6 +87,14 @@ function IMod:enable()
     logger.fmt('log', 'Enabled %s %s', self.mod, self.version)
     self.list.active = self
     return true
+end
+
+function IMod:isExcluded()
+    return self.mod == 'balatro_imm' or self.list.native
+end
+
+function IMod:isActive()
+    return self.list.active == self
 end
 
 --- @alias imm.Mod.C p.Constructor<imm.Mod, nil> | fun(entry: imm.ModList, ver: string, opts?: imm.ModOpts): imm.Mod

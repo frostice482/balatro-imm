@@ -72,6 +72,7 @@ function _ITasks:runTask(req, cb)
     return self.nextId
 end
 
+--- @async
 function _ITasks:runTaskCo(req)
     return co.wrapCallbackStyle(function (res) self:runTask(req, res) end)
 end

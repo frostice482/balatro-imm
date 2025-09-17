@@ -1,10 +1,12 @@
---- @param browser imm.Browser
+local co = require "imm.lib.co"
+
+--- @param browser imm.UI.Browser
 --- @param file love.DroppedFile
 local function dropinstall(browser, file)
-    local fd = love.filesystem.newFileData(file:read('data'), '')
+    local fd = file:read('data')
     file:close()
 
-    local ml = browser:installModFromZip(fd)
+    local ml = browser.tasks:createDownloadCoSes():installModFromZip(fd) --- @diagnostic disable-line
     local _, list = next(ml)
     if not list then return end
 
@@ -22,7 +24,7 @@ end
 local o2 = love.filedropped
 function love.filedropped(file) --- @diagnostic disable-line
     if G.OVERLAY_MENU and G.OVERLAY_MENU.config.imm then
-        return dropinstall(G.OVERLAY_MENU.config.imm, file)
+        return co.create(dropinstall, G.OVERLAY_MENU.config.imm, file)
     end
     if o2 then o2(file) end
 end

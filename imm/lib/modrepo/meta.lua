@@ -16,7 +16,7 @@ local logger = require("imm.logger")
 --- @field ts? thunderstore.PackageVersion
 
 local function transformVersion(tag)
-    if tag:sub(1, 1) == "v" then tag = tag:sub(2) end
+    if tag:sub(1, 1) == "v" or tag:sub(1, 1) == "V" then tag = tag:sub(2) end
     return tag
 end
 
@@ -86,6 +86,7 @@ function IMeta:author()
     return self.ts and self.ts.owner or self.bmi and self.bmi.owner or '-'
 end
 
+--- @async
 --- @return string? err, love.Image? data
 function IMeta:getImageCo()
     if self.tsLatest and self.tsLatest.icon then
@@ -120,6 +121,7 @@ function IMeta:getReleasesTs()
     return self.tsVersionsCache
 end
 
+--- @async
 --- @protected
 function IMeta:getReleasesBmiCo()
     if self.bmiVersionsCache then return self.bmiVersionsCache end
@@ -149,9 +151,9 @@ function IMeta:getReleasesBmiCo()
     return self.bmiVersionsCache
 end
 
+--- @async
 --- @return imm.ModMeta.Release[]
 function IMeta:getReleasesCo()
-    --- @type imm.ModMeta.Release[]
     self:getReleasesTs()
     self:getReleasesBmiCo()
     return self:getReleasesCached()
