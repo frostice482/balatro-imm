@@ -63,7 +63,7 @@ function coutil.all(...)
             local ret = func()
             returns[i] = ret
             remainings = remainings - 1
-            if remainings == 0 and isWaiting then coroutine.resume(co, returns) end
+            if remainings == 0 and isWaiting then assert(coroutine.resume(co, returns)) end
         end)
     end
 
