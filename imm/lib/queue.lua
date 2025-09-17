@@ -14,13 +14,21 @@ function IQueue:init(max)
     self.available = max or 1
 end
 
+--- @protected
 function IQueue:next()
-    self.available = self.available + 1
     --- @type imm.Queue.Cb
     local f = table.remove(self.taskQueues, 1)
     if not f then return end
+
     self.available = self.available - 1
-    f(function() self:next() end)
+    local d = false
+    local function done()
+        if d then return end
+        d = true
+        self.available = self.available + 1
+        self:next()
+    end
+    f(done)
 end
 
 --- @param func imm.Queue.Cb
