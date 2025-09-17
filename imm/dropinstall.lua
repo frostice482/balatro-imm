@@ -1,10 +1,10 @@
 --- @param browser imm.UI.Browser
 --- @param file love.DroppedFile
 local function dropinstall(browser, file)
-    local fd = love.filesystem.newFileData(file:read('data'), '')
+    local fd = file:read('data')
     file:close()
 
-    local ml = browser.tasks:installModFromZip(fd)
+    local ml = browser.tasks:installModFromZip(fd) --- @diagnostic disable-line
     local _, list = next(ml)
     if not list then return end
 

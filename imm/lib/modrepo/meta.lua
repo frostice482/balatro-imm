@@ -151,7 +151,6 @@ end
 
 --- @return imm.ModMeta.Release[]
 function IMeta:getReleasesCo()
-    --- @type imm.ModMeta.Release[]
     self:getReleasesTs()
     self:getReleasesBmiCo()
     return self:getReleasesCached()

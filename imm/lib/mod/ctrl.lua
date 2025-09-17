@@ -254,11 +254,11 @@ end
 
 local mnttmp = 0
 
---- @param zipData love.FileData
+--- @param zipData love.Data
 function IModCtrl:installFromZip(zipData)
     mnttmp = mnttmp + 1
     local tmpdir = 'tmp-'..mnttmp
-    local ok = love.filesystem.mount(zipData, tmpdir)
+    local ok = love.filesystem.mount(zipData, "tmp.zip", tmpdir)
     if not ok then return {}, {}, { 'Mount failed - is the file a zip?' } end
 
     local a, b, c = self:installFromDir(tmpdir, false)
