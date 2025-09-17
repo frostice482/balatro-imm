@@ -90,13 +90,13 @@ function IUIModSes:updateReleases(elm, res)
             if v.isPre then pre = pre or v
             else latest = latest or v
             end
-            --if latest then break end
+            if latest then break end
         end
 
         if latest then
             table.insert(list, self:uiVersionRelease(latest))
         end
-        if pre and not (pre.versionParsed and latest.versionParsed and pre.versionParsed < latest.versionParsed) then
+        if pre then
             table.insert(list, self:uiVersionRelease(pre))
         end
     end
