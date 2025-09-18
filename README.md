@@ -14,7 +14,7 @@ The mod sources are taken from [balatro-mod-index](https://github.com/skyline69/
 
 ## Config
 
-Make a configuration file in `<Balatro>/config/config/imm.txt`.
+Make a configuration file in `<Balatro>/config/imm.txt`.
 Config is formatted in a `key=value` pair.
 
 ### `githubToken`
