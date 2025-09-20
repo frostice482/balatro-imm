@@ -22,26 +22,32 @@ local function __imm_disableAllMods(err)
 
     -- detect multiple smods installation
     local smods = list.Steamodded
-    if smods and smods.list:list() ~= 1 then
+    if smods and #smods.list:list() ~= 1 then
         err = err..'\n\nMultiple Steamodded version detected - Remove the older ones!'
     end
 
     -- disable mods
+    local has = false
     for k,mod in pairs(list) do
         if not mod:isExcluded() then
+            has = true
             table.insert(detecteds, string.format('- %s: %s', mod.mod or '?', mod.version or '?'))
             ctrl:disableMod(mod)
             table.insert(disableds, mod.mod..'='..mod.version)
         end
     end
-    err = err..'\n\nimm has disabled detected mods: \n'..table.concat(detecteds, '\n')
+    if has then
+        err = err..'\n\nimm has disabled detected mods: \n'..table.concat(detecteds, '\n')
 
-    -- make all disabled mods temporary
-    if not suspect then
-        table.insert(disableds, _imm.configs.nextEnable)
-        _imm.configs.nextEnable = table.concat(disableds, '==')
-        require('imm.lib.util').saveconfig()
-        err = err..'\nThese mods are disabled temporarily - it will be reenabled on next startup'
+        -- make all disabled mods temporary
+        if not suspect then
+            table.insert(disableds, _imm.configs.nextEnable)
+            _imm.configs.nextEnable = table.concat(disableds, '==')
+            require('imm.lib.util').saveconfig()
+            err = err..'\nThese mods are disabled temporarily - it will be reenabled on next startup'
+        end
+    else
+        err = err..'\n\nYour crash happened without mods - your save may be corrupted.\n'
     end
 
     return err

@@ -104,7 +104,7 @@ function IModCtrl:enable(modid, version)
     local list = self.mods[modid]
     if not list then return errNotFound(modid) end
     local mod = list.versions[version]
-    if not mod then list:errVerNotFound(version) end
+    if not mod then return list:errVerNotFound(version) end
     return self:enableMod(mod)
 end
 
