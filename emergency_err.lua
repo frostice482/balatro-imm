@@ -4,6 +4,7 @@ local errhand_orig = love.errorhandler or love.errhand
 local hasHandlerOverridden = false
 
 local function __imm_disableAllMods(err)
+    assert(_imm.init())
     local ctrl = require('imm.modctrl')
 
     --- @type string?
@@ -37,7 +38,6 @@ local function __imm_disableAllMods(err)
 
     -- make all disabled mods temporary
     if not suspect then
-        _imm.initconfig()
         table.insert(disableds, _imm.configs.nextEnable)
         _imm.configs.nextEnable = table.concat(disableds, '==')
         require('imm.lib.util').saveconfig()
@@ -54,7 +54,7 @@ local function handler(err)
         attached = false
         err = type(err) == 'string' and err or tostring(err)
         local ok, nerr = pcall(__imm_disableAllMods, err)
-        err = ok and (nerr or err) or ('\n\nimm failed to disable mods: '..err)
+        err = ok and (nerr or err) or ('\n\nimm failed to disable mods: '..nerr)
     end
     return errhand_orig(err)
 end
