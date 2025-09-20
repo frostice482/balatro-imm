@@ -6,6 +6,7 @@ local hasHandlerOverridden = false
 local function __imm_disableAllMods(err)
     assert(_imm.init())
     local ctrl = require('imm.modctrl')
+    local util = require('imm.lib.util')
 
     --- @type string?
     local suspect = err:match("^%[SMODS ([^ ]+)")
@@ -32,8 +33,10 @@ local function __imm_disableAllMods(err)
         if not mod:isExcluded() then
             has = true
             table.insert(detecteds, string.format('- %s: %s', mod.mod or '?', mod.version or '?'))
-            ctrl:disableMod(mod)
-            table.insert(disableds, mod.mod..'='..mod.version)
+            local ok, err = ctrl:disableMod(mod)
+            if ok then table.insert(disableds, mod.mod..'='..mod.version)
+            else print('imm: error: Failed to disable', mod.mod, err)
+            end
         end
     end
     if has then
@@ -43,7 +46,7 @@ local function __imm_disableAllMods(err)
         if not suspect then
             table.insert(disableds, _imm.configs.nextEnable)
             _imm.configs.nextEnable = table.concat(disableds, '==')
-            require('imm.lib.util').saveconfig()
+            util.saveconfig()
             err = err..'\nThese mods are disabled temporarily - it will be reenabled on next startup'
         end
     else

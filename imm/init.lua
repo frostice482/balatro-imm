@@ -14,7 +14,9 @@ if m.config.nextEnable then
         if mod and ver then
             local ok, err = ctrl:enable(mod, ver)
             if ok then logger.log('Postenabled:', mod, ver)
-            else logger.err('Failed postenable:', err or '?') end
+            else logger.err('Postenable failed:', err or '?') end
+        else
+            logger.fmt('invalid nextEnable entry "%s"', entry)
         end
     end
 

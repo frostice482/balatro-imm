@@ -66,7 +66,9 @@ function _imm.init()
     local loveload = love.load
     function love.load() --- @diagnostic disable-line
         loveload()
-        require('imm.init')
+
+        local ok, err = pcall(require, 'imm.init')
+        if not ok then print('imm: error:', err) end
     end
 
     _imm.initialized = true
