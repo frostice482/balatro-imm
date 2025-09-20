@@ -68,7 +68,7 @@ function _imm.init()
         loveload()
 
         local ok, err = pcall(require, 'imm.init')
-        if not ok then print('imm: error:', err) end
+        if not ok then print('imm: error:', err, debug.traceback()) end
     end
 
     _imm.initialized = true
