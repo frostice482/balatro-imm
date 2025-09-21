@@ -35,7 +35,7 @@ function IGRepo:getList(cb)
     cb = function (err, res) --- @diagnostic disable-line
         if res then
             self.listDone = true
-            for i, entry in ipairs(res) do self:updateList(entry) end
+            for i, entry in pairs(res) do self:updateList(entry) end
         end
         return ocb(err)
     end

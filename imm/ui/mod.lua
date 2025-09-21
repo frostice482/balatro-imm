@@ -102,10 +102,13 @@ function IUIModSes:updateReleases(elm, res)
         end
     end
 
-    if self.mod.bmi and self.mod.bmi.repo then
+    local bmi = self.mod.bmi
+    if bmi and bmi.repo and bmi.download_url then
+        local v = bmi.version
+        local append = 'Potentially unstable!'
         local ui = self:uiVersion('Source', {
-            sub = self.mod.bmi.version..' - Potentially unstable!',
-            downloadUrl = self.mod.bmi.download_url,
+            sub = v and v..' - '..append or append,
+            downloadUrl = bmi.download_url,
             color = betaColor
         })
         table.insert(list, ui)

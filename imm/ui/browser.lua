@@ -509,10 +509,11 @@ function IUISes:update()
 end
 
 --- @protected
+--- @param prov string
 --- @param err? string
-function IUISes:_updateList(err)
+function IUISes:_updateList(prov, err)
     if err then
-        self.tasks.status:update(nil, string.format('Failed getting list for BMI: %s', err))
+        self.tasks.status:update(nil, string.format('Failed getting list for %s: %s', prov, err))
         return
     end
     pseudoshuffle(self.repo.list, math.random())
@@ -526,11 +527,9 @@ function IUISes:prepare()
         return
     end
 
-    logger.dbg('Getting list for BMI')
-    self.repo.bmi:getList(function (err) self:_updateList(err) end)
-
-    logger.dbg('Getting list for TS')
-    self.repo.ts:getList(function (err) self:_updateList(err) end)
+    self.repo.bmi:getList(function (err) self:_updateList('BMI', err) end)
+    self.repo.ts:getList(function (err) self:_updateList('TS', err) end)
+    self.repo.photon:getList(function (err) self:_updateList('Photon', err) end)
 
     self.prepared = true
 end

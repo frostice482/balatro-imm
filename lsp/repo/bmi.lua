@@ -12,6 +12,6 @@
 --- @field name string
 --- @field categories bmi.Meta.Category[]
 --- @field owner string
---- @field version string
+--- @field version? string
 --- @field download_url? string May be undefined in case of locally installed mods
 --- @field repo? string May be undefined in case of locally installed mods
