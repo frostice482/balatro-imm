@@ -1,5 +1,4 @@
 --- @class thunderstore.Package
---- @field format 'thunderstore'
 --- @field name string
 --- @field owner string
 --- @field package_url string
@@ -16,7 +15,6 @@
 -- @field has_nsfw_content boolean
 
 --- @class thunderstore.PackageVersion
---- @field format 'thunderstore'
 --- @field name string
 --- @field description string
 --- @field icon string

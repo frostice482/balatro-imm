@@ -4,7 +4,7 @@ local logger= require("imm.logger")
 local util  = require("imm.lib.util")
 
 --- @type imm.Fetch<nil, thunderstore.Package[]>
-local fetch_list = Fetch('https://thunderstore.io/c/balatro/api/v1/package/', 'immcache/thunderstore_list.json', false, true)
+local fetch_list = Fetch('https://thunderstore.io/c/balatro/api/v1/package/', 'immcache/list/thunderstore.json', false, true)
 
 --- @type imm.Fetch<string, string>
 local fetch_thumb_blob = Fetch('%s', 'immcache/thumb_blob/%s')
@@ -32,12 +32,10 @@ function fetch_list:interpretRes(str)
             util.removeswap(parsed, i)
             i = i - 1
         else
-            package.format = 'thunderstore'
             for _, omitProp in ipairs(omitProps) do
                 package[omitProp] = nil
             end
             for _, version in ipairs(package.versions) do
-                version.format = 'thunderstore'
                 for _, omitVerProp in ipairs(omitVerProps) do
                     version[omitVerProp] = nil
                 end

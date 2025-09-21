@@ -1,6 +1,5 @@
 local constructor = require("imm.lib.constructor")
 local V = require("imm.lib.version")
-local co = require("imm.lib.co")
 local logger = require("imm.logger")
 
 --- @class imm.ModMeta.Release

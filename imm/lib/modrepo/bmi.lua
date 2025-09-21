@@ -4,15 +4,19 @@ local getmods = require("imm.lib.mod.get")
 local co = require("imm.lib.co")
 local m = require("imm.config")
 
---- @type imm.Fetch<nil, bmi.Meta>
-local fetch_list = Fetch('https://github.com/frostice482/balatro-mod-index-tiny/raw/master/out.json.gz', 'immcache/list.json', false, true)
+--- @type imm.Fetch<nil, bmi.Meta[]>
+local fetch_list = Fetch('https://github.com/frostice482/balatro-mod-index-tiny/raw/master/out.json.gz', 'immcache/list/bmi.json', false, true)
+
+local excludeProps = {'metafmt'}
 
 --- @param str string
 function fetch_list:interpretRes(str)
     --- @type bmi.Meta[]
-    local parsed = JSON.decode(love.data.decompress("string", 'gzip', str))
-    for i,v in ipairs(parsed) do v.format = 'bmi' end
-    return parsed
+    local list = JSON.decode(love.data.decompress("string", 'gzip', str))
+    for i,entry in ipairs(list) do
+        for j, omitProp in ipairs(excludeProps) do entry[omitProp] = nil end
+    end
+    return list
 end
 
 --- @type imm.Fetch<string, ghapi.Releases>

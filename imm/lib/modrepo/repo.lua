@@ -84,8 +84,6 @@ end
 function IRepo:createVirtualEntry(mod)
     local m = ModMeta(self)
     m.bmi = {
-        format = 'bmi',
-        metafmt = 'smods',
         categories = mod.info.categories,
         id = mod.mod,
         name = mod.name,
