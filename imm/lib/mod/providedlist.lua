@@ -55,11 +55,11 @@ function IProvidedEntry:list(ascending, modsAscending)
             return a > b
         end)
 
-        table.insert(versions, list.parsed)
+        table.insert(versions, {list.parsed, mods})
     end
     table.sort(versions, function (a, b)
-        if ascending then return a < b end
-        return a > b
+        if ascending then return a[1] < b[1] end
+        return a[1] > b[1]
     end)
 
     return versions
