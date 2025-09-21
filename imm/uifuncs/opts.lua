@@ -19,8 +19,11 @@ G.FUNCS[funcs.disableAll] = function(elm)
     for k, mod in pairs(ses.ctrl.loadlist.loadedMods) do
         if not mod:isExcluded() then
             local ok, err = ses.ctrl:disableMod(mod)
-            if ok then table.insert(suc, mod.mod..' '..mod.version)
-            else table.insert(fail, err)
+            if ok then
+                table.insert(suc, mod.mod..' '..mod.version)
+                ses.hasChanges = true
+            else
+                table.insert(fail, err)
             end
         end
     end
