@@ -12,4 +12,4 @@ sources = ["imm/patch_prepend.txt"]
 [patches.copy]
 target = "main.lua"
 position = "append"
-sources = ["imm/patch_append.txt", "main.lua", "emergency_err.lua"]
+sources = ["imm/patch_append.txt", "main.lua", "early_error.lua"]

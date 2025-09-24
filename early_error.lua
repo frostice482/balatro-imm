@@ -78,11 +78,11 @@ local function __imm_disableAllMods(err)
     if not hasHandlerOverridden then
         local vers = {
             '',
-            'Lovely ' .. lovely.version,
             jit.os .. ' ' .. jit.arch,
             _VERSION,
             jit.version,
             'LÖVE ' .. table.concat({love.getVersion()}, '.', 1, 3),
+            'Lovely ' .. lovely.version,
             'Balatro ' .. (G and G.VERSION or '?')
         }
         for i,v in ipairs(vers) do table.insert(echunk, v) end
