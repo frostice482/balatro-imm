@@ -9,8 +9,8 @@ local function __imm_disableAllMods(err)
     local util = require('imm.lib.util')
     local lovely = require('lovely')
 
-    --- @type string?
-    local suspect = err:match("^%[SMODS ([^ ]+)")
+    --- @type imm.ModList?
+    local suspect = ctrl.mods[err:match("^%[SMODS ([^ ]+)")]
     --- @type imm.Mod[]
     local detecteds = {}
     --- @type string[]
@@ -18,8 +18,8 @@ local function __imm_disableAllMods(err)
 
     local echunk = {}
 
-    local list = suspect and ctrl.loadlist.loadedMods[suspect]
-        and {suspect = ctrl.loadlist.loadedMods[suspect]}
+    local list = suspect and suspect.active
+        and { [suspect.mod] = suspect.active }
         or ctrl.loadlist.loadedMods
 
     if not next(list) then return end
@@ -59,6 +59,8 @@ local function __imm_disableAllMods(err)
             _imm.configs.nextEnable = table.concat(disableds, '==')
             util.saveconfig()
             table.insert(echunk, 'These mods are disabled temporarily - it will be reenabled on next startup')
+        else
+            table.insert(echunk, 'Suspected mod: '..suspect.mod)
         end
     else
         local msg = {
