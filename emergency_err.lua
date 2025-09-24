@@ -7,6 +7,7 @@ local function __imm_disableAllMods(err)
     assert(_imm.init())
     local ctrl = require('imm.modctrl')
     local util = require('imm.lib.util')
+    local lovely = require('lovely')
 
     --- @type string?
     local suspect = err:match("^%[SMODS ([^ ]+)")
@@ -14,6 +15,8 @@ local function __imm_disableAllMods(err)
     local detecteds = {}
     --- @type string[]
     local disableds = {}
+
+    local echunk = {}
 
     local list = suspect and ctrl.loadlist.loadedMods[suspect]
         and {suspect = ctrl.loadlist.loadedMods[suspect]}
@@ -24,12 +27,19 @@ local function __imm_disableAllMods(err)
     -- detect multiple smods installation
     local smods = list.Steamodded
     if smods and #smods.list:list() ~= 1 then
-        err = err..'\n\nMultiple Steamodded version detected - Remove the older ones!'
+        table.insert(echunk, 'Multiple Steamodded version detected - Remove the older ones!\n')
     end
+
+    --- @type table<imm.Mod>
+    local activeListCopy = {}
 
     -- disable mods
     local has = false
     for k,mod in pairs(list) do
+        if not hasHandlerOverridden then
+            activeListCopy[mod] = true
+        end
+
         if not mod:isExcluded() then
             has = true
             table.insert(detecteds, string.format('- %s: %s', mod.mod or '?', mod.version or '?'))
@@ -40,18 +50,45 @@ local function __imm_disableAllMods(err)
         end
     end
     if has then
-        err = err..'\n\nimm has disabled detected mods: \n'..table.concat(detecteds, '\n')
+        table.insert(echunk, 'imm has disabled detected mods:')
+        table.insert(echunk, table.concat(detecteds, '\n'))
 
         -- make all disabled mods temporary
         if not suspect then
             table.insert(disableds, _imm.configs.nextEnable)
             _imm.configs.nextEnable = table.concat(disableds, '==')
             util.saveconfig()
-            err = err..'\nThese mods are disabled temporarily - it will be reenabled on next startup'
+            table.insert(echunk, 'These mods are disabled temporarily - it will be reenabled on next startup')
         end
     else
-        err = err..'\n\nYour crash happened without mods - your save may be corrupted.\n'
+        table.insert(echunk, 'Your crash happened without mods - your save may be corrupted.')
     end
+
+    if not hasHandlerOverridden then
+        table.insert(echunk, '')
+        table.insert(echunk, jit.os .. ' ' .. jit.arch)
+        table.insert(echunk, _VERSION)
+        table.insert(echunk, jit.version)
+        table.insert(echunk, 'LÖVE ' .. table.concat({love.getVersion()}, '.', 1, 3))
+        if G then table.insert(echunk, 'Balatro '..G.VERSION) end
+
+        --- @type imm.ModList[]
+        local listSorted = {}
+        for k,list in pairs(ctrl.mods) do
+            table.insert(listSorted, list)
+        end
+        table.sort(listSorted, function (a, b) return a.mod < b.mod end)
+
+        table.insert(echunk, '')
+        table.insert(echunk, 'Installed mods:')
+        for i, list in ipairs(listSorted) do
+            for i, mod in pairs(list:list()) do
+                table.insert(echunk, string.format('- %s: %s (%s)', mod.mod, mod.version, mod.path:sub(lovely.mod_dir:len()+2)))
+            end
+        end
+    end
+
+    err = err .. '\n' .. table.concat(echunk, '\n')
 
     return err
 end
