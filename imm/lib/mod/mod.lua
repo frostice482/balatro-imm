@@ -25,6 +25,7 @@ local logger = require('imm.logger')
 --- @field provides? table<string, string>
 --- @field pathDepth? number
 --- @field description? string
+--- @field loaded? boolean
 
 --- @class imm.Mod
 local IMod = {
@@ -50,6 +51,7 @@ function IMod:init(list, ver, opts)
     self.pathDepth = opts.pathDepth or 0
     self.description = opts.description
     self.name = opts.info and opts.info.name or list.mod
+    self.isLoaded = opts.loaded
 end
 
 --- @return boolean ok, string err

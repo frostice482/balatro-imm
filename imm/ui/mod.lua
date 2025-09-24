@@ -52,7 +52,7 @@ function IUIModSes:uiTabInstalled()
     local versions = {}
     for _, entry in ipairs(l:list()) do
         local ver = self:uiVersion(entry.version, {
-            sub = entry.path:sub(modsDir:len() + 2),
+            sub = entry.path:sub(modsDir:len()+2),
             installed = true
         })
         table.insert(versions, ver)

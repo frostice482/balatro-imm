@@ -52,7 +52,7 @@ function IUIOpts:gridMods()
     }, {
         UIBox_button({ minw = self.buttonWidth, button = funcs.enableAll     , label = {'Safe enable all'}, ref_table = self.ses }),
         UIBox_button({ minw = self.buttonWidth, button = funcs.deleteOld     , label = {'Delete old versions'}, ref_table = self }),
-        UIBox_button({ minw = self.buttonWidth, button = funcs.copyModlist   , label = {'Copy modlist'} }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.copyModlist   , label = {'Copy modlist'}, ref_table = self.ses }),
     }}
 end
 

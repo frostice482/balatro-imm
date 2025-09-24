@@ -132,6 +132,10 @@ function IModList:latest()
     return latest
 end
 
+function IModList:isExcluded()
+    return self.mod == 'balatro_imm' or self.native
+end
+
 --- @alias imm.ModList.C p.Constructor<imm.ModList, nil> | fun(mod: string, native?: boolean): imm.ModList
 --- @type imm.ModList.C
 local Mod = constructor(IModList)

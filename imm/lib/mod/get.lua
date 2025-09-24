@@ -252,7 +252,8 @@ function get.processFile(ctx, base, depth, file)
         conflicts = conflicts,
         provides = provides,
         pathDepth = depth,
-        description = mod.description
+        description = mod.description,
+        loaded = not ignored
     }, not ignored)
 end
 

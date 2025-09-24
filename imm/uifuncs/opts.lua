@@ -178,3 +178,44 @@ G.FUNCS[funcs.enableAll] = function(elm)
         r:showOverlay(true)
     end
 end
+
+local modlistfmt = "%-30s %-20s %-8s %s"
+local modlisthead = '# '..modlistfmt:format("id", "version", "status", "path")
+
+--- @param mod imm.Mod
+local function fmtmod(mod)
+    return '- '..modlistfmt:format(mod.mod, mod.version, mod.isLoaded and 'loaded' or '-', mod.path:sub(modsDir:len()+2))
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.copyModlist] = function(elm)
+    --- @type imm.UI.Browser
+    local ses = elm.config.ref_table
+    UIBrowser:assertInstance(ses, 'ref_table')
+
+    local entries = { modlisthead }
+    local disabledEntries = {}
+
+    for i, list in ipairs(ses.ctrl:list()) do
+        if not list:isExcluded() then
+            local l = disabledEntries
+            if list.active then
+                l = entries
+                table.insert(entries, fmtmod(list.active))
+            end
+            for j, mod in ipairs(list:list()) do
+                if mod ~= list.active then
+                    table.insert(l, fmtmod(mod))
+                end
+            end
+        end
+    end
+
+    for i,v in ipairs(disabledEntries) do
+        table.insert(entries, v)
+    end
+
+    love.system.setClipboardText(table.concat(entries, '\n'))
+
+    ses:showOverlay(true)
+end
