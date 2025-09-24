@@ -120,10 +120,10 @@ function util.removeswap(list, pos)
     return v
 end
 
---- @generic T: any[]
---- @param list `T`
+--- @generic T
+--- @param list { [number]: T }
 --- @param rowLen number
---- @return T[]
+--- @return T[][]
 function util.grid(list, rowLen)
     local r = {}
     local cur = {}

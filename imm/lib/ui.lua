@@ -196,6 +196,8 @@ end
 --- @param size number
 --- @param list balatro.UIElement.Definition[]
 function ui.gapList(mode, size, list)
+    if size == 0 then return list end
+
     local gapElm = ui.gap(mode, size)
     --- @type balatro.UIElement.Definition[]
     local gapped = {}
@@ -338,6 +340,18 @@ end
 --- @param def balatro.UIElement.Definition
 function ui.overlay(def)
     G.FUNCS.overlay_menu({definition = def})
+end
+
+--- @param grid balatro.UIElement.Definition[][]
+--- @param firstRow? boolean
+function ui.grid(grid, firstRow)
+    --- @type balatro.UIElement.Definition[]
+    local gappedInside = {}
+    for i,sublist in ipairs(grid) do
+        table.insert(gappedInside, { n = firstRow and G.UIT.C or G.UIT.R, nodes = sublist })
+    end
+    --- @type balatro.UIElement.Definition
+    return { n = firstRow and G.UIT.R or G.UIT.C, nodes = gappedInside }
 end
 
 return ui

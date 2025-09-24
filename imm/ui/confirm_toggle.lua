@@ -1,6 +1,7 @@
 local constructor = require('imm.lib.constructor')
 local UIBrowser = require('imm.ui.browser')
 local ui = require('imm.lib.ui')
+local util = require('imm.lib.util')
 local browser_funcs = UIBrowser.funcs
 
 --- @class imm.UI.ConfirmToggle.Funcs
@@ -36,9 +37,9 @@ function IUICT:init(ses, list, mod, isDisable)
     self.whoColor = G.C.WHITE
     self.versionColor = G.C.BLUE
 
-    self.fontscale = ses.fontscale * 0.75
+    self.fontscale = ses.fontscale * 0.9
     self.fontscaleTitle = self.fontscale
-    self.fontscaleVersion = self.fontscale
+    self.fontscaleVersion = self.fontscale * 0.70
     self.fontscaleSub = self.fontscale * 0.75
 
     self.uiButtonConf = {
@@ -48,6 +49,20 @@ function IUICT:init(ses, list, mod, isDisable)
         col = true,
         ref_table = self
     }
+
+    --- @type balatro.UIElement.Config
+    self.entryConfig = {
+        minw = 3,
+        maxw = 3
+    }
+end
+
+--- @param cols balatro.UIElement.Definition[][]
+function IUICT:uiEntry(cols)
+    for i, v in ipairs(cols) do
+        cols[i] = { n = G.UIT.R, config = self.entryConfig, nodes = v }
+    end
+    return ui.C(cols)
 end
 
 --- @param act imm.LoadList.ModAction
@@ -56,10 +71,11 @@ function IUICT:partAct(act)
     local version = act.mod.version
     local entryScale = self.fontscale
 
-    local byElm = act.cause and ui.TS(string.format(' (%s)', act.cause.mod), self.fontscaleSub, self.whoColor)
-    local verElm = ui.TS(' '..version, self.fontscaleVersion, self.versionColor)
+    --local byElm = act.cause and ui.TS(string.format(' (%s)', act.cause.mod), self.fontscaleSub, self.whoColor)
+    local verElm = ui.TS(version, self.fontscaleVersion, self.versionColor)
 
     local t
+    local t2 = {}
 
     if act.impossible then
         t = { ui.TS('! '..name, entryScale,G.C.RED) }
@@ -68,25 +84,21 @@ function IUICT:partAct(act)
     elseif act.action == 'disable' then
         t = { ui.TS('- '..name, entryScale,G.C.ORANGE) }
     elseif act.action == 'switch' then
+        t = { ui.TS('/ '..name..' ', entryScale, G.C.YELLOW), }
         local from = (self.ses.ctrl.loadlist.loadedMods[act.mod.mod] or {}).version or '?'
-        t = {
-            ui.TS('/ '..name..' ', entryScale, G.C.YELLOW),
-            ui.TS(from, self.fontscaleVersion, self.versionColor),
-            ui.TS(' ->', self.fontscaleVersion, G.C.UI.TEXT_LIGHT),
-        }
+        table.insert(t2, ui.TS(from, self.fontscaleVersion, self.versionColor))
+        table.insert(t2, ui.TS(' ->', self.fontscaleVersion, G.C.UI.TEXT_LIGHT))
     end
 
-    table.insert(t, verElm)
-    table.insert(t, byElm)
+    table.insert(t2, verElm)
+    --table.insert(t2, byElm)
 
-    return ui.R(t)
+    return self:uiEntry({ t, t2 })
 end
 
---- @param nodes balatro.UIElement.Definition[]
---- @return boolean hasImpossible, boolean hasChange
-function IUICT:partActions(nodes)
-    local hasImpossible, hasChange = false, false
-
+--- @return balatro.UIElement.Definition[] impossibleList
+--- @return balatro.UIElement.Definition[] changeList
+function IUICT:partActions()
     --- @type imm.LoadList.ModAction[]
     local impossibles = {}
     --- @type imm.LoadList.ModAction[]
@@ -105,30 +117,19 @@ function IUICT:partActions(nodes)
         return a.mod.name < b.mod.name
     end)
 
-    for i,act in ipairs(impossibles) do
-        if not hasImpossible then
-            table.insert(nodes, ui.TRS('These mods are in impossible condition to load:', self.fontscaleTitle))
-            hasImpossible = true
-        end
-        table.insert(nodes, self:partAct(act))
-    end
+    --- @type balatro.UIElement.Definition[]
+    local impossibleList = {}
+    for i,act in ipairs(impossibles) do table.insert(impossibleList, self:partAct(act)) end
 
-    for i,act in ipairs(actions) do
-        if not hasChange then
-            table.insert(nodes, ui.TRS('These mods will take effect:', self.fontscaleTitle))
-            hasChange = true
-        end
-        table.insert(nodes, self:partAct(act))
-    end
+    --- @type balatro.UIElement.Definition[]
+    local changeList = {}
+    for i,act in ipairs(actions) do table.insert(changeList, self:partAct(act)) end
 
-    return hasImpossible, hasChange
+    return impossibleList, changeList
 end
 
---- @param nodes balatro.UIElement.Definition[]
---- @return boolean hasMissing
-function IUICT:partMissing(nodes)
-    local hasMissing = false
-
+--- @return balatro.UIElement.Definition[] list
+function IUICT:partMissing()
     -- 1 month from now i will probably forget how this code does
 
     --- @type [string, string[]][]
@@ -142,27 +143,28 @@ function IUICT:partMissing(nodes)
             for i, rule in ipairs(rules) do
                 table.insert(rulesStr, rule.op..' '..rule.version.raw)
             end
-            table.insert(modsRulesStr, string.format('%s (%s)', other.name, table.concat(rulesStr, ' ')))
+            table.insert(modsRulesStr, table.concat(rulesStr, ' ') --[[string.format('%s (%s)', other.name, table.concat(rulesStr, ' '))]])
         end
         table.sort(modsRulesStr, function (a, b) return a < b end)
         table.insert(missings, { k, modsRulesStr })
     end
     table.sort(missings, function (a, b) return a[1] < b[1] end)
 
-    for i, entry in ipairs(missings) do
-        if not hasMissing then
-            table.insert(nodes, ui.TRS('These mods have missing dependencies:', self.fontscaleTitle))
-            hasMissing = true
-        end
+    --- @type balatro.UIElement.Definition[]
+    local list = {}
 
-        local base = ui.TRS(string.format('? %s', entry[1]), self.fontscale, G.C.YELLOW)
-        table.insert(nodes, base)
-        for i, entry in pairs(entry[2]) do
-            table.insert(nodes, ui.TRS('    '..entry, self.fontscaleSub))
-        end
+    for i, entry in ipairs(missings) do
+        local str = {}
+        for i, entry in pairs(entry[2]) do table.insert(str, entry) end
+
+        local base = self:uiEntry({
+            {ui.TS(string.format('? %s', entry[1]), self.fontscale, G.C.YELLOW)},
+            {ui.TS(' '..table.concat(str, ', '), self.fontscaleSub)}
+        })
+        table.insert(list, base)
     end
 
-    return hasMissing
+    return list
 end
 
 function IUICT:uiButtonOptions(hasMissing, hasErr)
@@ -206,6 +208,11 @@ function IUICT:uiButtons(hasMissing, hasErr)
     return buttons
 end
 
+--- @param elms balatro.UIElement.Definition[]
+function IUICT:uiGridList(elms)
+    return ui.gapGrid(0.1, 0.1, util.grid(elms, 7), true)
+end
+
 function IUICT:renderContent()
     local tgltext = self.isDisable and 'Disable' or 'Enable'
     local titleText = self.mod and string.format('%s %s %s?', tgltext, self.mod.name, self.mod.version) or string.format('%s?', tgltext)
@@ -214,9 +221,26 @@ function IUICT:renderContent()
     local nodes = {}
     table.insert(nodes, ui.TRS(titleText, self.fontscaleTitle * 1.25))
 
-    local hasMissing = self:partMissing(nodes)
-    local hasImpossible, hasChange = self:partActions(nodes)
-    local hasErr = hasMissing or hasImpossible
+    local missings = self:partMissing()
+    local impossibles, changes = self:partActions()
+    local hasMissing = #missings ~= 0
+    local hasImpossibles = #impossibles ~= 0
+    local hasChanges = #changes ~= 0
+
+    if hasImpossibles then
+        table.insert(nodes, ui.TRS('These mods are impossible to load:', self.fontscale))
+        table.insert(nodes, ui.R(self:uiGridList(impossibles)))
+    end
+    if hasMissing then
+        table.insert(nodes, ui.TRS('These mods are missing:', self.fontscale))
+        table.insert(nodes, ui.R(self:uiGridList(missings)))
+    end
+    if hasChanges then
+        table.insert(nodes, ui.TRS('These mods will take effect:', self.fontscale))
+        table.insert(nodes, ui.R(self:uiGridList(changes)))
+    end
+
+    local hasErr = hasMissing or hasImpossibles
     local buttons = self:uiButtons(hasMissing, hasErr)
     table.insert(nodes, ui.R(ui.gapList('C', 0.1, buttons)))
 
