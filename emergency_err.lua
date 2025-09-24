@@ -61,16 +61,31 @@ local function __imm_disableAllMods(err)
             table.insert(echunk, 'These mods are disabled temporarily - it will be reenabled on next startup')
         end
     else
-        table.insert(echunk, 'Your crash happened without mods - your save may be corrupted.')
+        local msg = {
+            '',
+            'Your crash happened without mods - your save may be corrupted. Try:',
+            '1. Move save and config files out of the save folder',
+            '2. Move all mods out',
+            '3. Reinstall Balatro',
+            '',
+            'Save folder: '..love.filesystem.getSaveDirectory(),
+            'Installation: '..love.filesystem.getSource(),
+            'Mods folder: '..lovely.mod_dir
+        }
+        for i,v in ipairs(msg) do table.insert(echunk, v) end
     end
 
     if not hasHandlerOverridden then
-        table.insert(echunk, '')
-        table.insert(echunk, jit.os .. ' ' .. jit.arch)
-        table.insert(echunk, _VERSION)
-        table.insert(echunk, jit.version)
-        table.insert(echunk, 'LÖVE ' .. table.concat({love.getVersion()}, '.', 1, 3))
-        if G then table.insert(echunk, 'Balatro '..G.VERSION) end
+        local vers = {
+            '',
+            'Lovely ' .. lovely.version,
+            jit.os .. ' ' .. jit.arch,
+            _VERSION,
+            jit.version,
+            'LÖVE ' .. table.concat({love.getVersion()}, '.', 1, 3),
+            'Balatro ' .. (G and G.VERSION or '?')
+        }
+        for i,v in ipairs(vers) do table.insert(echunk, v) end
 
         --[[
         --- @type imm.ModList[]
