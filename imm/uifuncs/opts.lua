@@ -2,6 +2,7 @@ local a = require("imm.lib.assert")
 local util = require("imm.lib.util")
 local modsDir = require('imm.config').modsDir
 local UIBrowser = require("imm.ui.browser")
+local UICT = require("imm.ui.confirm_toggle")
 local UIOpts = require("imm.ui.options")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
@@ -74,6 +75,15 @@ G.FUNCS[funcs.clearCacheOpts] = function(elm)
 end
 
 --- @param elm balatro.UIElement
+G.FUNCS[funcs.modsOpts] = function(elm)
+    --- @type imm.UI.Options
+    local ses = elm.config.ref_table
+    UIOpts:assertInstance(ses, 'ref_table')
+
+    ui.overlay(ses:renderModsOpts())
+end
+
+--- @param elm balatro.UIElement
 G.FUNCS[funcs.checkRateLimit] = function(elm)
     --- @type imm.UI.Options
     local ses = elm.config.ref_table
@@ -131,4 +141,40 @@ G.FUNCS[funcs.deleteConf] = function(elm)
     end
 
     ses:showOverlay(true)
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.enableAll] = function(elm)
+    --- @type imm.UI.Browser
+    local r = elm.config.ref_table
+    UIBrowser:assertInstance(r, 'ref_table')
+
+    local vlist = r.ctrl:createLoadList()
+
+    for i, list in ipairs(r.ctrl:list()) do
+        local m = list:latest()
+        if m and not m:isActive() and not m:isExcluded() then
+            local mlist = r.ctrl:createLoadList(true)
+            mlist:simpleCopyFrom(vlist)
+
+            mlist:tryEnable(m)
+
+            local ok = not next(mlist.missingDeps)
+            if ok then
+                for k,v in pairs(mlist.actions) do
+                    ok = ok and v.action == 'enable'
+                    if not ok then break end
+                end
+            end
+            if ok then
+                vlist:tryEnable(m)
+            end
+        end
+    end
+
+    if next(vlist.actions) then
+        ui.overlay(UICT(r, vlist):render())
+    else
+        r:showOverlay(true)
+    end
 end

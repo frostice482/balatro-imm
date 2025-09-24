@@ -289,6 +289,25 @@ function IModCtrl:installFromZip(zipData)
     return a, b, c
 end
 
+function IModCtrl:list()
+    --- @type imm.ModList[]
+    local l = {}
+    for k,v in pairs(self.mods) do table.insert(l, v) end
+    table.sort(l, function (a, b) return a.mod < b.mod end)
+    return l
+end
+
+function IModCtrl:listAll()
+    --- @type imm.Mod[]
+    local mods = {}
+    for i,list in ipairs(self:list()) do
+        for j, mod in list:list() do
+            table.insert(mods, mod)
+        end
+    end
+    return mods
+end
+
 --- @alias imm.ModController.C p.Constructor<imm.ModController, nil> | fun(noInit?: boolean): imm.ModController
 --- @type imm.ModController.C
 local ModCtrl = constructor(IModCtrl)

@@ -123,6 +123,15 @@ function IModList:getVersionSatisfies(rules, excludesOr)
     end
 end
 
+function IModList:latest()
+    --- @type imm.Mod?
+    local latest
+    for k,v in pairs(self.versions) do
+        if not latest or latest.versionParsed < v.versionParsed then latest = v end
+    end
+    return latest
+end
+
 --- @alias imm.ModList.C p.Constructor<imm.ModList, nil> | fun(mod: string, native?: boolean): imm.ModList
 --- @type imm.ModList.C
 local Mod = constructor(IModList)

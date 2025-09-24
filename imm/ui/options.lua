@@ -10,9 +10,12 @@ local funcs = {
     openModFolder  = 'imm_o_open',
     clearCache     = 'imm_o_clearcache',
     clearCacheOpts = 'imm_o_clearcacheopts',
+    modsOpts       = 'imm_o_modsopts',
     checkRateLimit = 'imm_o_checkghratelimit',
     disableAll     = 'imm_o_disableall',
+    enableAll      = 'imm_o_enableall',
     updateAll      = 'imm_o_updateall',
+    copyModlist    = 'imm_o_copymodlist',
     deleteOld      = 'imm_o_deleteold',
     deleteConf     = 'imm_o_delete_conf',
 }
@@ -31,14 +34,25 @@ end
 --- @return balatro.UIElement.Definition[]
 function IUIOpts:gridOptions()
     return {{
-        UIBox_button({ minw = self.buttonWidth, button = funcs.disableAll       , label = {'Disable all mods'}, ref_table = self.ses }),
-        UIBox_button({ minw = self.buttonWidth, button = funcs.restart          , label = {'Restart'} }),
-        UIBox_button({ minw = self.buttonWidth, button = funcs.deleteOld        , label = {'Delete old versions'}, ref_table = self }),
-        UIBox_button({ minw = self.buttonWidth, button = funcs.checkRateLimit   , label = {'Check ratelimit'}, ref_table = self }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.modsOpts      , label = {'Mods...'}, ref_table = self }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.checkRateLimit, label = {'Check ratelimit'}, ref_table = self }),
     }, {
-        UIBox_button({ minw = self.buttonWidth, button = funcs.updateAll        , label = {'Update all mods'}, ref_table = self.ses }),
-        UIBox_button({ minw = self.buttonWidth, button = funcs.openModFolder    , label = {'Open mods folder'} }),
-        UIBox_button({ minw = self.buttonWidth, button = funcs.clearCacheOpts   , label = {'Clear cache...'}, ref_table = self }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.restart       , label = {'Restart'} }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.clearCacheOpts, label = {'Clear cache...'}, ref_table = self }),
+    }}
+end
+
+--- @return balatro.UIElement.Definition[][]
+function IUIOpts:gridMods()
+    local opts = { __index = { minw = self.buttonWidth, button = funcs.clearCache } }
+    return {{
+        UIBox_button({ minw = self.buttonWidth, button = funcs.disableAll    , label = {'Disable all'}, ref_table = self.ses }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.updateAll     , label = {'Update all'}, ref_table = self.ses }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.openModFolder , label = {'Open mods folder'} }),
+    }, {
+        UIBox_button({ minw = self.buttonWidth, button = funcs.enableAll     , label = {'Safe enable all'}, ref_table = self.ses }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.deleteOld     , label = {'Delete old versions'}, ref_table = self }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.copyModlist   , label = {'Copy modlist'} }),
     }}
 end
 
@@ -104,6 +118,10 @@ end
 
 function IUIOpts:renderClearCacheOpts()
     return self:optionsContainer({self:gridRow(self:gridClearCache())})
+end
+
+function IUIOpts:renderModsOpts()
+    return self:optionsContainer({self:gridRow(self:gridMods())})
 end
 
 function IUIOpts:renderCheckRateLimitExec()
