@@ -42,7 +42,7 @@ local function __imm_disableAllMods(err)
 
         if not mod:isExcluded() then
             has = true
-            table.insert(detecteds, string.format('- %s: %s', mod.mod or '?', mod.version or '?'))
+            table.insert(detecteds, string.format('- %-30s: %-20s (%s)', mod.mod, mod.version, mod.path:sub(lovely.mod_dir:len()+2)))
             local ok, err = ctrl:disableMod(mod)
             if ok then table.insert(disableds, mod.mod..'='..mod.version)
             else print('imm: error: Failed to disable', mod.mod, err)
@@ -72,6 +72,7 @@ local function __imm_disableAllMods(err)
         table.insert(echunk, 'LÖVE ' .. table.concat({love.getVersion()}, '.', 1, 3))
         if G then table.insert(echunk, 'Balatro '..G.VERSION) end
 
+        --[[
         --- @type imm.ModList[]
         local listSorted = {}
         for k,list in pairs(ctrl.mods) do
@@ -86,6 +87,7 @@ local function __imm_disableAllMods(err)
                 table.insert(echunk, string.format('- %s: %s (%s)', mod.mod, mod.version, mod.path:sub(lovely.mod_dir:len()+2)))
             end
         end
+        ]]
     end
 
     err = err .. '\n' .. table.concat(echunk, '\n')
