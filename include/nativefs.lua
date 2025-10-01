@@ -357,6 +357,7 @@ local function withTempMount(dir, fn, ...)
 end
 
 function nativefs.getDirectoryItems(dir)
+	if type(dir) ~= "string" then error("expected type string for dir, got "..type(dir)) end
 	local result, err = withTempMount(dir, love.filesystem.getDirectoryItems)
 	return result or {}
 end

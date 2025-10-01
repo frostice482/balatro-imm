@@ -102,7 +102,7 @@ local function handler(err)
         attached = false
         err = type(err) == 'string' and err or tostring(err)
         local ok, nerr = pcall(__imm_disableAllMods, err)
-        err = ok and (nerr or err) or ('\n\nimm failed to disable mods: '..nerr)
+        err = ok and (nerr or err) or (err..'\n\nimm failed to disable mods: '..nerr)
     end
     return errhand_orig(err)
 end

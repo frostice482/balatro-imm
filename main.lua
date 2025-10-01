@@ -115,7 +115,7 @@ function _imm.init()
         selfdir = {}
     else
         local lovely = require('lovely')
-        moddir = lovely.mods_dir
+        moddir = lovely.mod_dir
         for i, item in ipairs(NFS.getDirectoryItems(moddir)) do
             local base = moddir..'/'..item
             if not NFS.getInfo(base..'/.lovelyignore') and NFS.read(base..'/imm/sig') == 'balatro-imm' then
