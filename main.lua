@@ -1,27 +1,25 @@
+--resbundle.before
+
+--- @class imm.Base
 _imm = {
     configFile = 'config/imm.txt',
     initialized = false,
-    ---@type imm.ParsedConfig
-    configs = {},
+    config = {},
 }
+
+--resbundle.after
 
 function _imm.initmodule()
     if package.loaded['imm.config'] then return end
 
-    --- @type imm.Config
-    package.loaded['imm.config'] = {
-        path = _imm.selfdir,
-        modsDir = _imm.modsDir,
-        configFile = _imm.configFile,
-        config = _imm.configs
-    }
+    package.loaded['imm.config'] = _imm
 end
 
 function _imm.parseconfig(entry)
     if entry:sub(1, 1) == '#' then return end
     local s, e, key = entry:find('^([%w%d_-]+) *= *')
     if not key then return end
-    _imm.configs[key] = entry:sub(e+1)
+    _imm.config[key] = entry:sub(e+1)
 end
 
 function _imm.initconfig()
@@ -35,6 +33,68 @@ function _imm.initconfig()
         _imm.parseconfig(entry)
     end
 end
+--- @return string dirname, string filename
+function _imm.dirname(str)
+    local prev
+    while true do
+        local a, b = str:find('/', (prev or 0) + 1, true)
+        if not b then break end
+        prev = b
+    end
+    if not prev then return '', str end
+    return str:sub(1, prev-1), str:sub(prev+1)
+end
+
+--- @return string filename, string extname
+function _imm.filename(str)
+    local prev
+    while true do
+        local a, b = str:find('.', (prev or 0) + 1, true)
+        if not b then break end
+        prev = b
+    end
+    if not prev then return str, '' end
+    return str:sub(1, prev-1), str:sub(prev)
+end
+
+function _imm.determineConfpath()
+    if jit.os == 'Linux' then
+        return os.getenv('XDG_CONFIG_HOME') or os.getenv('HOME')..'/.config'
+    elseif jit.os == 'OSX' then
+        return os.getenv('HOME')..'/Library/Application Support'
+    elseif jit.os == 'Windows' then
+        return os.getenv('APPDATA')
+    end
+end
+
+function _imm.determineModpath()
+    local confpath = _imm.determineConfpath()
+    if not confpath then return end
+
+    local exe = arg[-2] -- is this consistent??
+    local dirname, filename = _imm.dirname(exe)
+    if jit.os == 'OSX' then
+        dirname, filename = _imm.dirname(_imm.dirname(_imm.dirname(dirname)))
+    end
+    filename = filename:gsub("%.", "_")
+    local base, ext = _imm.filename(filename)
+
+    return table.concat({ confpath, base, 'Mods' }, '/')
+end
+
+function _imm.applyNonLovelyHook()
+    local a = create_UIBox_generic_options
+    local G2 = _G
+    function G2.create_UIBox_generic_options(opts)
+        local n = a(opts)
+        if opts then
+            if opts.ref_table then
+                n.nodes[1].nodes[1].nodes[2].config.ref_table = opts.ref_table
+            end
+        end
+        return n
+    end
+end
 
 --- @return boolean ok, string? err
 function _imm.init()
@@ -44,22 +104,33 @@ function _imm.init()
     JSON = JSON or package.preload.json and require('json') or require("imm-json")
 
     local selfdir
-    local moddir = require('lovely').mod_dir
-    for i, item in ipairs(NFS.getDirectoryItems(moddir)) do
-        local base = moddir..'/'..item
-        if not NFS.getInfo(base..'/.lovelyignore') and NFS.read(base..'/imm/sig') == 'balatro-imm' then
-            selfdir = base
-            break
+    local moddir
+    if _imm.resbundle then
+        _imm.applyNonLovelyHook()
+        local lok, lovely = pcall(require, 'lovely')
+        if not moddir and lok then moddir = lovely.mod_dir end
+        if not moddir then moddir = os.getenv("LOVELY_MOD_DIR") end
+        if not moddir then moddir = _imm.determineModpath() end
+        if not moddir then error("Cannot determine mod path (unsupported os?)") end
+        selfdir = {}
+    else
+        local lovely = require('lovely')
+        moddir = lovely.mods_dir
+        for i, item in ipairs(NFS.getDirectoryItems(moddir)) do
+            local base = moddir..'/'..item
+            if not NFS.getInfo(base..'/.lovelyignore') and NFS.read(base..'/imm/sig') == 'balatro-imm' then
+                selfdir = base
+                break
+            end
         end
+        if not selfdir then
+            print('imm: error: could not determine path')
+            return false, 'could not determine imm path'
+        end
+        if not NFS.mount(selfdir..'/imm', 'imm') then return false, 'imm mount failed' end
     end
 
-    if not selfdir then
-        print('imm: error: could not determine path')
-        return false, 'could not determine imm path'
-    end
-
-    if not NFS.mount(selfdir..'/imm', 'imm') then return false, 'imm mount failed' end
-    _imm.selfdir = selfdir
+    _imm.path = selfdir
     _imm.modsDir = moddir
     _imm.initconfig()
 

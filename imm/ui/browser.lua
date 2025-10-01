@@ -233,7 +233,7 @@ function IUISes:uiHeaderInput()
         ref_table = self,
         ref_value = 'search',
         w = 16 * .6,
-        prompt_text = 'Search (@author, #installed, $id)',
+        prompt_text = 'Search (.installed, @author)',
         text_scale = self.fontscale,
         extended_corpus = true
     })
@@ -420,7 +420,7 @@ function IUISes:createFilter()
     local hasFilter = true
     while hasFilter do
         local c = search:sub(1, 1)
-        if c == '#' then isInstalled = true
+        if c == '.' then isInstalled = true
         elseif c == '@' then isAuthor = true
         elseif c == '$' then isId = true
         else hasFilter = false

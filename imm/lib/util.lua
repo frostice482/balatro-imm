@@ -43,6 +43,8 @@ function util.startswith(str, check)
 end
 
 --- @param str string
+--- @return string dirname
+--- @return string filename
 function util.dirname(str)
     local prev
     while true do
@@ -50,7 +52,22 @@ function util.dirname(str)
         if not b then break end
         prev = b
     end
-    return prev and str:sub(1, prev-1) or ''
+    if not prev then return '', str end
+    return str:sub(1, prev-1), str:sub(prev+1)
+end
+
+--- @param filename string
+--- @return string basename
+--- @return string extname Includes dots
+function util.filename(filename)
+    local prev
+    while true do
+        local a, b = filename:find('.', (prev or 0) + 1, true)
+        if not b then break end
+        prev = b
+    end
+    if not prev then return filename, '' end
+    return filename:sub(1, prev-1), filename:sub(prev)
 end
 
 --- @param source string

@@ -55,8 +55,8 @@ local function __imm_disableAllMods(err)
 
         -- make all disabled mods temporary
         if not suspect then
-            table.insert(disableds, _imm.configs.nextEnable)
-            _imm.configs.nextEnable = table.concat(disableds, '==')
+            table.insert(disableds, _imm.config.nextEnable)
+            _imm.config.nextEnable = table.concat(disableds, '==')
             util.saveconfig()
             table.insert(echunk, 'These mods are disabled temporarily - it will be reenabled on next startup')
         else
@@ -88,23 +88,6 @@ local function __imm_disableAllMods(err)
             'Balatro ' .. (G and G.VERSION or '?')
         }
         for i,v in ipairs(vers) do table.insert(echunk, v) end
-
-        --[[
-        --- @type imm.ModList[]
-        local listSorted = {}
-        for k,list in pairs(ctrl.mods) do
-            table.insert(listSorted, list)
-        end
-        table.sort(listSorted, function (a, b) return a.mod < b.mod end)
-
-        table.insert(echunk, '')
-        table.insert(echunk, 'Installed mods:')
-        for i, list in ipairs(listSorted) do
-            for i, mod in pairs(list:list()) do
-                table.insert(echunk, string.format('- %s: %s (%s)', mod.mod, mod.version, mod.path:sub(lovely.mod_dir:len()+2)))
-            end
-        end
-        ]]
     end
 
     err = err .. '\n' .. table.concat(echunk, '\n')

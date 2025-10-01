@@ -1,6 +1,6 @@
 local Tasks = require("imm.lib.tasks")
-local immpath = require("imm.config").path
-local threadcode = assert(NFS.newFileData(immpath..'/imm/https_thread.lua'))
+local imm = require("imm.config")
+local threadcode = imm.resbundle and imm.resbundle.https_thread or assert(NFS.newFileData(imm.path..'/imm/https_thread.lua'))
 
 --- @class imm.HttpsAgent.Req
 --- @field url string

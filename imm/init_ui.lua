@@ -6,12 +6,13 @@ require('imm.uifuncs.mod')
 require('imm.uifuncs.opts')
 require('imm.uifuncs.version')
 
+local imm = require("imm.config")
 local function atlas(key, path, px, py)
-    local abspath = string.format('%s/assets/%s', _imm.selfdir, path)
+    local abspath = string.format('%s/assets/%s', _imm.path, path)
     local name = 'imm_'..key
 
     G.ASSET_ATLAS[name] = {
-        image = love.graphics.newImage(assert(NFS.newFileData(abspath)), { dpiscale = 1 }),
+        image = love.graphics.newImage(imm.resbundle and imm.resbundle.assets[key] or assert(NFS.newFileData(abspath)), { dpiscale = 1 }),
         name = name,
         px = px,
         py = py
