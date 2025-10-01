@@ -7,11 +7,11 @@ require('imm.uifuncs.opts')
 require('imm.uifuncs.version')
 
 local function atlas(key, path, px, py)
-    local abspath = string.format('%s/assets/%dx/%s', _imm.selfdir, G.SETTINGS.GRAPHICS.texture_scaling, path)
+    local abspath = string.format('%s/assets/%s', _imm.selfdir, path)
     local name = 'imm_'..key
 
     G.ASSET_ATLAS[name] = {
-        image = love.graphics.newImage(assert(NFS.newFileData(abspath)), { dpiscale = G.SETTINGS.GRAPHICS.texture_scaling }),
+        image = love.graphics.newImage(assert(NFS.newFileData(abspath)), { dpiscale = 1 }),
         name = name,
         px = px,
         py = py
