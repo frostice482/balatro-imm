@@ -60,24 +60,26 @@ const mainPre = `
 if _imm then return print("imm is already initialized") end
 `
 
-const final = `
-if __IMM_B_INIT then
-    error("Recursive load")
-end
+const prepend = `
+if __IMM_B_INIT then error("Recursive load") end
 __IMM_B_INIT = true
+__IMM_BUNDLE = true
+`
+
+const loadAppend = `
+__IMM_WRAP = true
+require("imm.main")
 
 love.filesystem.setIdentity(love.filesystem.getIdentity(), true)
-package.loaded.main = nil
-local wrapped_main = assert(loadstring(love.filesystem.read("main.lua"), "=wrapped_main.lua"))
+local content = love.filesystem.read("main.lua")
 love.filesystem.setIdentity(love.filesystem.getIdentity(), false)
-wrapped_main()
-
-require("imm.main")
+local func, err = assert(loadstring(content, "@wrapped_main.lua"))
 `
 
 async function main() {
-    const [httpsThreadCode] = await Promise.all([
+    const [httpsThreadCode, earlyErrorCode] = await Promise.all([
         fsp.readFile('imm/https_thread.lua'),
+        fsp.readFile('early_error.lua', 'ascii'),
         processModule('main'),
         processModule('imm.init'),
         bundleRes(assetBundles, 'assets'),
@@ -105,7 +107,7 @@ async function main() {
 
     const w = fs.createWriteStream('bundle.lua')
 
-    w.write('__IMM_BUNDLE = true\n')
+    w.write(prepend)
 
     for (const [k, v] of Object.entries(includeBundles)) {
         w.write(`package.preload["imm-"..${JSON.stringify(k)}] = function()\n${v}\nend\n`)
@@ -113,7 +115,9 @@ async function main() {
     for (const [k, v] of Object.entries(moduleBundles)) {
         w.write(`package.preload[${JSON.stringify(k)}] = function()\n${v}\nend\n`)
     }
-    w.write(final)
+
+    w.write(earlyErrorCode.replace('--bundle inject', loadAppend))
+
     w.end()
 }
 main()

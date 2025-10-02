@@ -3,7 +3,7 @@
 local errhand_orig = love.errorhandler or love.errhand
 local hasHandlerOverridden = false
 
-local function __imm_disableAllMods(err)
+local function disableAllMods(err)
     assert(_imm.init())
     local ctrl = require('imm.modctrl')
     local lovely = require('lovely')
@@ -29,16 +29,9 @@ local function __imm_disableAllMods(err)
         table.insert(echunk, 'Multiple Steamodded version detected - Remove the older ones!\n')
     end
 
-    --- @type table<imm.Mod>
-    local activeListCopy = {}
-
     -- disable mods
     local has = false
     for k,mod in pairs(list) do
-        if not hasHandlerOverridden then
-            activeListCopy[mod] = true
-        end
-
         if not mod:isExcluded() then
             has = true
             table.insert(detecteds, string.format('- %-30s: %-20s (%s)', mod.mod, mod.version, mod.path:sub(lovely.mod_dir:len()+2)))
@@ -96,11 +89,11 @@ end
 
 local attached = true
 
-local function handler(err)
+local function errHandler(err)
+    err = type(err) == 'string' and err or tostring(err)
     if attached then
         attached = false
-        err = type(err) == 'string' and err or tostring(err)
-        local ok, nerr = pcall(__imm_disableAllMods, err)
+        local ok, nerr = pcall(disableAllMods, err)
         err = ok and (nerr or err) or (err..'\n\nimm failed to disable mods: '..nerr)
     end
     if __IMM_BUNDLE then
@@ -109,14 +102,16 @@ local function handler(err)
     return errhand_orig(err)
 end
 
-love.errorhandler = handler
+love.errorhandler = errHandler
+
+--bundle inject
 
 assert(func, err)
 local ok, err = pcall(func, ...)
 
-if love.errorhandler ~= handler then
+if love.errorhandler ~= errHandler then
     errhand_orig = love.errorhandler or love.errhand
-    love.errorhandler = handler
+    love.errorhandler = errHandler
     hasHandlerOverridden = true
 end
 
