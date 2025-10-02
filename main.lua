@@ -157,4 +157,4 @@ function _imm.init()
     _imm.initialized = true
     return true
 end
-if not __IMM_WRAP then _imm.init() end --- @diagnostic disable-line
+if not __IMM_WRAP then _imm.init() end

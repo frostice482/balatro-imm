@@ -105,6 +105,8 @@ async function main() {
 
     const w = fs.createWriteStream('bundle.lua')
 
+    w.write('__IMM_BUNDLE = true\n')
+
     for (const [k, v] of Object.entries(includeBundles)) {
         w.write(`package.preload["imm-"..${JSON.stringify(k)}] = function()\n${v}\nend\n`)
     }
