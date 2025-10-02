@@ -1,7 +1,7 @@
 local Fetch = require("imm.lib.fetch")
 local GRepo = require("imm.lib.modrepo.generic")
-local logger= require("imm.logger")
 local util  = require("imm.lib.util")
+local logger= require("imm.logger")
 
 --- @type imm.Fetch<nil, thunderstore.Package[]>
 local fetch_list = Fetch('https://thunderstore.io/c/balatro/api/v1/package/', 'immcache/list/thunderstore.json', false, true)

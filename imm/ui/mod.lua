@@ -1,9 +1,9 @@
 local constructor = require("imm.lib.constructor")
-local UIVersion = require('imm.ui.version')
 local LoveMoveable = require("imm.lib.love_moveable")
+local UIVersion = require('imm.ui.version')
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
-local modsDir = require('imm.config').modsDir
+local imm = require('imm')
 
 --- @class imm.UI.Mod.Funcs
 local funcs = {
@@ -52,7 +52,7 @@ function IUIModSes:uiTabInstalled()
     local versions = {}
     for _, entry in ipairs(l:list()) do
         local ver = self:uiVersion(entry.version, {
-            sub = entry.path:sub(modsDir:len()+2),
+            sub = entry.path:sub(imm.modsDir:len()+2),
             installed = true
         })
         table.insert(versions, ver)

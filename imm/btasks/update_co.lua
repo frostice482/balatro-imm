@@ -1,8 +1,8 @@
 local constructor = require("imm.lib.constructor")
-local UICT
 local co = require("imm.lib.co")
-local logger = require("imm.logger")
 local ui = require("imm.lib.ui")
+local logger = require("imm.logger")
+local UICT
 
 --- @class imm.Browser.Task.Update
 --- @field newMods imm.Mod[]

@@ -6,7 +6,7 @@ require('imm.uifuncs.mod')
 require('imm.uifuncs.opts')
 require('imm.uifuncs.version')
 
-local imm = require("imm.config")
+local imm = require("imm")
 local function atlas(key, path, px, py)
     local abspath = string.format('%s/assets/%s', _imm.path, path)
     local name = 'imm_'..key

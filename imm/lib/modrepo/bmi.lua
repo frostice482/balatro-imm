@@ -2,7 +2,7 @@ local Fetch = require("imm.lib.fetch")
 local GRepo = require("imm.lib.modrepo.generic")
 local getmods = require("imm.lib.mod.get")
 local co = require("imm.lib.co")
-local m = require("imm.config")
+local imm = require("imm")
 
 --- @type imm.Fetch<nil, bmi.Meta[]>
 local fetch_list = Fetch('https://github.com/frostice482/balatro-mod-index-tiny/raw/master/out.json.gz', 'immcache/list/bmi.json', false, true)
@@ -26,7 +26,7 @@ function fetch_gh_releases:getReqOpts()
     --- @type luahttps.Options
     return {
         headers = {
-            Authorization = m.config.githubToken and 'Bearer '..m.config.githubToken or nil
+            Authorization = imm.config.githubToken and 'Bearer '..imm.config.githubToken or nil
         }
     }
 end

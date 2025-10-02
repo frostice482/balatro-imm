@@ -6,7 +6,7 @@ local luahttps = {}
 --- @class luahttps.Options
 --- @field data? string
 --- @field method? string
---- @field headers? table<string, string>
+--- @field headers? table<string, string|nil>
 
 --- @param url string
 --- @param options? luahttps.Options

@@ -1,9 +1,8 @@
 local constructor = require("imm.lib.constructor")
 local UIBrowser = require("imm.ui.browser")
 local httpsAgent = require('imm.https_agent')
-local config = require('imm.config')
 local ui = require('imm.lib.ui')
-local m = require("imm.config")
+local imm = require("imm")
 
 --- @class imm.UI.Options.Funcs
 local funcs = {
@@ -39,7 +38,7 @@ function IUIOpts:gridOptions()
     return {{
         UIBox_button({ minw = self.buttonWidth, button = funcs.modsOpts      , label = {'Mods...'}, ref_table = self }),
         UIBox_button({ minw = self.buttonWidth, button = funcs.checkRateLimit, label = {'Check ratelimit'}, ref_table = self }),
-        UIBox_button({ minw = self.buttonWidth, button = funcs.updateLovely  , label = {config.lovelyver and 'Update Lovely' or 'Install Lovely'}, ref_table = self.ses, func = funcs.updateLovelyInit }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.updateLovely  , label = {imm.lovelyver and 'Update Lovely' or 'Install Lovely'}, ref_table = self.ses, func = funcs.updateLovelyInit }),
     }, {
         UIBox_button({ minw = self.buttonWidth, button = funcs.restart       , label = {'Restart'} }),
         UIBox_button({ minw = self.buttonWidth, button = funcs.clearCacheOpts, label = {'Clear cache...'}, ref_table = self }),
@@ -138,7 +137,7 @@ function IUIOpts:renderCheckRateLimitExec()
     local t = os.time()
     httpsAgent:request('https://api.github.com/rate_limit', {
         headers = {
-            Authorization = m.config.githubToken and 'Bearer '..m.config.githubToken or nil
+            Authorization = imm.config.githubToken and 'Bearer '..imm.config.githubToken or nil
         }
     }, function (code, body, headers)
         if code ~= 200 then

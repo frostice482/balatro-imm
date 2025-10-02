@@ -1,7 +1,7 @@
 local constructor = require("imm.lib.constructor")
-local https = require("imm.https_agent")
 local util = require("imm.lib.util")
 local co = require("imm.lib.co")
+local https = require("imm.https_agent")
 
 --- @class imm.Fetch<A, T>: balatro.Object, {
 ---     fetch: fun(self, arg: A, cb: fun(err?: string, res?: T), refreshCache?: boolean, useCache?: boolean);

@@ -1,5 +1,5 @@
-local a = require("imm.lib.assert")
 local UICT = require("imm.ui.confirm_toggle")
+local a = require("imm.lib.assert")
 local co = require("imm.lib.co")
 local funcs = UICT.funcs
 

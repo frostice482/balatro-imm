@@ -1,4 +1,4 @@
---- @meta imm.config
+--- @meta imm
 
 --- @class imm.ParsedConfig: { [string]: string }
 --- Determines what mod to load at the next loading.\
@@ -16,8 +16,6 @@
 --- @field githubToken? string
 ---
 --- @field init? boolean
-
---- @class imm.Config
 
 --- @class imm.Resbundle
 --- @field assets table

@@ -1,10 +1,9 @@
 local constructor = require("imm.lib.constructor")
 local LoveMoveable = require("imm.lib.love_moveable")
-local UIMod = require("imm.ui.mod")
 local BrowserTask = require("imm.btasks.tasks")
+local UIMod = require("imm.ui.mod")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
-local logger = require("imm.logger")
 
 --- @class imm.UI.Browser.Funcs
 local funcs = {

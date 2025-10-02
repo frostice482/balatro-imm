@@ -10,9 +10,7 @@ _imm = {
 --resbundle.after
 
 function _imm.initmodule()
-    if package.loaded['imm.config'] then return end
-
-    package.loaded['imm.config'] = _imm
+    package.loaded.imm = package.loaded.imm or _imm
 end
 
 function _imm.parseconfig(entry)

@@ -1,12 +1,12 @@
-local a = require("imm.lib.assert")
-local util = require("imm.lib.util")
-local config = require('imm.config')
 local UIBrowser = require("imm.ui.browser")
 local UICT = require("imm.ui.confirm_toggle")
 local UIOpts = require("imm.ui.options")
-local lovelyUrl = require('imm.lovely_downloads')
+local a = require("imm.lib.assert")
+local util = require("imm.lib.util")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
+local imm = require('imm')
+local lovelyUrl = require('imm.lovely_downloads')
 local funcs = UIOpts.funcs
 
 --- @param elm balatro.UIElement
@@ -100,7 +100,7 @@ end
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.openModFolder] = function(elm)
-    love.system.openURL('file:///'..config.modsDir:gsub('\\', '/'))
+    love.system.openURL('file:///'..imm.modsDir:gsub('\\', '/'))
 end
 
 --- @param elm balatro.UIElement
@@ -185,7 +185,7 @@ local modlisthead = '# '..modlistfmt:format("id", "version", "status", "path")
 
 --- @param mod imm.Mod
 local function fmtmod(mod)
-    return '- '..modlistfmt:format(mod.mod, mod.version, mod.isLoaded and 'loaded' or '-', mod.path:sub(config:len()+2))
+    return '- '..modlistfmt:format(mod.mod, mod.version, mod.isLoaded and 'loaded' or '-', mod.path:sub(imm.modsDir:len()+2))
 end
 
 --- @param elm balatro.UIElement
@@ -236,7 +236,7 @@ end
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.updateLovelyInit] = function(elm)
     local texts = {
-        config.lovelyver and 'Current: '..config.lovelyver or 'Undetected'
+        imm.lovelyver and 'Current: '..imm.lovelyver or 'Undetected'
     }
     if not lovelyUrl then
         table.insert(texts, string.format('Unknown hardware (%s %s)', jit.os, jit.arch))

@@ -1,6 +1,6 @@
 local constructor = require("imm.lib.constructor")
-local logger = require("imm.logger")
 local co = require("imm.lib.co")
+local logger = require("imm.logger")
 
 --- @class imm.Browser.Task.Download.Co
 --- @field blacklistUrls? table<string>

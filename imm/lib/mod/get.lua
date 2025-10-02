@@ -2,7 +2,7 @@ local ModList = require("imm.lib.mod.list")
 local V = require("imm.lib.version")
 local util = require("imm.lib.util")
 local logger = require("imm.logger")
-local modsDir = require('imm.config').modsDir
+local imm = require('imm')
 
 local get = {}
 
@@ -310,7 +310,7 @@ function get.getMods(opts)
     opts.list = opts.list or {}
     opts.isNfs = opts.isNfs ~= false
     opts.depthLimit = opts.depthLimit or 3
-    get.getModsLow(opts, opts.base or modsDir, 1) --- @diagnostic disable-line
+    get.getModsLow(opts, opts.base or imm.modsDir, 1) --- @diagnostic disable-line
 
     return opts.list
 end

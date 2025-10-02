@@ -1,16 +1,16 @@
 local util = require("imm.lib.util")
 local ui = require("imm.lib.ui")
-local m = require('imm.config')
+local imm = require('imm')
 
 local updateConfig = false
 
 --- Processing configs
 
-if m.config.nextEnable then
+if imm.config.nextEnable then
     local ctrl = require('imm.modctrl')
     local logger = require('imm.logger')
 
-    local mods = util.strsplit(m.config.nextEnable, '%s*==%s*')
+    local mods = util.strsplit(imm.config.nextEnable, '%s*==%s*')
     for i,entry in ipairs(mods) do
         local mod, ver = entry:match('^([^=]+)=(.*)')
         if mod and ver then
@@ -22,11 +22,11 @@ if m.config.nextEnable then
         end
     end
 
-    m.config.nextEnable = nil
+    imm.config.nextEnable = nil
     updateConfig = true
 end
 
-if not m.config.init then
+if not imm.config.init then
     local ctrl = require('imm.modctrl')
     local hasOtherMod = false
     for i, list in ipairs(ctrl:list()) do
@@ -38,7 +38,7 @@ if not m.config.init then
     if not hasOtherMod then
         require("imm.welcome")
     else
-        m.config.init = true
+        imm.config.init = true
         updateConfig = true
     end
 end

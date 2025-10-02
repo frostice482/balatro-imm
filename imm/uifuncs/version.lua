@@ -1,7 +1,7 @@
-local a = require("imm.lib.assert")
-local ConfirmToggle = require('imm.ui.confirm_toggle')
+local UICT = require('imm.ui.confirm_toggle')
 local UIVerDel = require('imm.ui.version_delete')
 local UIVersion = require("imm.ui.version")
+local a = require("imm.lib.assert")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
 local funcs = UIVersion.funcs
@@ -73,7 +73,7 @@ G.FUNCS[funcs.toggle] = function(elm)
         ses:updateSelectedMod()
         if ok then ses.hasChanges = true end
     else
-        ui.overlay(ConfirmToggle(ses, test, mod, enabled):render())
+        ui.overlay(UICT(ses, test, mod, enabled):render())
     end
 end
 

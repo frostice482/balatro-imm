@@ -1,6 +1,6 @@
+local UIMod = require("imm.ui.mod")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
-local UIMod = require("imm.ui.mod")
 local funcs = UIMod.funcs
 
 --- @param elm balatro.UIElement

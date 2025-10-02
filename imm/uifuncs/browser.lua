@@ -1,9 +1,9 @@
+local UIBrowser = require("imm.ui.browser")
+local UIOpts = require("imm.ui.options")
+local ModMeta = require("imm.lib.modrepo.meta")
 local a = require("imm.lib.assert")
 local util = require("imm.lib.util")
 local ui = require("imm.lib.ui")
-local ModMeta = require("imm.lib.modrepo.meta")
-local UIBrowser = require("imm.ui.browser")
-local UIOpts = require("imm.ui.options")
 local funcs = UIBrowser.funcs
 
 --- @param elm balatro.UIElement

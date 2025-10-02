@@ -97,7 +97,6 @@ async function main() {
         .replace('--resbundle.after', mainInjects.join('\n'))
 
     delete moduleBundles['main']
-    delete moduleBundles['imm.config']
 
     //const compiler = cp.spawn('luajit', ['-b', '-', '-'], { stdio: ['pipe', 'pipe', 'inherit'] })
     //const ostream = fs.createWriteStream('bundle.lua')
