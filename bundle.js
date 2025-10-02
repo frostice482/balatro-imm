@@ -56,14 +56,15 @@ async function bundleRes(list, dir) {
     await Promise.all(queues)
 }
 
-const mainPre = `
-if _imm then return print("imm is already initialized", debug.traceback()) end
-`
-
 const prepend = `
 if __IMM_B_INIT then error("Recursive load") end
 __IMM_B_INIT = true
 __IMM_BUNDLE = true
+
+if not _imm then
+    print("imm is loaded from bundle")
+    __IMM_WRAP = true
+-- packages
 `
 
 const loaderInject = `
@@ -74,8 +75,7 @@ local func, err = assert(loadstring(content, "@wrapped_main.lua"))
 `
 
 const append = `
-if not _imm then
-    print("imm is loaded from bundle")
+-- packages
     __IMM_WRAP = true
     require("imm.main")
 else
@@ -103,7 +103,7 @@ async function main() {
         mainInjects.push(`_imm.resbundle.assets[${JSON.stringify(k)}] = love.data.decode("data", "base64", "${v.toString('base64')}")`)
     }
 
-    moduleBundles['imm.main'] = mainPre
+    moduleBundles['imm.main'] = ''
         + moduleBundles.main.replace('--bundle inject', mainInjects.join('\n'))
         + loaderCode.replace('--bundle inject', loaderInject)
 

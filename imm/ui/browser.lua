@@ -28,6 +28,8 @@ local funcs = {
 --- @field contMods balatro.UIBox[]
 --- @field contCycle balatro.UIBox
 --- @field contSelect balatro.UIBox
+---
+--- @field sidebarBase balatro.UIElement.Config
 local IUISes = {
     search = '',
     prevSearch = '',
@@ -51,6 +53,11 @@ local IUISes = {
 
     noThumbnail = false,
 
+    colorCategorySelected = G.C.GREEN,
+    colorCategoryUnselected = G.C.BLUE,
+    colorHeader = G.C.RED,
+    colorButtons = G.C.ORANGE,
+    colorMod = G.C.BOOSTER
 }
 
 --- @protected
@@ -73,6 +80,7 @@ function IUISes:init(modctrl, repo)
         {'Tools'},
     }
     self.tasks = BrowserTask(self)
+    self.sidebarBase = { padding = 0.15, r = true, hover = true, shadow = true, colour = self.colorButtons }
 end
 
 function IUISes:updateContainers()
@@ -124,7 +132,7 @@ function IUISes:uiCategory(label, category)
     category = category or label
     return ui.R{
         align = 'm',
-        colour = self.tags[category] and G.C.ORANGE or G.C.RED,
+        colour = self.tags[category] and self.colorCategorySelected or self.colorCategoryUnselected,
         minw = 2,
         padding = 0.1,
         shadow = true,
@@ -137,16 +145,13 @@ function IUISes:uiCategory(label, category)
     }
 end
 
---- @type balatro.UIElement.Config
-local someWeirdBase = { padding = 0.15, r = true, hover = true, shadow = true, colour = G.C.BLUE }
-
 function IUISes:uiSidebarHeaderExit()
     return ui.C({
         tooltip = { text = {'Exit'} },
         button = 'exit_overlay_menu',
 
         self:uiText('X')
-    }, someWeirdBase)
+    }, self.sidebarBase)
 end
 
 function IUISes:uiSidebarHeaderRefresh()
@@ -156,7 +161,7 @@ function IUISes:uiSidebarHeaderRefresh()
         ref_table = self,
 
         self:uiText('R')
-    }, someWeirdBase)
+    }, self.sidebarBase)
 end
 
 function IUISes:uiSidebarHeaderOptions()
@@ -166,7 +171,7 @@ function IUISes:uiSidebarHeaderOptions()
         ref_table = self,
 
         self:uiText('O')
-    }, someWeirdBase)
+    }, self.sidebarBase)
 end
 
 function IUISes:uiSidebarHeader()
@@ -210,7 +215,7 @@ function IUISes:uiModEntry(mod)
 
         ui.C{
             padding = 0.1,
-            colour = G.C.RED,
+            colour = self.colorMod,
             hover = true,
             shadow = true,
             r = true,
@@ -234,7 +239,9 @@ function IUISes:uiHeaderInput()
         w = 16 * .6,
         prompt_text = 'Search (.installed, @author)',
         text_scale = self.fontscale,
-        extended_corpus = true
+        extended_corpus = true,
+        colour = self.colorHeader,
+        hooked_colour = darken(self.colorHeader, 0.2)
     })
 end
 
@@ -290,7 +297,8 @@ function IUISes:uiCycle()
         ref_value = 'listPage',
         _ses = self,
         opt_callback = funcs.cyclePage,
-        no_pips = true
+        no_pips = true,
+        colour = self.colorHeader
     })}
 end
 

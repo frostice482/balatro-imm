@@ -1,6 +1,5 @@
 local UIBrowser = require("imm.ui.browser")
 local UIOpts = require("imm.ui.options")
-local ModMeta = require("imm.lib.modrepo.meta")
 local util = require("imm.lib.util")
 local ui = require("imm.lib.ui")
 local funcs = UIBrowser.funcs
@@ -21,7 +20,7 @@ G.FUNCS[funcs.setCategory] = function(elm)
     local ses, cat = r.ses, r.cat
 
     ses.tags[cat] = not ses.tags[cat]
-    elm.config.colour = ses.tags[cat] and G.C.ORANGE or G.C.RED
+    elm.config.colour = ses.tags[cat] and ses.colorCategorySelected or ses.colorCategoryUnselected
     ses:queueUpdate()
 end
 

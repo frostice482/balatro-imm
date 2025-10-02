@@ -105,9 +105,8 @@ function IUIModSes:updateReleases(elm, res)
     local bmi = self.mod.bmi
     if bmi and bmi.repo and bmi.download_url then
         local v = bmi.version
-        local append = 'Potentially unstable!'
-        local ui = self:uiVersion('Source', {
-            sub = v and v..' - '..append or append,
+        local ui = self:uiVersion('Latest', {
+            sub = v,
             downloadUrl = bmi.download_url,
             color = betaColor
         })
