@@ -2,6 +2,7 @@ local ui = require("imm.lib.ui")
 local co = require('imm.lib.co')
 local lovelyUrl = require("imm.lovely_downloads")
 local lok = pcall(require, 'lovely')
+local imm = require('imm')
 
 local fontscale = 0.4
 local fontscalesub = fontscale * 0.9
@@ -31,7 +32,7 @@ local function installSmodsCo(b)
     local latest = reg and reg:latest()
     if not latest then return b.tasks.status:update(nil, "Cannot get latest installed Steamodded version") end
 
-    ok, err = latest:enable()
+    ok, err = b.ctrl:enableMod(latest)
     if not ok then return b.tasks.status:update(nil, err) end
     b.hasChanges = true
 end
@@ -75,8 +76,9 @@ local function uiWelcome()
         if lovelyUrl then
             table.insert(l, ui.TRS('- Lovely', fontscalesub, G.C.GREEN))
         else
-            table.insert(l, ui.TRS('Lovely installation is not supported for this device', fontscalesub), G.C.ORANGE)
+            table.insert(l, ui.TRS('Lovely installation is not supported for this device', fontscalesub, G.C.ORANGE))
         end
+        --table.insert(l, ui.TRS(imm.modsDir, 0.2))
     end
     return ui.gapList('R', 0.1, l)
 end

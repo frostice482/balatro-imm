@@ -61,6 +61,9 @@ G.FUNCS.exit_overlay_menu = function()
     ui.overlay(G.UIDEF.imm_restart())
 end
 
+--- @class balatro.Functions.Uidef
+--- @field imm_restart fun()
+
 G.UIDEF.imm_restart = function()
     return ui.confirm( ui.TRS('Restart balatro now?', 0.6), funcs.restartConf, {} )
 end

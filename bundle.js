@@ -68,9 +68,9 @@ __IMM_B_INIT = true
 
 love.filesystem.setIdentity(love.filesystem.getIdentity(), true)
 package.loaded.main = nil
-local ba_main = assert(love.filesystem.load("main.lua"))
+local wrapped_main = assert(loadstring(love.filesystem.read("main.lua"), "=wrapped_main.lua"))
 love.filesystem.setIdentity(love.filesystem.getIdentity(), false)
-ba_main()
+wrapped_main()
 
 require("imm.main")
 `

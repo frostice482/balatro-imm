@@ -45,7 +45,7 @@ end
 function _imm.dirname(str)
     local prev
     while true do
-        local a, b = str:find('/', (prev or 0) + 1, true)
+        local a, b = str:find('[/\\]', (prev or 0) + 1)
         if not b then break end
         prev = b
     end
@@ -71,7 +71,7 @@ function _imm.determineConfpath()
     elseif jit.os == 'OSX' then
         return os.getenv('HOME')..'/Library/Application Support'
     elseif jit.os == 'Windows' then
-        return os.getenv('APPDATA')
+        return os.getenv('appdata')
     end
 end
 
@@ -84,8 +84,8 @@ function _imm.determineModpath()
     if jit.os == 'OSX' then
         dirname, filename = _imm.dirname(_imm.dirname(_imm.dirname(dirname)))
     end
-    filename = filename:gsub("%.", "_")
     local base, ext = _imm.filename(filename)
+    base = base:gsub("%.", "_")
 
     return table.concat({ confpath, base, 'Mods' }, '/')
 end

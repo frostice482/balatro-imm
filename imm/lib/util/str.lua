@@ -49,7 +49,7 @@ end
 function util.dirname(str)
     local prev
     while true do
-        local a, b = str:find('/', (prev or 0) + 1, true)
+        local a, b = str:find('[/\\]', (prev or 0) + 1, true)
         if not b then break end
         prev = b
     end
