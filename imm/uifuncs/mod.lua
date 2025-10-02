@@ -13,7 +13,6 @@ end
 G.FUNCS[funcs.releasesInit] = function(elm)
     --- @type imm.UI.Mod
     local modses = elm.config.ref_table
-    UIMod:assertInstance(modses, 'ref_table')
 
     local mod = modses.mod
     elm.config.func = nil
@@ -29,7 +28,6 @@ end
 G.FUNCS[funcs.otherInit] = function(elm)
     --- @type imm.UI.Mod
     local modses = elm.config.ref_table
-    UIMod:assertInstance(modses, 'ref_table')
 
     local mod = modses.mod
     elm.config.func = nil

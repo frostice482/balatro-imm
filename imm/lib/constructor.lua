@@ -1,12 +1,9 @@
-local assert_instance = require("imm.lib.assert").instance
-
 --- @class p.Constructor<Proto, Super>: {
 --- proto: Proto;
 --- super: Super;
 --- className: string;
 --- extendTo: fun(constructor: self, other: table, name?: string);
 --- is: fun(constructor: self, other: any): boolean;
---- assertInstance: fun(constructor: self, var: any, varname?: string);
 --- }
 --- @alias p.C.Default p.Constructor<any, fun(...)>
 
@@ -14,9 +11,6 @@ local createConstructor
 
 local Proto = {}
 
-function Proto:assertInstance(var, varname)
-    return assert_instance(var, self.proto, self.className or "?", varname)
-end
 
 function Proto:new(...)
     local proto = self.proto

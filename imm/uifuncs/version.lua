@@ -1,7 +1,6 @@
 local UICT = require('imm.ui.confirm_toggle')
 local UIVerDel = require('imm.ui.version_delete')
 local UIVersion = require("imm.ui.version")
-local a = require("imm.lib.assert")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
 local funcs = UIVersion.funcs
@@ -10,8 +9,6 @@ local funcs = UIVersion.funcs
 G.FUNCS[funcs.download] = function(elm)
     --- @type imm.UI.Version
     local r = elm.config.ref_table
-    UIVersion:assertInstance(r, 'ref_table')
-
     if not r.opts.downloadUrl then return end
 
     co.create(function ()
@@ -27,7 +24,6 @@ end
 G.FUNCS[funcs.delete] = function(elm)
     --- @type imm.UI.Version
     local r = elm.config.ref_table
-    UIVersion:assertInstance(r, 'ref_table')
 
     ui.overlay(UIVerDel(r.ses, r.mod, r.ver):render())
 end
@@ -36,12 +32,8 @@ end
 G.FUNCS[funcs.toggle] = function(elm)
     --- @type table
     local r = elm.config.ref_table
-    a.type(r, 'ref_table', 'table')
-
     --- @type imm.UI.Version, boolean
     local modses, enabled = r.ses, r.toggle
-    UIVersion:assertInstance(modses, 'r.ses')
-    a.type(enabled, 'r.toggle', 'boolean')
 
     local ses = modses.ses
     local modid = modses.mod
@@ -80,10 +72,8 @@ end
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.deleteConfirm] = function(elm)
     local r = elm.config.ref_table or {}
-
     --- @type imm.UI.VerDel
     local modses = r.ses
-    UIVerDel:assertInstance(modses, 'r.ses')
 
     local ses = modses.ses
 

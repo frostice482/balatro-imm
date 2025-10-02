@@ -1,5 +1,4 @@
 local UICT = require("imm.ui.confirm_toggle")
-local a = require("imm.lib.assert")
 local co = require("imm.lib.co")
 local funcs = UICT.funcs
 
@@ -7,7 +6,6 @@ local funcs = UICT.funcs
 G.FUNCS[funcs.download] = function (elm)
     --- @type imm.UI.ConfirmToggle
     local r = elm.config.ref_table
-    UICT:assertInstance(r, 'ref_table')
 
     co.create(function ()
         local down = r.ses.tasks:createDownloadCoSes()
@@ -25,7 +23,6 @@ end
 G.FUNCS[funcs.confirm] = function (elm)
     --- @type imm.UI.ConfirmToggle
     local r = elm.config.ref_table
-    UICT:assertInstance(r, 'ref_table')
 
     for id, act in pairs(r.list.actions) do
         if not act.impossible then
@@ -46,7 +43,6 @@ end
 G.FUNCS[funcs.confirmOne] = function (elm)
     --- @type imm.UI.ConfirmToggle
     local r = elm.config.ref_table
-    UICT:assertInstance(r, 'ref_table')
 
     local ok, err = r.ses.ctrl:enableMod(r.mod)
     r.ses.tasks.status:update(nil, err)

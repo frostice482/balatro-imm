@@ -1,7 +1,6 @@
 local UIBrowser = require("imm.ui.browser")
 local UICT = require("imm.ui.confirm_toggle")
 local UIOpts = require("imm.ui.options")
-local a = require("imm.lib.assert")
 local util = require("imm.lib.util")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
@@ -13,7 +12,6 @@ local funcs = UIOpts.funcs
 G.FUNCS[funcs.disableAll] = function(elm)
     --- @type imm.UI.Browser
     local ses = elm.config.ref_table
-    UIBrowser:assertInstance(ses, 'ref_table')
 
     local suc = {}
     local fail = {}
@@ -39,12 +37,9 @@ end
 G.FUNCS[funcs.clearCache] = function(elm)
     --- @type table
     local r = elm.config.ref_table
-    a.type(r, 'ref_table', 'table')
 
     --- @type imm.UI.Browser, string
     local ses, mode = r.ses, r.mode
-    UIBrowser:assertInstance(ses, 'r.ses')
-    a.enum(mode, 'mode', { 't', 'd', 'r', 'l' })
 
     local repo = ses.repo
     local ts, bmi = repo.ts, repo.bmi
@@ -70,7 +65,6 @@ end
 G.FUNCS[funcs.clearCacheOpts] = function(elm)
     --- @type imm.UI.Options
     local ses = elm.config.ref_table
-    UIOpts:assertInstance(ses, 'ref_table')
 
     ui.overlay(ses:renderClearCacheOpts())
 end
@@ -79,7 +73,6 @@ end
 G.FUNCS[funcs.modsOpts] = function(elm)
     --- @type imm.UI.Options
     local ses = elm.config.ref_table
-    UIOpts:assertInstance(ses, 'ref_table')
 
     ui.overlay(ses:renderModsOpts())
 end
@@ -88,7 +81,6 @@ end
 G.FUNCS[funcs.checkRateLimit] = function(elm)
     --- @type imm.UI.Options
     local ses = elm.config.ref_table
-    UIOpts:assertInstance(ses, 'ref_table')
 
     ui.overlay(ses:renderCheckRateLimitExec())
 end
@@ -107,7 +99,6 @@ end
 G.FUNCS[funcs.updateAll] = function(elm)
     --- @type imm.UI.Browser
     local ses = elm.config.ref_table
-    UIBrowser:assertInstance(ses, 'ref_table')
 
     co.create(function ()
         ses.tasks:createUpdaterCoSes():updateAll()
@@ -119,7 +110,6 @@ end
 G.FUNCS[funcs.deleteOld] = function(elm)
     --- @type imm.UI.Options
     local r = elm.config.ref_table
-    UIOpts:assertInstance(r, 'ref_table')
 
     local list = r.ses.ctrl:getOlderMods()
     if #list == 0 then return r.ses:showOverlay(true) end
@@ -133,7 +123,6 @@ G.FUNCS[funcs.deleteConf] = function(elm)
 
     --- @type imm.UI.Browser, imm.Mod[]
     local ses, list = r.ses, r.list
-    UIBrowser:assertInstance(ses, 'r.ses')
 
     if r.confirm then
         for i,mod in ipairs(list) do
@@ -148,7 +137,6 @@ end
 G.FUNCS[funcs.enableAll] = function(elm)
     --- @type imm.UI.Browser
     local r = elm.config.ref_table
-    UIBrowser:assertInstance(r, 'ref_table')
 
     local vlist = r.ctrl:createLoadList()
 
@@ -192,7 +180,6 @@ end
 G.FUNCS[funcs.copyModlist] = function(elm)
     --- @type imm.UI.Browser
     local ses = elm.config.ref_table
-    UIBrowser:assertInstance(ses, 'ref_table')
 
     local entries = { modlisthead }
     local disabledEntries = {}
@@ -225,7 +212,6 @@ end
 G.FUNCS[funcs.updateLovely] = function(elm)
     --- @type imm.UI.Browser
     local ses = elm.config.ref_table
-    UIBrowser:assertInstance(ses, 'ref_table')
 
     co.create(function ()
         ses.tasks:downloadLovelyCo()

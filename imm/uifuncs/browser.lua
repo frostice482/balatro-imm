@@ -1,7 +1,6 @@
 local UIBrowser = require("imm.ui.browser")
 local UIOpts = require("imm.ui.options")
 local ModMeta = require("imm.lib.modrepo.meta")
-local a = require("imm.lib.assert")
 local util = require("imm.lib.util")
 local ui = require("imm.lib.ui")
 local funcs = UIBrowser.funcs
@@ -10,7 +9,6 @@ local funcs = UIBrowser.funcs
 G.FUNCS[funcs.back] = function(elm)
     --- @type imm.UI.Browser
     local e = elm.config.ref_table
-    UIBrowser:assertInstance(e, 'ref_table')
 
     e:showOverlay(true)
 end
@@ -19,12 +17,8 @@ end
 G.FUNCS[funcs.setCategory] = function(elm)
     --- @type table
     local r = elm.config.ref_table
-    a.type(r, 'ref_table', 'table')
-
     --- @type imm.UI.Browser, string
     local ses, cat = r.ses, r.cat
-    UIBrowser:assertInstance(ses, 'r.ses')
-    a.type(cat, 'r.cat', 'string')
 
     ses.tags[cat] = not ses.tags[cat]
     elm.config.colour = ses.tags[cat] and G.C.ORANGE or G.C.RED
@@ -35,7 +29,6 @@ end
 G.FUNCS[funcs.update] = function(elm)
     --- @type imm.UI.Browser
     local ses = elm.config.ref_table
-    UIBrowser:assertInstance(ses, 'ref_table')
 
     if ses.prevSearch ~= ses.search then
         ses.prevSearch = ses.search
@@ -47,7 +40,6 @@ end
 G.FUNCS[funcs.cyclePage] = function(elm)
     --- @type imm.UI.Browser
     local ses = elm.cycle_config._ses
-    UIBrowser:assertInstance(ses, 'cycle_config._ses')
 
     ses.listPage = elm.to_key
     ses:updateMods()
@@ -57,12 +49,8 @@ end
 G.FUNCS[funcs.chooseMod] = function(elm)
     --- @type table
     local r = elm.config.ref_table
-    a.type(r, 'ref_table', 'table')
-
     --- @type imm.UI.Browser, imm.ModMeta
     local ses, mod = r.ses, r.mod
-    UIBrowser:assertInstance(ses, 'r.ses')
-    ModMeta:assertInstance(mod, 'r.mod')
 
     ses:selectMod(mod)
 end
@@ -81,7 +69,6 @@ end
 G.FUNCS[funcs.options] = function(elm)
     --- @type imm.UI.Browser
     local ses = elm.config.ref_table
-    UIBrowser:assertInstance(ses, 'ref_table')
 
     ui.overlay(UIOpts(ses):render())
 end
