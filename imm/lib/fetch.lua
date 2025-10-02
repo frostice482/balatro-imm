@@ -2,12 +2,15 @@ local constructor = require("imm.lib.constructor")
 local util = require("imm.lib.util")
 local co = require("imm.lib.co")
 local https = require("imm.https_agent")
+local logger= require("imm.logger")
 
 --- @class imm.Fetch<A, T>: balatro.Object, {
 ---     fetch: fun(self, arg: A, cb: fun(err?: string, res?: T), refreshCache?: boolean, useCache?: boolean);
 ---     fetchCo: async fun(self, arg: A, refreshCache?: boolean, useCache?: boolean): string?, T;
 --- }
-local IFetch = {}
+local IFetch = {
+    cacheLasts = 3600 * 24
+}
 
 --- @protected
 --- @param url string
@@ -100,10 +103,20 @@ function IFetch:runreqCo(state)
 
     local err, res = self:handleRes(body or '')
     if res and state.useCache ~= false then
-        love.filesystem.createDirectory(util.dirname(state.cachefile))
-        love.filesystem.write(state.cachefile, self:stringifyDataToCache(res))
+        local dir = util.dirname(state.cachefile)
+        local ok, err = love.filesystem.createDirectory(dir)
+        if ok then ok, err = love.filesystem.write(state.cachefile, self:stringifyDataToCache(res)) end
+        if not ok then logger.fmt("warn", "Failed saving cache for %s (%s): %s", state.cachefile, dir, err or '?') end
     end
     return err, res
+end
+
+--- @param file string
+function IFetch:getCacheFile(file)
+    local info = love.filesystem.getInfo(file)
+    if not (info and info.modtime + self.cacheLasts > os.time()) then return end
+    local data = love.filesystem.read(file)
+    return data
 end
 
 --- @type imm.Fetch<any, any>
@@ -112,7 +125,7 @@ local IFetch2 = IFetch
 --- @async
 function IFetch2:fetchCo(arg, refreshCache, useCache)
     local cachefile = self:getCacheFileName(arg)
-    local cache = not refreshCache and love.filesystem.read(cachefile)
+    local cache = not refreshCache and self:getCacheFile(cachefile)
     if cache then return nil, self:parseCache(cache) end
 
     return self:runreqCo({

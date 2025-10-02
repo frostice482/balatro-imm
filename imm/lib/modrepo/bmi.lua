@@ -6,6 +6,7 @@ local imm = require("imm")
 
 --- @type imm.Fetch<nil, bmi.Meta[]>
 local fetch_list = Fetch('https://github.com/frostice482/balatro-mod-index-tiny/raw/master/out.json.gz', 'immcache/list/bmi.json', false, true)
+fetch_list.cacheLasts = 3600 * 6
 
 local excludeProps = {'metafmt'}
 

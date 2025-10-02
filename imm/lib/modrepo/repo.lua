@@ -8,6 +8,7 @@ local util = require("imm.lib.util")
 
 --- @type imm.Fetch<string, string>
 local fetch_blob = Fetch('%s', 'immcache/blob/%s')
+fetch_blob.cacheLasts = 3600 * 1
 
 function fetch_blob:getCacheFileName(arg)
     return self.cacheFile:format(love.data.encode('string', 'hex', love.data.hash('md5', arg)))

@@ -5,6 +5,7 @@ local logger= require("imm.logger")
 
 --- @type imm.Fetch<nil, thunderstore.Package[]>
 local fetch_list = Fetch('https://thunderstore.io/c/balatro/api/v1/package/', 'immcache/list/thunderstore.json', false, true)
+fetch_list.cacheLasts = 3600 * 12
 
 --- @type imm.Fetch<string, string>
 local fetch_thumb_blob = Fetch('%s', 'immcache/thumb_blob/%s')

@@ -4,6 +4,7 @@ local util = require("imm.lib.util")
 
 --- @type imm.Fetch<nil, bmi.Meta[]>
 local fetch_list = Fetch('https://photonmodmanager.onrender.com/data', 'immcache/list/photon.json', false, true)
+fetch_list.cacheLasts = 3600 * 24
 
 local excludeProps = {'git_owner', 'git_repo', 'mod_path', 'subpath', 'download_suffix', 'update_mandatory', 'target_version', 'type', 'published_at', 'readme', 'badge_colour', 'favourites'}
 local tagTransform = {
