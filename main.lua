@@ -85,7 +85,7 @@ end
 function _imm.applyNonLovelyHook()
     local a = create_UIBox_generic_options
     local G2 = _G
-    function G2.create_UIBox_generic_options(opts)
+    function G2.create_UIBox_generic_options(opts) --- @diagnostic disable-line
         local n = a(opts)
         if opts then
             if opts.ref_table then
@@ -108,7 +108,10 @@ function _imm.init()
     if _imm.resbundle then
         _imm.applyNonLovelyHook()
         local lok, lovely = pcall(require, 'lovely')
-        if not moddir and lok then moddir = lovely.mod_dir end
+        if lok then
+            moddir = lovely.mod_dir
+            _imm.lovelyver = lovely.version
+        end
         if not moddir then moddir = os.getenv("LOVELY_MOD_DIR") end
         if not moddir then moddir = _imm.determineModpath() end
         if not moddir then error("Cannot determine mod path (unsupported os?)") end
@@ -116,6 +119,7 @@ function _imm.init()
     else
         local lovely = require('lovely')
         moddir = lovely.mod_dir
+        _imm.lovelyver = lovely.version
         for i, item in ipairs(NFS.getDirectoryItems(moddir)) do
             local base = moddir..'/'..item
             if not NFS.getInfo(base..'/.lovelyignore') and NFS.read(base..'/imm/sig') == 'balatro-imm' then

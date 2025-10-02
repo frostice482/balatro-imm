@@ -24,6 +24,8 @@
 --- @class imm.Base
 --- Where the IMM is located at
 --- @field path string
+--- Lovely version
+--- @field lovelyver? string
 --- Where the mods directory is located at.
 --- Similar to lovely's mod_dir
 --- @field modsDir string

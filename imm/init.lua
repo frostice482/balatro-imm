@@ -87,24 +87,3 @@ function create_UIBox_main_menu_buttons()
     table.insert(r.nodes[2].nodes, 1, wrap({browse_button()}, 'imm_browse'))
     return r
 end
-
---- @type p.Assert.Schema
-local def = {
-    type = 'table',
-    props = {
-        n = { type = 'number' },
-        nodes = {
-            type = {'table', 'nil'},
-            isArray = true
-        }
-    }
-}
-def.props.nodes.restProps = def
-
---[[
-local a = UIBox.set_parent_child
-function UIBox.set_parent_child(s, n, p)
-    require('imm.lib.assert').schema(n, 'n', def)
-    a(s, n, p)
-end
-]]

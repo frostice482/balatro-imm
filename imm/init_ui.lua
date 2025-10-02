@@ -10,9 +10,11 @@ local imm = require("imm.config")
 local function atlas(key, path, px, py)
     local abspath = string.format('%s/assets/%s', _imm.path, path)
     local name = 'imm_'..key
-
+    local source = imm.resbundle and imm.resbundle.assets[key] or assert(NFS.newFileData(abspath))
+    local img = love.graphics.newImage(source, { dpiscale = 1 })
+    img:setFilter("nearest", "nearest")
     G.ASSET_ATLAS[name] = {
-        image = love.graphics.newImage(imm.resbundle and imm.resbundle.assets[key] or assert(NFS.newFileData(abspath)), { dpiscale = 1 }),
+        image = img,
         name = name,
         px = px,
         py = py
