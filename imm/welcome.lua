@@ -51,7 +51,7 @@ local function handleAfter(b)
 end
 
 G.FUNCS[confBut] = function (elm)
-    _imm.config.init = true
+    _imm.config.init = '1'
     _imm.saveconfig()
 
     local b = G.FUNCS.imm_browse()

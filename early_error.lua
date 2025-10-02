@@ -5,8 +5,11 @@ local hasHandlerOverridden = false
 
 local function disableAllMods(err)
     assert(_imm.init())
+    if _imm.config.handleEarlyError == 'ignore' then return end
+
     local ctrl = require('imm.modctrl')
     local lovely = require('lovely')
+    local shouldDisable = _imm.config.handleEarlyError ~= 'nodisable'
 
     --- @type imm.ModList?
     local suspect = ctrl.mods[err:match("^%[SMODS ([^ ]+)")]
@@ -35,14 +38,16 @@ local function disableAllMods(err)
         if not mod:isExcluded() then
             has = true
             table.insert(detecteds, string.format('- %-30s: %-20s (%s)', mod.mod, mod.version, mod.path:sub(lovely.mod_dir:len()+2)))
-            local ok, err = ctrl:disableMod(mod)
-            if ok then table.insert(disableds, mod.mod..'='..mod.version)
-            else print('imm: error: Failed to disable', mod.mod, err)
+            if shouldDisable then
+                local ok, err = ctrl:disableMod(mod)
+                if ok then table.insert(disableds, mod.mod..'='..mod.version)
+                else print('imm: error: Failed to disable', mod.mod, err)
+                end
             end
         end
     end
     if has then
-        table.insert(echunk, 'imm has disabled detected mods:')
+        table.insert(echunk, shouldDisable and 'imm has disabled detected mods:' or 'Detected mods:')
         table.insert(echunk, table.concat(detecteds, '\n'))
 
         -- make all disabled mods temporary
@@ -50,7 +55,7 @@ local function disableAllMods(err)
             table.insert(disableds, _imm.config.nextEnable)
             _imm.config.nextEnable = table.concat(disableds, '==')
             _imm.saveconfig()
-            table.insert(echunk, 'These mods are disabled temporarily - it will be reenabled on next startup')
+            table.insert(echunk, shouldDisable and 'These mods are disabled temporarily - it will be reenabled on next startup' or nil)
         else
             table.insert(echunk, 'Suspected mod: '..suspect.mod)
         end

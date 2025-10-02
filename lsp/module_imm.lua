@@ -15,7 +15,13 @@
 --- Allows users to specify the GitHub API token
 --- @field githubToken? string
 ---
---- @field init? boolean
+--- If `ignore`, disables imm from handling early crash entirely. \
+--- If `nodisable`, only list installed mods
+--- @field handleEarlyError? string
+---
+--- If null, shows a popup player for the first time installation,
+--- The popup is only shown when there's no other mods installed
+--- @field init? string
 
 --- @class imm.Resbundle
 --- @field assets table

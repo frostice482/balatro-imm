@@ -38,7 +38,7 @@ if not imm.config.init then
     if not hasOtherMod then
         require("imm.welcome")
     else
-        imm.config.init = true
+        imm.config.init = '1'
         updateConfig = true
     end
 end

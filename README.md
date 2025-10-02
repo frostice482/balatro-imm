@@ -17,6 +17,10 @@ The mod sources are taken from [balatro-mod-index](https://github.com/skyline69/
 Make a configuration file in `<Balatro>/config/imm.txt`.
 Config is formatted in a `key=value` pair.
 
+### `noHandleEarlyError`
+
+Disables imm's early crash handing.
+
 ### `githubToken`
 
 Allows player to specify the GitHub API token.
