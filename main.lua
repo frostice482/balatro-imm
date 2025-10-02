@@ -33,6 +33,16 @@ function _imm.initconfig()
         _imm.parseconfig(entry)
     end
 end
+
+function _imm.saveconfig()
+    local entries = {}
+    for k,v in pairs(_imm.config) do table.insert(entries, k..' = '..tostring(v)) end
+    table.sort(entries, function (a, b) return a < b end)
+
+    love.filesystem.createDirectory(_imm.dirname(_imm.configFile))
+    love.filesystem.write(_imm.configFile, table.concat(entries, '\n'))
+end
+
 --- @return string dirname, string filename
 function _imm.dirname(str)
     local prev

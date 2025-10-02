@@ -3,6 +3,8 @@ local Queue = require("imm.lib.queue")
 local UITaskStatusReg = require("imm.btasks.status")
 local TaskDownloadCo = require("imm.btasks.download_co")
 local TaskUpdateCo = require("imm.btasks.update_co")
+local lovelyUrl = require('imm.lovely_downloads')
+local https = require('imm.https_agent')
 
 --- @class imm.Browser.Tasks
 local IBTasks = {}
@@ -21,6 +23,40 @@ end
 
 function IBTasks:createUpdaterCoSes()
     return TaskUpdateCo(self)
+end
+
+local tmplovely = "tmp-lovely"
+
+--- @async
+--- @return string? err
+function IBTasks:downloadLovelyCo()
+    if not lovelyUrl then self.status:update(nil, "Cannot determine download link for Lovely") end
+    local task = self.status:new()
+    task:update("Downloading lovely")
+
+    local status, content = https:requestCo(lovelyUrl) --- @diagnostic disable-line
+    if status ~= 200 then
+        local err = string.format("Failed downloading lovely: HTTP %d", status)
+        task:error(err)
+        return err
+    end
+
+    local data = love.data.newByteData(content)
+    local ok = love.filesystem.mount(data, "tmp.zip", tmplovely)
+    if not ok then
+        local err = string.format("Failed mounting temp folder")
+        task:error(err)
+        return err
+    end
+
+    local target = love.filesystem.getSourceBaseDirectory()
+    for i, sub in ipairs(love.filesystem.getDirectoryItems(tmplovely)) do
+        NFS.write(target..'/'..sub, love.filesystem.read(tmplovely..'/'..sub))
+    end
+
+    task:done("Installed lovely")
+
+    love.filesystem.unmount(data) --- @diagnostic disable-line
 end
 
 ---@param data love.Data

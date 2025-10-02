@@ -2,6 +2,8 @@ local util = require("imm.lib.util")
 local ui = require("imm.lib.ui")
 local m = require('imm.config')
 
+local updateConfig = false
+
 --- Processing configs
 
 if m.config.nextEnable then
@@ -21,7 +23,28 @@ if m.config.nextEnable then
     end
 
     m.config.nextEnable = nil
-    util.saveconfig()
+    updateConfig = true
+end
+
+if not m.config.init then
+    local ctrl = require('imm.modctrl')
+    local hasOtherMod = false
+    for i, list in ipairs(ctrl:list()) do
+        if not list:isExcluded() then
+            hasOtherMod = true
+            break
+        end
+    end
+    if not hasOtherMod then
+        require("imm.welcome")
+    else
+        m.config.init = true
+        updateConfig = true
+    end
+end
+
+if updateConfig then
+    _imm.saveconfig()
 end
 
 --- UI-related
@@ -35,13 +58,11 @@ G.FUNCS.exit_overlay_menu = function()
     local ses = G.OVERLAY_MENU and G.OVERLAY_MENU.config.imm
     if not ses or not ses.hasChanges then return exit_overlay() end
 
-    ui.overlay(
-        ui.confirm(
-            ui.TRS('Restart balatro now?', 0.6),
-            funcs.restartConf,
-            {}
-        )
-    )
+    ui.overlay(G.UIDEF.imm_restart())
+end
+
+G.UIDEF.imm_restart = function()
+    return ui.confirm( ui.TRS('Restart balatro now?', 0.6), funcs.restartConf, {} )
 end
 
 --- @param elm balatro.UIElement
@@ -77,8 +98,10 @@ end
 function G.FUNCS.imm_browse()
     require('imm.init_ui')
     Browser = Browser or require("imm.ui.browser")
-    G.SETTINGS.paused = true
-    Browser():showOverlay(true)
+
+    local b = Browser()
+    b:showOverlay(true)
+    return b
 end
 
 local o1 = create_UIBox_main_menu_buttons

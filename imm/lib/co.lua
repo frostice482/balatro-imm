@@ -72,4 +72,24 @@ function coutil.all(list)
     return coroutine.yield()
 end
 
+function coutil.waitFrames(frames)
+    local co = coroutine.running()
+    if not co then error('Not in coroutine') end
+
+    local n = 0
+    G.E_MANAGER:add_event(Event{
+        blockable = false,
+        blocking = false,
+        no_delete = true,
+        func = function ()
+            n = n + 1
+            if n < frames then return false end
+            assert(coroutine.resume(co))
+            return true
+        end
+    })
+
+    coroutine.yield()
+end
+
 return coutil

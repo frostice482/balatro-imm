@@ -40,7 +40,9 @@ function IBTaskDownCo:download(url, extra)
     self.blacklistUrls[url] = true
 
     local status = self.tasks.status:new()
-    status:updatef('Downloading %s (%s%s)', name, url, size and string.format(', %.1fMB', size / 1048576) or '')
+    local t = string.format('Downloading %s', name)
+    if size then t = string.format('%s (%.1fMB)', t, size / 1048576) end
+    status:update(t)
 
     local err, res = self.ses.repo.api.blob:fetchCo(url)
     if not res then

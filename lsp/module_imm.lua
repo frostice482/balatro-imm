@@ -10,10 +10,12 @@
 ---
 --- Useful for when Balatro crashes at loading and it disables all mods.
 --- This config can be used to re-enable all disabled mods during loading crash.
---- @field nextEnable string
+--- @field nextEnable? string
 ---
 --- Allows users to specify the GitHub API token
---- @field githubToken string
+--- @field githubToken? string
+---
+--- @field init? boolean
 
 --- @class imm.Config
 

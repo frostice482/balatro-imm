@@ -544,6 +544,7 @@ function IUISes:render()
 end
 
 function IUISes:showOverlay(update)
+    G.SETTINGS.paused = true
     ui.overlay(self:render())
 
     self.uibox = G.OVERLAY_MENU

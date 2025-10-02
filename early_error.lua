@@ -6,7 +6,6 @@ local hasHandlerOverridden = false
 local function __imm_disableAllMods(err)
     assert(_imm.init())
     local ctrl = require('imm.modctrl')
-    local util = require('imm.lib.util')
     local lovely = require('lovely')
 
     --- @type imm.ModList?
@@ -57,7 +56,7 @@ local function __imm_disableAllMods(err)
         if not suspect then
             table.insert(disableds, _imm.config.nextEnable)
             _imm.config.nextEnable = table.concat(disableds, '==')
-            util.saveconfig()
+            _imm.saveconfig()
             table.insert(echunk, 'These mods are disabled temporarily - it will be reenabled on next startup')
         else
             table.insert(echunk, 'Suspected mod: '..suspect.mod)
