@@ -1,5 +1,3 @@
---resbundle.before
-
 --- @class imm.Base
 _imm = {
     configFile = 'config/imm.txt',
@@ -7,7 +5,7 @@ _imm = {
     config = {},
 }
 
---resbundle.after
+--bundle inject
 
 function _imm.initmodule()
     package.loaded.imm = package.loaded.imm or _imm

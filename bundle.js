@@ -57,7 +57,7 @@ async function bundleRes(list, dir) {
 }
 
 const mainPre = `
-if _imm then return print("imm is already initialized") end
+if _imm then return print("imm is already initialized", debug.traceback()) end
 `
 
 const prepend = `
@@ -66,18 +66,27 @@ __IMM_B_INIT = true
 __IMM_BUNDLE = true
 `
 
-const loadAppend = `
-__IMM_WRAP = true
-require("imm.main")
-
+const loaderInject = `
 love.filesystem.setIdentity(love.filesystem.getIdentity(), true)
 local content = love.filesystem.read("main.lua")
 love.filesystem.setIdentity(love.filesystem.getIdentity(), false)
 local func, err = assert(loadstring(content, "@wrapped_main.lua"))
 `
 
+const append = `
+if not _imm then
+    print("imm is loaded from bundle")
+    __IMM_WRAP = true
+    require("imm.main")
+else
+    print("imm is loaded from lovely - ignoring the bundle")
+    ${loaderInject}
+    assert(func, err)()
+end
+`
+
 async function main() {
-    const [httpsThreadCode, earlyErrorCode] = await Promise.all([
+    const [httpsThreadCode, loaderCode] = await Promise.all([
         fsp.readFile('imm/https_thread.lua'),
         fsp.readFile('early_error.lua', 'ascii'),
         processModule('main'),
@@ -94,9 +103,9 @@ async function main() {
         mainInjects.push(`_imm.resbundle.assets[${JSON.stringify(k)}] = love.data.decode("data", "base64", "${v.toString('base64')}")`)
     }
 
-    moduleBundles['imm.main'] = moduleBundles.main
-        .replace('--resbundle.before', mainPre)
-        .replace('--resbundle.after', mainInjects.join('\n'))
+    moduleBundles['imm.main'] = mainPre
+        + moduleBundles.main.replace('--bundle inject', mainInjects.join('\n'))
+        + loaderCode.replace('--bundle inject', loaderInject)
 
     delete moduleBundles['main']
 
@@ -116,7 +125,7 @@ async function main() {
         w.write(`package.preload[${JSON.stringify(k)}] = function()\n${v}\nend\n`)
     }
 
-    w.write(earlyErrorCode.replace('--bundle inject', loadAppend))
+    w.write(append)
 
     w.end()
 }

@@ -107,7 +107,7 @@ love.errorhandler = errHandler
 --bundle inject
 
 assert(func, err)
-local ok, err = pcall(func, ...)
+local ok, err = pcall(func)
 
 if love.errorhandler ~= errHandler then
     errhand_orig = love.errorhandler or love.errhand
