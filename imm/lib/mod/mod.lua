@@ -66,15 +66,15 @@ function IMod:errActiveUninstall()
 end
 
 --- @return boolean ok, string err
-function IMod:errUnsafeUninstall()
-    return false, string.format('Mod %s cannot be uninstalled safely', self.mod)
+function IMod:errUnsafe()
+    return false, string.format('Mod %s is in unsafe path', self.mod)
 end
 
 --- @return boolean ok, string? err
 function IMod:uninstall()
     if self.list.native then return self:errNative() end
     if self:isActive() then return self:errActiveUninstall() end
-    if not self:isSafeUninstall() then return self:errActiveUninstall() end
+    if not self:isSafePath() then return self:errUnsafe() end
 
     local ok = util.rmdir(self.path, true)
     if not ok then return false, 'Failed deleting moddir' end
@@ -106,7 +106,7 @@ function IMod:isActive()
     return self.list.active == self
 end
 
-function IMod:isSafeUninstall()
+function IMod:isSafePath()
     return util.startswith(self.path, imm.modsDir)
 end
 
