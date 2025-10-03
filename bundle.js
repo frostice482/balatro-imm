@@ -86,6 +86,12 @@ end
 `
 
 async function main() {
+    const opts = {}
+    for (const [i, item] of process.argv.entries()) {
+        if (i < 2) continue;
+        opts[item] = true
+    }
+
     const [httpsThreadCode, loaderCode] = await Promise.all([
         fsp.readFile('imm/https_thread.lua'),
         fsp.readFile('early_error.lua', 'ascii'),
@@ -109,12 +115,15 @@ async function main() {
 
     delete moduleBundles['main']
 
-    //const compiler = cp.spawn('luajit', ['-b', '-', '-'], { stdio: ['pipe', 'pipe', 'inherit'] })
-    //const ostream = fs.createWriteStream('bundle.lua')
-    //compiler.stdout.pipe(ostream)
-    //const w = compiler.stdin
-
-    const w = fs.createWriteStream('bundle.lua')
+    let w
+    if (opts.c || opts.compile) {
+        const compiler = cp.spawn('luajit', ['-b', '-', '-'], { stdio: ['pipe', 'pipe', 'inherit'] })
+        w = compiler.stdin
+        const ostream = fs.createWriteStream('bundle.lua')
+        compiler.stdout.pipe(ostream)
+    } else {
+        w = fs.createWriteStream('bundle.lua')
+    }
 
     w.write(prepend)
 
