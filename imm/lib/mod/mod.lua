@@ -2,6 +2,7 @@ local constructor = require("imm.lib.constructor")
 local V = require("imm.lib.version")
 local util = require('imm.lib.util')
 local logger = require('imm.logger')
+local imm = require('imm')
 
 --- @alias imm.ModMetaFormat 'thunderstore' | 'smods' | 'smods-header'
 
@@ -64,10 +65,16 @@ function IMod:errActiveUninstall()
     return false, string.format('Mod %s is currently active and cannot be deleted', self.mod)
 end
 
+--- @return boolean ok, string err
+function IMod:errUnsafeUninstall()
+    return false, string.format('Mod %s cannot be uninstalled safely', self.mod)
+end
+
 --- @return boolean ok, string? err
 function IMod:uninstall()
     if self.list.native then return self:errNative() end
     if self:isActive() then return self:errActiveUninstall() end
+    if not self:isSafeUninstall() then return self:errActiveUninstall() end
 
     local ok = util.rmdir(self.path, true)
     if not ok then return false, 'Failed deleting moddir' end
@@ -97,6 +104,10 @@ end
 
 function IMod:isActive()
     return self.list.active == self
+end
+
+function IMod:isSafeUninstall()
+    return util.startswith(self.path, imm.modsDir)
 end
 
 --- @alias imm.Mod.C p.Constructor<imm.Mod, nil> | fun(entry: imm.ModList, ver: string, opts?: imm.ModOpts): imm.Mod
