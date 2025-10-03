@@ -43,7 +43,7 @@ function IUIOpts:gridOptions()
     }, {
         UIBox_button({ minw = self.buttonWidth, button = funcs.restart       , label = {'Restart'} }),
         UIBox_button({ minw = self.buttonWidth, button = funcs.clearCacheOpts, label = {'Clear cache...'}, ref_table = self }),
-        imm.resbundle and UIBox_button({ minw = self.buttonWidth, button = funcs.removeBundle, label = {'Remove bundle'}, ref_table = self.ses }) or nil
+        __IMM_BUNDLE and UIBox_button({ minw = self.buttonWidth, button = funcs.removeBundle, label = {'Remove bundle'}, ref_table = self.ses }) or nil
     }}
 end
 
