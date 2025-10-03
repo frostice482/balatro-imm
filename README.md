@@ -1,11 +1,54 @@
-The ingame mod browser.
+The ingame mod browser for Balatro.
 
-The mod sources are taken from [balatro-mod-index](https://github.com/skyline69/balatro-mod-index),
-[modified](https://github.com/frostice482/balatro-mod-index-tiny) for the purpose of smaller API requests.
+## Installation
+
+### Normal Installation
+
+1.  Install [lovely](https://github.com/ethangreen-dev/lovely-injector?tab=readme-ov-file#manual-installation).
+
+3.  Download [inmodman.zip](https://github.com/frostice482/balatro-imm/releases/latest/download/inmodman.zip)
+
+4.  Extract the zip to `Mods/imm`.
+    The `Mods/imm` folder should now contain `manifest.json`.
+
+    If you cannot find the save file, see [this section](#finding-mods-folder).
+
+### Bundled Installation
+
+This is meant as a quick way to install imm, and does not require lovely installation.
+Be noted that this method will cause issues with some mods, and will just not work in all platform.
+
+Windows:
+```sh
+wget "https://github.com/frostice482/balatro-imm/releases/latest/download/bundle.lua" -O "%appdata%\Balatro\main.lua" && start "" "steam://launch/2379780"
+```
+
+### Finding Mods Folder
+
+Windows: `%appdata%\Balatro\Mods`
+
+Mac: `~/Library/Application Support/Balatro/Mods`
+
+Linux with Steam Proton:
+
+-   Find your Steam installation path
+
+    - `~/.local/share/Steam`
+    - Snap installation: `~/snap/steam/common/.local/share/Steam`
+    - Flatpak installation: `~/.var/app/com.valvesoftware.Steam/.local/share/Steam`
+    - Other installation: `~/.steam/steam`
+
+    Then, from the Steam folder, navigate to `steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods`
+
+## Sources
+
+- [balatro-mod-index](https://github.com/skyline69/balatro-mod-index), [modified](https://github.com/frostice482/balatro-mod-index-tiny)
+- [Thunderstore](https://thunderstore.io/c/balatro/)
+- [Photon](https://photonmodmanager.onrender.com)
 
 ## Features
 
-- Thunderstore support
+- Disabling, enabling, updating all mods
 - Automatic problematic mod disabling on startup
 - Automatic installation of missing dependencies
 - Dependency / Conflict management
@@ -21,6 +64,10 @@ Config is formatted in a `key=value` pair.
 
 Disables imm's early crash handing.
 
+### `init`
+
+Internally used to mark for non-first game launch.
+
 ### `githubToken`
 
 Allows player to specify the GitHub API token.
@@ -28,15 +75,12 @@ This is used to increase the 60/hour ratelimit, when getting mod releases in Bal
 
 ### `nextEnable`
 
-Determines what mod to load at the next loading.
+Internally used when Balatro crashes at loading and it disables all mods.
+
+Determines what mod to enable at the next loading.
 The entry is mod ID and version separated by `=` (includes surrounding whitespaces).
 The list is separated by `==` (includes surrounding whitespaces).
 e.g. `Steamodded=1.0.0~beta-0827c == Cryptid=0.5.12a`
-
-Changes won't be applied with the next restart.
-
-Used for when Balatro crashes at loading and it disables all mods.
-This config can be used to re-enable all disabled mods during loading crash.
 
 ## Developers
 
