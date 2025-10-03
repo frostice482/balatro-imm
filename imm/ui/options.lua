@@ -19,7 +19,8 @@ local funcs = {
     deleteOld      = 'imm_o_deleteold',
     deleteConf     = 'imm_o_delete_conf',
     updateLovely   = 'imm_o_updatelovely',
-    updateLovelyInit = 'imm_o_updatelovelyinit'
+    updateLovelyInit = 'imm_o_updatelovelyinit',
+    removeBundle    = 'imm_o_rmbundle'
 }
 
 --- @class imm.UI.Options
@@ -37,11 +38,12 @@ end
 function IUIOpts:gridOptions()
     return {{
         UIBox_button({ minw = self.buttonWidth, button = funcs.modsOpts      , label = {'Mods...'}, ref_table = self }),
-        UIBox_button({ minw = self.buttonWidth, button = funcs.checkRateLimit, label = {'Check ratelimit'}, ref_table = self }),
         UIBox_button({ minw = self.buttonWidth, button = funcs.updateLovely  , label = {imm.lovelyver and 'Update Lovely' or 'Install Lovely'}, ref_table = self.ses, func = funcs.updateLovelyInit }),
+        UIBox_button({ minw = self.buttonWidth, button = funcs.checkRateLimit, label = {'Check ratelimit'}, ref_table = self }),
     }, {
         UIBox_button({ minw = self.buttonWidth, button = funcs.restart       , label = {'Restart'} }),
         UIBox_button({ minw = self.buttonWidth, button = funcs.clearCacheOpts, label = {'Clear cache...'}, ref_table = self }),
+        imm.resbundle and UIBox_button({ minw = self.buttonWidth, button = funcs.removeBundle, label = {'Remove bundle'}, ref_table = self.ses }) or nil
     }}
 end
 

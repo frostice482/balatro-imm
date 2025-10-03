@@ -230,3 +230,11 @@ G.FUNCS[funcs.updateLovelyInit] = function(elm)
     end
     elm.config.tooltip = { text = texts }
 end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.removeBundle] = function(elm)
+    --- @type imm.UI.Browser
+    local ses = elm.config.ref_table
+    love.filesystem.remove('main.lua')
+    ses:showOverlay(true)
+end
