@@ -20,7 +20,7 @@ Be noted that this method will cause issues with some mods, and will just not wo
 
 Windows:
 ```sh
-wget "https://github.com/frostice482/balatro-imm/releases/latest/download/bundle.lua" -O "%appdata%\Balatro\main.lua" && start "" "steam://launch/2379780"
+curl -SL "https://github.com/frostice482/balatro-imm/releases/latest/download/bundle.lua" -o "%appdata%\Balatro\main.lua" && start "" "steam://launch/2379780"
 ```
 
 ### Finding Mods Folder
