@@ -11,7 +11,7 @@ The ingame mod browser for Balatro.
 4.  Extract the zip to `Mods/imm`.
     The `Mods/imm` folder should now contain `manifest.json`.
 
-    If you cannot find the save file, see [this section](#finding-mods-folder).
+    If you cannot find the mods folder, see [this section](#finding-mods-folder).
 
 ### Bundled Installation
 
@@ -60,9 +60,11 @@ Linux with Steam Proton:
 Make a configuration file in `<Balatro>/config/imm.txt`.
 Config is formatted in a `key=value` pair.
 
-### `noHandleEarlyError`
+### `handleEarlyError`
 
 Disables imm's early crash handing.
+- `ignore`: Disables imm's early error handling
+- `nodisable`: Only list detected mods
 
 ### `init`
 
