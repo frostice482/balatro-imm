@@ -122,13 +122,13 @@ end
 
 assert(ok, err)
 
-local main_menu_orig = Game.main_menu
-function Game.main_menu(...)
+local h = create_UIBox_main_menu_buttons
+function create_UIBox_main_menu_buttons(...)
     if attached then
         attached = false
         print('Pre error detection detached')
     end
-    return main_menu_orig(...)
+    return h(...)
 end
 
 _imm.init()
