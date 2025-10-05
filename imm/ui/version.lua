@@ -117,20 +117,21 @@ function IUIVer:render()
     }
 
     return ui.R{
-        minh = self.ses.fontscale * 1.8,
         ui.R{
             colour = opts.color or opts.enabled and G.C.GREEN or G.C.BLUE,
             padding = 0.1,
             r = true,
             shadow = true,
             nodes = uis
-        }
+        },
+        ui.gap('R', 0.1)
     }
 end
 
 --- @class imm.UI.Version.Static
 --- @field funcs imm.UI.Version.Funcs
 --- @field fromRelease fun(ses: imm.UI.Browser, mod: string, release: imm.ModMeta.Release): imm.UI.Version
+--- @field fromGithubAsset fun(ses: imm.UI.Browser, mod: string, asset: ghapi.Releases.Assets, version?: string): imm.UI.Version
 
 --- @alias imm.UI.Version.C imm.UI.Version.Static | p.Constructor<imm.UI.Version, nil> | fun(ses: imm.UI.Browser, mod: string, ver: string, opts?: imm.UI.Version.Opts): imm.UI.Version
 --- @type imm.UI.Version.C
@@ -139,21 +140,20 @@ local UIVer = constructor(IUIVer)
 UIVer.funcs = funcs
 
 function UIVer.fromRelease(ses, mod, release)
-    local l = ses.ctrl.mods[mod]
-    local ver = release.version
-
-    local installed, enabled
-    if l then
-        installed = not not l.versions[ver]
-        enabled = (l.active and l.active.version) == ver
-    end
-
-    return UIVer(ses, mod, ver, {
+    return UIVer(ses, mod, release.version, {
         color = release.isPre and betaColor or release.ts and thunderstoreColor or nil,
         downloadSize = release.size,
-        downloadUrl = release.url,
-        enabled = enabled,
-        installed = installed
+        downloadUrl = release.url
+    })
+end
+
+function UIVer.fromGithubAsset(ses, mod, asset, ver)
+    return UIVer(ses, mod, asset.name, {
+        downloadSize = asset.size,
+        downloadUrl = asset.browser_download_url,
+        sub = ver,
+        enabled = false,
+        installed = false
     })
 end
 

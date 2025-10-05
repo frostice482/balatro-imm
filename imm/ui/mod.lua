@@ -44,6 +44,12 @@ function IUIModSes:uiVersionRelease(release)
     return UIVersion.fromRelease(self.ses, self.mod:id(), release)
 end
 
+--- @param asset ghapi.Releases.Assets
+--- @param ver? string
+function IUIModSes:uiVersionAsset(asset, ver)
+    return UIVersion.fromGithubAsset(self.ses, self.mod:id(), asset, ver)
+end
+
 function IUIModSes:uiTabInstalled()
     local l = self.ses.ctrl.mods[self.mod:id()]
     if not l or not next(l.versions) then return self.ses:uiText('No installed\nversions', 1.25, G.C.ORANGE) end
@@ -94,6 +100,14 @@ function IUIModSes:updateReleases(elm, res)
             if latest then break end
         end
 
+        --- @type imm.ModMeta.Release
+        latest = latest
+
+        if latest.bmi then
+            for i, asset in ipairs(latest.bmi.assets) do
+                table.insert(list, self:uiVersionAsset(asset, latest.version))
+            end
+        end
         if latest then
             table.insert(list, self:uiVersionRelease(latest))
         end
