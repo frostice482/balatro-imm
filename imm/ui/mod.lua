@@ -84,7 +84,7 @@ end
 --- @param elm balatro.UIElement
 --- @param res imm.ModMeta.Release[]
 function IUIModSes:updateReleases(elm, res)
-    --- @type imm.UI.Version
+    --- @type imm.UI.Version[]
     local list = {}
 
     if res then

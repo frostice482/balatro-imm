@@ -93,4 +93,23 @@ function util.convertCommands(args, platform)
     return converted
 end
 
+local now = os.time()
+util.timezoneOffsetSec = os.difftime(now, os.time(os.date("!*t", now)))
+
+--- @param iso string
+function util.isotime(iso)
+    local year, month, day, T, hour, min, sec, Z = iso:match("^(%d+)-(%d+)-(%d+)(T?)(%d*):(%d*):(%d+%.?%d*)(Z?)$")
+    year = tonumber(year, 10) -- always
+    month = tonumber(month, 10) -- always
+    day = tonumber(day, 10) -- always
+    hour = hour == "" and 0 or tonumber(hour, 10)
+    min = min == "" and 0 or tonumber(min, 10)
+    sec = sec == "" and 0 or tonumber(sec)
+    if not (year and hour and min and sec) then return nil end
+
+    if Z == 'Z' then sec = sec + util.timezoneOffsetSec end
+
+    return os.time({ year = year, month = month, day = day, hour = hour, min = min, sec = sec })
+end
+
 return util

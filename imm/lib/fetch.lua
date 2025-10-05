@@ -62,12 +62,13 @@ function IFetch:getReqOpts(arg) end
 --- @return string? error
 --- @return any? res
 function IFetch:handleRes(body)
-    local ok, res
+    local ok, res = true, body
 
     if self.isResJson then
         ok, res = pcall(JSON.decode, body)
-    else
-        ok, res = pcall(self.interpretRes, self, body)
+    end
+    if ok then
+        ok, res = pcall(self.interpretRes, self, res)
     end
 
     if ok then return nil, res

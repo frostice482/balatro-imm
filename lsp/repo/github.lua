@@ -1,58 +1,42 @@
---- @class ghapi.Contents.Links
---- @field self string
---- @field git string
---- @field html string
-
---- @class ghapi.Contents
---- @field name string
---- @field path string
---- @field sha string
---- @field url string
---- @field html_url string
---- @field git_url string
---- @field download_url? string
---- @field type 'file'
---- @field _links ghapi.Contents.Links
-
 --- @class ghapi.Releases.Assets
 --- @field url string
---- @field id string
---- @field node_id string
 --- @field name string
---- @field label string?
---- @field uploader any
---- @field content_type string
---- @field state string
 --- @field size number
---- @field digest string
 --- @field download_count number
---- @field created_at string
 --- @field updated_at string
 --- @field browser_download_url string
+---- @field id string
+---- @field node_id string
+---- @field label string?
+---- @field uploader any
+---- @field content_type string
+---- @field state string
+---- @field digest string
+---- @field created_at string
 
 --- @class ghapi.Releases
 --- @field url string
---- @field assets_url string
---- @field upload_url string
---- @field html_url string
---- @field id string
---- @field author any
---- @field node_id string
 --- @field tag_name string
---- @field target_committish string
 --- @field name string
 --- @field draft boolean
---- @field immutable boolean
 --- @field prerelease boolean
---- @field created_at string
 --- @field updated_at string
---- @field published_at string
---- @field tarball_url string
 --- @field zipball_url string
---- @field body string
---- @field reactions any
---- @field mentions_count number
 --- @field assets ghapi.Releases.Assets[]
+---- @field id string
+---- @field upload_url string
+---- @field html_url string
+---- @field node_id string
+---- @field target_committish string
+---- @field tarball_url string
+---- @field body string
+---- @field reactions any
+---- @field mentions_count number
+---- @field immutable boolean
+---- @field created_at string
+---- @field published_at string
+---- @field assets_url string
+---- @field author any
 
 --- @class ghapi.Ratelimit.Entry
 --- @field limit number

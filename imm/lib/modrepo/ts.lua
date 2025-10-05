@@ -14,8 +14,8 @@ function fetch_thumb_blob:getCacheFileName(arg)
     return self.cacheFile:format(love.data.encode('string', 'hex', love.data.hash('md5', arg)))
 end
 
-local omitProps = { 'full_name', 'date_created', 'date_updated', 'uuid4', 'rating_score', 'has_nsfw_content'}
-local omitVerProps = { 'full_name', 'downloads', 'date_created', 'is_active', 'uuid4' }
+local omitProps = { 'full_name', 'date_created', 'uuid4', 'rating_score', 'has_nsfw_content'}
+local omitVerProps = { 'full_name', 'is_active', 'uuid4' }
 local blacklistedPackages = {
     r2modman = true,
     lovely = true

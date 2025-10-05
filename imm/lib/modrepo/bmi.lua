@@ -23,6 +23,20 @@ end
 --- @type imm.Fetch<string, ghapi.Releases>
 local fetch_gh_releases = Fetch('https://api.github.com/repos/%s/releases', 'immcache/release/%s', true, true)
 
+local excludeRelProps = {'id', 'upload_url', 'html_url', 'node_id', 'target_commitish', 'tarball_url', 'body', 'reactions', 'mentions_count', 'immutable', 'created_at', 'published_at', 'assets_url', 'author'}
+local excludeAssetProps = {'id', 'node_id', 'label', 'uploader', 'content_type', 'state', 'digest', 'created_at'}
+
+--- @param data ghapi.Releases[]
+function fetch_gh_releases:interpretRes(data)
+    for i, entry in ipairs(data) do
+        for j, omitProp in ipairs(excludeRelProps) do entry[omitProp] = nil end
+        for j, asset in ipairs(entry.assets) do
+            for k, omitProp in ipairs(excludeAssetProps) do asset[omitProp] = nil end
+        end
+    end
+    return data
+end
+
 function fetch_gh_releases:getReqOpts()
     --- @type luahttps.Options
     return {

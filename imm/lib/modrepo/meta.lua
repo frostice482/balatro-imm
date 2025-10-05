@@ -1,6 +1,7 @@
 local constructor = require("imm.lib.constructor")
 local V = require("imm.lib.version")
 local logger = require("imm.logger")
+local util   = require("imm.lib.util")
 
 --- @class imm.ModMeta.Release
 --- @field url string
@@ -9,7 +10,8 @@ local logger = require("imm.logger")
 --- @field versionParsed? Version
 --- @field dependencies? string[]
 --- @field size? number
----
+--- @field time? string | number
+--- @field count? number
 --- @field format 'thunderstore' | 'bmi'
 --- @field bmi? ghapi.Releases
 --- @field ts? thunderstore.PackageVersion
@@ -96,6 +98,45 @@ function IMeta:getImageCo()
     end
 end
 
+--- @param rel thunderstore.PackageVersion
+function IMeta:transformTsRelease(rel)
+    local ver = transformVersion(rel.version_number)
+    local vpok, vparsed = pcall(V, ver) --- @diagnostic disable-line
+
+    --- @type imm.ModMeta.Release
+    return {
+        url = rel.download_url,
+        version = ver,
+        versionParsed = vpok and vparsed or nil,
+        size = rel.file_size,
+        time = rel.date_created,
+        count = rel.downloads,
+        dependencies = rel.dependencies,
+        format = 'thunderstore',
+        ts = rel
+    }
+end
+
+--- @param rel ghapi.Releases
+function IMeta:transformBmiRelease(rel)
+    local ver = transformVersion(rel.tag_name)
+    local c = 0
+    for i,v in ipairs(rel.assets) do c = c + v.download_count end
+    local vpok, vparsed = pcall(V, ver) --- @diagnostic disable-line
+
+    --- @type imm.ModMeta.Release
+    return {
+        url = rel.zipball_url,
+        version = ver,
+        versionParsed = vpok and vparsed or nil,
+        isPre = rel.prerelease or rel.draft,
+        time = rel.updated_at,
+        count = #rel.assets ~= 0 and c or nil,
+        format = 'bmi',
+        bmi = rel
+    }
+end
+
 --- @protected
 function IMeta:getReleasesTs()
     if self.tsVersionsCache then return self.tsVersionsCache end
@@ -103,19 +144,7 @@ function IMeta:getReleasesTs()
 
     self.tsVersionsCache = {}
     for i, ver in ipairs(self.ts.versions) do
-        local v = transformVersion(ver.version_number)
-        local vpok, vparsed = pcall(V, v) --- @diagnostic disable-line
-        --- @type imm.ModMeta.Release
-        local t = {
-            url = ver.download_url,
-            version = v,
-            versionParsed = vpok and vparsed or nil,
-            dependencies = ver.dependencies,
-            size = ver.file_size,
-            format = 'thunderstore',
-            ts = ver
-        }
-        table.insert(self.tsVersionsCache, t)
+        table.insert(self.tsVersionsCache, self:transformTsRelease(ver))
     end
     return self.tsVersionsCache
 end
@@ -134,18 +163,7 @@ function IMeta:getReleasesBmiCo()
 
     self.bmiVersionsCache = {}
     for i, ver in ipairs(releases) do
-        local v = transformVersion(ver.tag_name)
-        local vpok, vparsed = pcall(V, v) --- @diagnostic disable-line
-        --- @type imm.ModMeta.Release
-        local t = {
-            url = ver.zipball_url,
-            version = v,
-            versionParsed = vpok and vparsed or nil,
-            isPre = ver.prerelease or ver.draft,
-            format = 'bmi',
-            bmi = ver
-        }
-        table.insert(self.bmiVersionsCache, t)
+        table.insert(self.bmiVersionsCache, self:transformBmiRelease(ver))
     end
     return self.bmiVersionsCache
 end
