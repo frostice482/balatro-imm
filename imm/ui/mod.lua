@@ -104,12 +104,12 @@ function IUIModSes:updateReleases(elm, res)
         latest = latest
 
         if latest then
-            table.insert(list, self:uiVersionRelease(latest))
             if latest.bmi then
                 for i, asset in ipairs(latest.bmi.assets) do
                     table.insert(list, self:uiVersionAsset(asset, latest.version))
                 end
             end
+            table.insert(list, self:uiVersionRelease(latest))
         end
         if pre then
             table.insert(list, self:uiVersionRelease(pre))
