@@ -4,3 +4,5 @@
 /inmodman.zip
 /.lovelyignore
 /bundle.lua
+.vscode
+.luarc.json
