@@ -56,7 +56,10 @@ function IBTasks:downloadLovelyCo()
 
     task:done("Installed lovely")
 
-    love.filesystem.unmount(data) --- @diagnostic disable-line
+    local ok2 = love.filesystem.unmount(data) --- @diagnostic disable-line
+    if not ok2 then
+        print('Failed unmounting temp folder ' .. tmplovely)
+    end
 end
 
 ---@param info imm.InstallResult

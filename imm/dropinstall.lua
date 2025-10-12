@@ -41,7 +41,10 @@ local function dirinstall(browser, dir)
 
     local info = browser.tasks:createDownloadCoSes():installModFromDir(tmpdir, false)
 
-    love.filesystem.unmount(tmpdir)
+    ok = love.filesystem.unmount(dir)
+    if not ok then
+        print('Failed unmounting temp folder ' .. tmpdir)
+    end
     handleresult(browser, info)
 end
 
