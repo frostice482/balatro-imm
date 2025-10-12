@@ -25,7 +25,8 @@ local function process(req)
 end
 
 while true do
-    local msg = i:demand()
+    local msg = i:demand(30)
+    if not msg then break end
     local res = process(msg.req)
     love.event.push('imm_taskres', msg.gid, msg.id, res) --- @diagnostic disable-line
 end

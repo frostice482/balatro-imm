@@ -17,7 +17,8 @@ setmetatable(registry, { __mode = 'v' })
 local ITasks = {
     allocated = 0,
     pendingCount = 0,
-    nextId = 1
+    nextId = 1,
+    autoRecountThreads = false
 }
 
 --- @protected
@@ -78,6 +79,9 @@ function _ITasks:runTask(req, cb)
     self.input:push({ gid = self.gid, id = self.nextId, req = req })
     self.pendings[self.nextId] = cb
 
+    if self.autoRecountThreads then
+        self:recountThreads()
+    end
     if self.pendingCount > self.allocated and self.allocated < self.maxConcurrency then
         self:spawn()
     end

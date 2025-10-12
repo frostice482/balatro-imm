@@ -20,6 +20,7 @@ local agent = {
     task = Tasks(threadcode, 6), --- @diagnostic disable-line
     userAgent = 'imm (https://github.com/frostice482/balatro-imm)'
 }
+agent.task.autoRecountThreads = true
 
 --- @param options imm.HttpsAgent.Options
 function agent.addUa(options)
