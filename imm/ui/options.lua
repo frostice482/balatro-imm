@@ -68,7 +68,6 @@ function IUIOpts:gridClearCache()
         UIBox_button(setmetatable({ ref_table = {ses = self.ses, mode = 't'}, label = {'Clear thumbnails cache'} }, opts)),
         UIBox_button(setmetatable({ ref_table = {ses = self.ses, mode = 'r'}, label = {'Clear releases cache'} }, opts)),
     }, {
-        UIBox_button(setmetatable({ ref_table = {ses = self.ses, mode = 'd'}, label = {'Clear downloads'} }, opts)),
         UIBox_button(setmetatable({ ref_table = {ses = self.ses, mode = 'l'}, label = {'Clear list cache'} }, opts)),
     }}
 end

@@ -49,8 +49,6 @@ G.FUNCS[funcs.clearCache] = function(elm)
         util.rmdir(util.dirname(bmi.thumbApi.cacheFile), false)
         ts.imageCache = {}
         bmi.imageCache = {}
-    elseif mode == 'd' then
-        util.rmdir(util.dirname(repo.api.blob.cacheFile), false)
     elseif mode == 'r' then
         repo:clearReleases()
     elseif mode == 'l' then
