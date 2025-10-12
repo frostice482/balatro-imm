@@ -80,7 +80,7 @@ If a mod does not have any release, don't update it from latest commit.
 
 ### `noAutoDownloadUnreleasedMods`
 
-If a mod does not have any release, don't automatically download it as a dependency it from latest commit.
+If a mod does not have any release, don't automatically download it as a dependency from latest commit.
 
 ### `httpsThreads`
 
