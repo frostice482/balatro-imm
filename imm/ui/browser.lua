@@ -84,7 +84,7 @@ BrowserStatic.categories = {
 -- NOTE: this section can be moved to tasks but kinda irrelevant idk
 
 BrowserStatic.flavors = {
-    'Crash logs are important when a mod crashes. Be sure to include them when repoting a crash.',
+    'Crash logs are important when Balatro crashes. Be sure to include them when repoting a crash.',
 }
 
 --- @type (fun(browser: imm.UI.Browser): string?)[]
@@ -96,11 +96,7 @@ BrowserStatic.specialFlavors = {
     function (browser)
         if not (browser.ctrl.mods.Talisman and browser.ctrl.mods.Talisman.active) then return end
         return 'Some mods are not compatible with Talisman.'
-    end,
-    function (browser)
-        if not browser.ctrl.mods.yorick then return end
-        return 'If you need stackable Jokers / Consumables, try Yorick.'
-    end,
+    end
     --[[
     function (browser)
         if browser.ctrl.mods.aikoyorisshenanigans then return end
