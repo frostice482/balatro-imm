@@ -1,5 +1,5 @@
-local ModCtrl = require("imm.lib.mod.ctrl")
-local ModList = require("imm.lib.mod.list")
+local ModCtrl = require("imm.mod.ctrl")
+local ModList = require("imm.mod.list")
 local ctrl = ModCtrl()
 local imm = require("imm")
 

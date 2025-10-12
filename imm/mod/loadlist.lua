@@ -1,5 +1,5 @@
 local constructor = require('imm.lib.constructor')
-local ProvidedList = require('imm.lib.mod.providedlist')
+local ProvidedList = require('imm.mod.providedlist')
 local logger = require('imm.logger')
 
 --- @alias imm.LoadList.ModList table<string, table<imm.Mod, imm.Dependency.Rule[]>>

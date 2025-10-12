@@ -1,4 +1,4 @@
-local ModList = require("imm.lib.mod.list")
+local ModList = require("imm.mod.list")
 local V = require("imm.lib.version")
 local util = require("imm.lib.util")
 local logger = require("imm.logger")

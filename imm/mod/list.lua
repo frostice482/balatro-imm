@@ -1,5 +1,5 @@
 local constructor = require("imm.lib.constructor")
-local Mod = require("imm.lib.mod.mod")
+local Mod = require("imm.mod.mod")
 local logger = require("imm.logger")
 
 --- @class imm.ModList

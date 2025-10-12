@@ -1,8 +1,8 @@
 local constructor = require("imm.lib.constructor")
-local ModMeta = require("imm.lib.modrepo.meta")
-local BMIRepo = require("imm.lib.modrepo.bmi")
-local TSRepo = require("imm.lib.modrepo.ts")
-local PhotonRepo = require("imm.lib.modrepo.photon")
+local ModMeta = require("imm.modrepo.meta")
+local BMIRepo = require("imm.modrepo.bmi")
+local TSRepo = require("imm.modrepo.ts")
+local PhotonRepo = require("imm.modrepo.photon")
 local Fetch = require("imm.lib.fetch")
 local util = require("imm.lib.util")
 
