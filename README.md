@@ -93,3 +93,14 @@ For mod releases, please make sure to use the Github Releases.
 I recommend that you name your tags based on your mod version, with some conversion:
 - Mod version `~` is converted to `-` (e.g. `1.0.0~alpha-1` -> `1.0.0-alpha-5`)
 - Tag version with leading `v` is ignored (e.g. `v1.0.0` -> `1.0.0`)
+
+## Socials
+
+- [The official Balatro Discord server modding thread](https://discord.com/channels/1116389027176787968/1413687995378176021)
+
+## Credits
+
+### Logo
+
+- Font: Amaranth (Gesine Todt), SIL Open Font License
+- Icons: [gear](https://www.svgrepo.com/svg/509956/gear) (zest), MIT License
