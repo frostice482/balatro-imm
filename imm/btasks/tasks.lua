@@ -15,7 +15,7 @@ local IBTasks = {}
 --- @param repo? imm.Repo
 --- @param modctrl? imm.ModController
 function IBTasks:init(repo, modctrl)
-    self.ctrl = modctrl or require('imm.modctrl')
+    self.ctrl = modctrl or require('imm.ctrl')
     self.repo = repo or require('imm.repo')
     self.queues = Queue(tonumber(imm.config.concurrentTasks) or 4)
     self.status = UITaskStatusReg()

@@ -7,7 +7,7 @@ local function disableAllMods(err)
     assert(_imm.init())
     if _imm.config.handleEarlyError == 'ignore' then return end
 
-    local ctrl = require('imm.modctrl')
+    local ctrl = require('imm.ctrl')
     local lovely = require('lovely')
     local shouldDisable = _imm.config.handleEarlyError ~= 'nodisable'
 

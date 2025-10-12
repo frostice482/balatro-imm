@@ -7,7 +7,7 @@ local updateConfig = false
 --- Processing configs
 
 if imm.config.nextEnable then
-    local ctrl = require('imm.modctrl')
+    local ctrl = require('imm.ctrl')
     local logger = require('imm.logger')
 
     local mods = util.strsplit(imm.config.nextEnable, '%s*==%s*')
@@ -27,7 +27,7 @@ if imm.config.nextEnable then
 end
 
 if not imm.config.init then
-    local ctrl = require('imm.modctrl')
+    local ctrl = require('imm.ctrl')
     local hasOtherMod = false
     for i, list in ipairs(ctrl:list()) do
         if not list:isExcluded() then
