@@ -17,7 +17,7 @@ function util.cpdir(source, target, sourceNfs, targetNfs, excludes)
 
     if stat.type == 'file' then
         assert(targetProv.write(target,
-            assert(sourceProv.read(source))
+            assert(sourceProv.newFileData(source))
         ))
     elseif stat.type == 'directory' then
         assert(targetProv.createDirectory(target))
