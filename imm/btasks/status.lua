@@ -10,7 +10,7 @@ local funcs = {
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.statusInit] = function (elm)
-    --- @type imm.Browser.Task.UI.Status
+    --- @type imm.Task.UI.Status
     local r = elm.config.ref_table
     elm.config.func = nil
     r.elm = elm
@@ -23,13 +23,13 @@ end
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.statusRegInit] = function (elm)
-    --- @type imm.Browser.Task.UI.Status.Reg
+    --- @type imm.Task.UI.Status.Reg
     local r = elm.config.ref_table
     elm.config.func = nil
     r.listElm = elm
 end
 
---- @class imm.Browser.Task.UI.Status
+--- @class imm.Task.UI.Status
 --- @field containerCfg balatro.UIElement.Config
 --- @field labelCfg balatro.UIElement.Config
 --- @field textCfg balatro.UIElement.Config
@@ -100,12 +100,12 @@ function IUITaskStatus:render()
     }
 end
 
---- @alias imm.Browser.Task.UI.Status.C p.Constructor<imm.Browser.Task.UI.Status, nil> | fun(): imm.Browser.Task.UI.Status
---- @type imm.Browser.Task.UI.Status.C
+--- @alias imm.Task.UI.Status.C p.Constructor<imm.Task.UI.Status, nil> | fun(): imm.Task.UI.Status
+--- @type imm.Task.UI.Status.C
 local UITaskStatus = constructor(IUITaskStatus)
 
---- @class imm.Browser.Task.UI.Status.Reg
---- @field statuses imm.Browser.Task.UI.Status[]
+--- @class imm.Task.UI.Status.Reg
+--- @field statuses imm.Task.UI.Status[]
 --- @field listElm? balatro.UIElement
 local ITaskStatusReg = {}
 
@@ -116,7 +116,7 @@ end
 
 --- @param i number
 function ITaskStatusReg:remove(i)
-    --- @type imm.Browser.Task.UI.Status
+    --- @type imm.Task.UI.Status
     local e = util.removeswap(self.statuses, i)
     if not e then error(string.format('index %d not found', i)) end
 
@@ -124,7 +124,7 @@ function ITaskStatusReg:remove(i)
     e.isRemoved = true
 end
 
---- @param status imm.Browser.Task.UI.Status
+--- @param status imm.Task.UI.Status
 function ITaskStatusReg:add(status)
     table.insert(self.statuses, status)
     if self.listElm then
@@ -184,7 +184,7 @@ function ITaskStatusReg:render()
     }
 end
 
---- @alias imm.Browser.Task.UI.Status.Reg.C p.Constructor<imm.Browser.Task.UI.Status.Reg, nil> | fun(): imm.Browser.Task.UI.Status.Reg
---- @type imm.Browser.Task.UI.Status.Reg.C
+--- @alias imm.Task.UI.Status.Reg.C p.Constructor<imm.Task.UI.Status.Reg, nil> | fun(): imm.Task.UI.Status.Reg
+--- @type imm.Task.UI.Status.Reg.C
 local UITaskStatusReg = constructor(ITaskStatusReg)
 return UITaskStatusReg

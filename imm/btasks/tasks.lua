@@ -6,7 +6,7 @@ local TaskUpdateCo = require("imm.btasks.update_co")
 local lovelyUrl = require('imm.lovely_downloads')
 local https = require('imm.https_agent')
 
---- @class imm.Browser.Tasks
+--- @class imm.Tasks
 local IBTasks = {}
 
 --- @protected
@@ -88,7 +88,7 @@ function IBTasks:installModFromDir(dir, sorucenfs)
     return self:handleInstallResult(self.ses.ctrl:installFromDir(dir, sorucenfs))
 end
 
---- @alias imm.Browser.Tasks.C p.Constructor<imm.Browser.Tasks, nil> | fun(ses: imm.UI.Browser): imm.Browser.Tasks
---- @type imm.Browser.Tasks.C
+--- @alias imm.Tasks.C p.Constructor<imm.Tasks, nil> | fun(ses: imm.UI.Browser): imm.Tasks
+--- @type imm.Tasks.C
 local BTasks = constructor(IBTasks)
 return BTasks

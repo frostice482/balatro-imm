@@ -4,9 +4,9 @@ local ui = require("imm.lib.ui")
 local logger = require("imm.logger")
 local UICT
 
---- @class imm.Browser.Task.Update
+--- @class imm.Task.Update
 --- @field newMods imm.Mod[]
---- @field status? imm.Browser.Task.UI.Status
+--- @field status? imm.Task.UI.Status
 local IUpdateCo = {
     allowNoReleaseUSeCommit = false,
     count = 0,
@@ -15,7 +15,7 @@ local IUpdateCo = {
 }
 
 --- @protected
---- @param tasks imm.Browser.Tasks
+--- @param tasks imm.Tasks
 function IUpdateCo:init(tasks)
     self.tasks = tasks
     self.down = tasks:createDownloadCoSes()
@@ -120,7 +120,7 @@ function IUpdateCo:updateAll()
     self:enableAll()
 end
 
---- @alias imm.Browser.Task.Update.C p.Constructor<imm.Browser.Task.Update, nil> | fun(tasks: imm.Browser.Tasks): imm.Browser.Task.Update
---- @type imm.Browser.Task.Update.C
+--- @alias imm.Task.Update.C p.Constructor<imm.Task.Update, nil> | fun(tasks: imm.Tasks): imm.Task.Update
+--- @type imm.Task.Update.C
 local UpdateCo = constructor(IUpdateCo)
 return UpdateCo

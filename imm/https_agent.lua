@@ -1,4 +1,4 @@
-local Tasks = require("imm.lib.tasks")
+local Tasks = require("imm.lib.threadworker")
 local imm = require("imm")
 local threadcode = imm.resbundle and imm.resbundle.https_thread or assert(NFS.newFileData(imm.path..'/imm/https_thread.lua'))
 
@@ -13,7 +13,7 @@ local threadcode = imm.resbundle and imm.resbundle.https_thread or assert(NFS.ne
 
 --- @class imm.HttpsAgent
 local agent = {
-    --- @type imm.Tasks<imm.HttpsAgent.Req, imm.HttpsAgent.Res>
+    --- @type imm.ThreadWorker<imm.HttpsAgent.Req, imm.HttpsAgent.Res>
     task = Tasks(threadcode, 6), --- @diagnostic disable-line
     userAgent = 'imm (https://github.com/frostice482/balatro-imm)'
 }

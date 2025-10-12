@@ -2,7 +2,7 @@ local constructor = require("imm.lib.constructor")
 local co = require("imm.lib.co")
 local logger = require("imm.logger")
 
---- @class imm.Browser.Task.Download.Co
+--- @class imm.Task.Download.Co
 --- @field blacklistUrls? table<string>
 --- @field modlist imm.Mod[]
 --- @field errors string[]
@@ -15,7 +15,7 @@ local IBTaskDownCo = {
 --- @field size? number
 
 --- @protected
---- @param tasks imm.Browser.Tasks
+--- @param tasks imm.Tasks
 function IBTaskDownCo:init(tasks)
     self.tasks = tasks
     self.ses = tasks.ses
@@ -122,7 +122,7 @@ function IBTaskDownCo:installModFromDir(dir, sorucenfs)
     return self:handleInstallResult(self.tasks:installModFromDir(dir, sorucenfs))
 end
 
---- @alias imm.Browser.Task.Download.Co.C p.Constructor<imm.Browser.Task.Download.Co, nil> | fun(tasks: imm.Browser.Tasks): imm.Browser.Task.Download.Co
---- @type imm.Browser.Task.Download.Co.C
+--- @alias imm.Task.Download.Co.C p.Constructor<imm.Task.Download.Co, nil> | fun(tasks: imm.Tasks): imm.Task.Download.Co
+--- @type imm.Task.Download.Co.C
 local BTaskDownCo = constructor(IBTaskDownCo)
 return  BTaskDownCo

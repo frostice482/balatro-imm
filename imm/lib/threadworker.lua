@@ -2,11 +2,11 @@ local constructor = require("imm.lib.constructor")
 local co = require("imm.lib.co")
 
 local gid = 0
---- @type table<number, imm.Tasks>
+--- @type table<number, imm.ThreadWorker>
 local registry = {}
 setmetatable(registry, { __mode = 'v' })
 
---- @class imm.Tasks<Req, Res>: {
+--- @class imm.ThreadWorker<Req, Res>: {
 ---     runTask: fun(self: self, req: Req, res: fun(res: Res) ): number;
 ---     runTaskCo: fun(self: self, req: Req ): Res;
 --- }
@@ -56,7 +56,7 @@ function ITasks:handleRes(id, res)
 end
 
 
---- @type imm.Tasks<any, any>
+--- @type imm.ThreadWorker<any, any>
 local _ITasks = ITasks
 
 function _ITasks:runTask(req, cb)
@@ -84,7 +84,7 @@ function love.handlers.imm_taskres(gid, id, res)
     taskReg:handleRes(id, res)
 end
 
---- @alias imm.Tasks.C p.Constructor<imm.Tasks<any, any>, nil> | fun(threadcode: love.FileData, max?: number): imm.Tasks<any, any>
---- @type imm.Tasks.C
+--- @alias imm.ThreadWorker.C p.Constructor<imm.ThreadWorker<any, any>, nil> | fun(threadcode: love.FileData, max?: number): imm.ThreadWorker<any, any>
+--- @type imm.ThreadWorker.C
 local Tasks = constructor(ITasks)
 return Tasks
