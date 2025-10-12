@@ -66,9 +66,16 @@ Disables imm's early crash handing.
 - `ignore`: Disables imm's early error handling
 - `nodisable`: Only list detected mods
 
-### `init`
+### `httpsThreads`
 
-Internally used to mark for non-first game launch.
+Specifies maximum number of HTTPS thread to create. Defaults to 6
+
+### `concurrentTasks`
+
+Specifies maximum number of running tasks at once. Defaults to 4.
+
+Tasks are:
+- Downloading a mod release
 
 ### `githubToken`
 
@@ -83,6 +90,10 @@ Determines what mod to enable at the next loading.
 The entry is mod ID and version separated by `=` (includes surrounding whitespaces).
 The list is separated by `==` (includes surrounding whitespaces).
 e.g. `Steamodded=1.0.0~beta-0827c == Cryptid=0.5.12a`
+
+### `init`
+
+Internally used to mark for non-first game launch.
 
 ## Developers
 

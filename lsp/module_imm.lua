@@ -22,6 +22,13 @@
 --- If null, shows a popup player for the first time installation,
 --- The popup is only shown when there's no other mods installed
 --- @field init? string
+---
+--- Maximum HTTPS threads. Defaults to 6.
+--- @field httpsThreads? string
+---
+--- Maximum concurrent tasks. Defaults to 4.
+--- Currently only used for number of downloads at once.
+--- @field concurrentTasks? string
 
 --- @class imm.Resbundle
 --- @field assets table

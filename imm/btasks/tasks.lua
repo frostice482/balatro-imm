@@ -5,6 +5,7 @@ local TaskDownloadCo = require("imm.btasks.download_co")
 local TaskUpdateCo = require("imm.btasks.update_co")
 local lovelyUrl = require('imm.lovely_downloads')
 local https = require('imm.https_agent')
+local imm = require("imm")
 
 --- @class imm.Tasks
 --- @field ses? imm.UI.Browser
@@ -16,7 +17,7 @@ local IBTasks = {}
 function IBTasks:init(repo, modctrl)
     self.ctrl = modctrl or require('imm.modctrl')
     self.repo = repo or require('imm.repo')
-    self.queues = Queue(3)
+    self.queues = Queue(tonumber(imm.config.concurrentTasks) or 4)
     self.status = UITaskStatusReg()
 end
 

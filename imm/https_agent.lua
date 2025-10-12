@@ -17,7 +17,7 @@ local threadcode = imm.resbundle and imm.resbundle.https_thread or assert(NFS.ne
 --- @class imm.HttpsAgent
 local agent = {
     --- @type imm.ThreadWorker<imm.HttpsAgent.Req, imm.HttpsAgent.Res>
-    task = Tasks(threadcode, 6), --- @diagnostic disable-line
+    task = Tasks(threadcode, tonumber(imm.config.httpsThreads) or 6), --- @diagnostic disable-line
     userAgent = 'imm (https://github.com/frostice482/balatro-imm)'
 }
 agent.task.autoRecountThreads = true
