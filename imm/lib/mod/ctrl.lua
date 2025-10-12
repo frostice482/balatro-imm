@@ -223,8 +223,14 @@ function IModCtrl:install(mod, sourceNfs, excludedDirs)
     return true
 end
 
+--- @class imm.InstallResult
+--- @field mods table<string, imm.ModList>
+--- @field installed imm.Mod[]
+--- @field errors string[]
+
 --- @param dir string
 --- @param sourceNfs boolean
+--- @return imm.InstallResult
 function IModCtrl:installFromDir(dir, sourceNfs)
     local modslist = getmods.getMods({ base = dir, isNfs = sourceNfs })
     --- @type imm.Mod[]
@@ -271,22 +277,27 @@ function IModCtrl:installFromDir(dir, sourceNfs)
         end
     end
 
-    return modslist, intalled, errors
+    --- @type imm.InstallResult
+    return {
+        mods = modslist,
+        installed = intalled,
+        errors = errors,
+    }
 end
 
 local mnttmp = 0
 
 --- @param zipData love.Data
+--- @return imm.InstallResult
 function IModCtrl:installFromZip(zipData)
     mnttmp = mnttmp + 1
     local tmpdir = 'tmp-'..mnttmp
     local ok = love.filesystem.mount(zipData, "tmp.zip", tmpdir)
-    if not ok then return {}, {}, { 'Mount failed - is the file a zip?' } end
+    if not ok then return { errors = { 'Mount failed - is the file a zip?' } } end
 
-    local a, b, c = self:installFromDir(tmpdir, false)
+    local a = self:installFromDir(tmpdir, false)
     love.filesystem.unmount(zipData) --- @diagnostic disable-line
-
-    return a, b, c
+    return a
 end
 
 function IModCtrl:list()

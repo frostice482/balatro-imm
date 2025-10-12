@@ -95,20 +95,31 @@ function IBTaskDownCo:downloadMissings(mod)
 end
 
 --- @async
---- @param data love.Data
-function IBTaskDownCo:installModFromZip(data)
-    local modlistSet, list, errlist = self.tasks:installModFromZip(data)
-
+--- @param info imm.InstallResult
+function IBTaskDownCo:handleInstallResult(info)
     if self.installMissings then
         local queues = {}
-        for i, mod in ipairs(list) do table.insert(queues, function() self:downloadMissings(mod) end) end
+        for i, mod in ipairs(info.installed) do table.insert(queues, function() self:downloadMissings(mod) end) end
         co.all(queues)
     end
 
-    for i,v in ipairs(list) do table.insert(self.modlist, v) end
-    for i,v in ipairs(errlist) do table.insert(self.errors, v) end
+    for i,v in ipairs(info.installed) do table.insert(self.modlist, v) end
+    for i,v in ipairs(info.errors) do table.insert(self.errors, v) end
 
-    return modlistSet, list, errlist
+    return info
+end
+
+--- @async
+--- @param data love.Data
+function IBTaskDownCo:installModFromZip(data)
+    return self:handleInstallResult(self.tasks:installModFromZip(data))
+end
+
+---@async
+---@param dir string
+---@param sorucenfs boolean
+function IBTaskDownCo:installModFromDir(dir, sorucenfs)
+    return self:handleInstallResult(self.tasks:installModFromDir(dir, sorucenfs))
 end
 
 --- @alias imm.Browser.Task.Download.Co.C p.Constructor<imm.Browser.Task.Download.Co, nil> | fun(tasks: imm.Browser.Tasks): imm.Browser.Task.Download.Co

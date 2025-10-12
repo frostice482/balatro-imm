@@ -7,7 +7,7 @@ local function dropinstall(browser, file)
     file:close()
 
     local ml = browser.tasks:createDownloadCoSes():installModFromZip(fd) --- @diagnostic disable-line
-    local _, list = next(ml)
+    local _, list = next(ml.mods)
     if not list then return end
 
     local meta

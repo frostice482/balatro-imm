@@ -59,18 +59,30 @@ function IBTasks:downloadLovelyCo()
     love.filesystem.unmount(data) --- @diagnostic disable-line
 end
 
----@param data love.Data
-function IBTasks:installModFromZip(data)
-    local modlist, list, errlist = self.ses.ctrl:installFromZip(data)
-
+---@param info imm.InstallResult
+function IBTasks:handleInstallResult(info)
     local strlist = {}
-    for i,v in ipairs(list) do table.insert(strlist, v.mod..' '..v.version) end
+    for i,v in ipairs(info.installed) do table.insert(strlist, v.mod..' '..v.version) end
     local hasInstall = #strlist ~= 0
 
-    if not hasInstall and #errlist == 0 then table.insert(errlist, 'Nothing is installed') end
-    self.status:update( hasInstall and 'Installed '..table.concat(strlist, ', ') or nil, table.concat(errlist, '\n') )
+    if not hasInstall and #info.errors == 0 then table.insert(info.errors, 'Nothing is installed') end
+    self.status:update(
+        hasInstall and 'Installed '..table.concat(strlist, ', ') or nil,
+        table.concat(info.errors, '\n')
+    )
 
-    return modlist, list, errlist
+    return info
+end
+
+---@param data love.Data
+function IBTasks:installModFromZip(data)
+    return self:handleInstallResult(self.ses.ctrl:installFromZip(data))
+end
+
+---@param dir string
+---@param sorucenfs boolean
+function IBTasks:installModFromDir(dir, sorucenfs)
+    return self:handleInstallResult(self.ses.ctrl:installFromDir(dir, sorucenfs))
 end
 
 --- @alias imm.Browser.Tasks.C p.Constructor<imm.Browser.Tasks, nil> | fun(ses: imm.UI.Browser): imm.Browser.Tasks
