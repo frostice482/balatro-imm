@@ -9,7 +9,8 @@ local util = require("imm.lib.util")
 --- @type imm.Fetch<string, love.Data>
 local fetch_blob = Fetch('%s', 'immcache/blob/%s', {
     resType = 'data',
-    cacheType = 'filedata'
+    cacheType = 'filedata',
+    neverCache = true
 })
 
 function fetch_blob:getCacheFileName(arg)
