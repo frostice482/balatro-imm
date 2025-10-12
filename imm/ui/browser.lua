@@ -1,6 +1,5 @@
 local constructor = require("imm.lib.constructor")
 local LoveMoveable = require("imm.lib.love_moveable")
-local BrowserTask = require("imm.btasks.tasks")
 local UIMod = require("imm.ui.mod")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
@@ -63,7 +62,7 @@ local IUISes = {
 --- @protected
 --- @param tasks? imm.Tasks
 function IUISes:init(tasks)
-    self.tasks = tasks or BrowserTask()
+    self.tasks = tasks or require('imm.tasks')
     self.tasks.ses = self
     self.repo = self.tasks.repo
     self.ctrl = self.tasks.ctrl
