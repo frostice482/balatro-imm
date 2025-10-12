@@ -66,6 +66,22 @@ Disables imm's early crash handing.
 - `ignore`: Disables imm's early error handling
 - `nodisable`: Only list detected mods
 
+### `disableFlavor`
+
+Disables flavor text.
+
+### `disableSafetyWarning`
+
+Disables safety warning.
+
+### `noUpdateUnreleasedMods`
+
+If a mod does not have any release, don't update it from latest commit.
+
+### `noAutoDownloadUnreleasedMods`
+
+If a mod does not have any release, don't automatically download it as a dependency it from latest commit.
+
 ### `httpsThreads`
 
 Specifies maximum number of HTTPS thread to create. Defaults to 6
@@ -76,14 +92,6 @@ Specifies maximum number of running tasks at once. Defaults to 4.
 
 Tasks are:
 - Downloading a mod release
-
-### `disableFlavor`
-
-Disables flavor text.
-
-### `disableSafetyWarning`
-
-Disables safety warning.
 
 ### `githubToken`
 

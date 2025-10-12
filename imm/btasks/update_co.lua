@@ -2,13 +2,14 @@ local constructor = require("imm.lib.constructor")
 local co = require("imm.lib.co")
 local ui = require("imm.lib.ui")
 local logger = require("imm.logger")
+local imm = require("imm")
 local UICT
 
 --- @class imm.Task.Update
 --- @field newMods imm.Mod[]
 --- @field status? imm.Task.UI.Status
 local IUpdateCo = {
-    allowNoReleaseUSeCommit = false,
+    allowNoReleaseUseCommit = not imm.config.noUpdateUnreleasedMods,
     count = 0,
     done = 0,
     ignored = 0,
@@ -19,6 +20,7 @@ local IUpdateCo = {
 function IUpdateCo:init(tasks)
     self.tasks = tasks
     self.down = tasks:createDownloadCoSes()
+    self.down.allowNoReleaseUseCommit = false
     self.newMods = {}
 end
 
@@ -73,8 +75,8 @@ function IUpdateCo:updateMod(installed, meta)
     if latest then
         if not self:getModUpdate(installed, latest) then return self:statusAddIgnore() end
     else
-        if not (self.allowNoReleaseUSeCommit and meta.bmi) then return self:statusAddIgnore() end
-        logger.warn('Mod %s does not have any release, using source')
+        if not (self.allowNoReleaseUseCommit and meta.bmi) then return self:statusAddIgnore() end
+        logger.fmt('warn', 'Mod %s does not have any release, using source', meta:id())
         latest = { format = 'bmi', url = meta.bmi.download_url, version = 'Source' }
     end
 

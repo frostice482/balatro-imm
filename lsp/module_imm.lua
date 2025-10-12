@@ -35,6 +35,12 @@
 ---
 --- Disables flavor text after everytime the manager is open.
 --- @field disableFlavor? string
+---
+--- Disallows updating a mod that does from latest commit if the mod does not have any release.
+--- @field noUpdateUnreleasedMods? string
+---
+--- Disallows downloading a mod dependency from latest commit if the mod does not have any release.
+--- @field noAutoDownloadUnreleasedMods? string
 
 --- @class imm.Resbundle
 --- @field assets table

@@ -1,12 +1,14 @@
 local constructor = require("imm.lib.constructor")
 local co = require("imm.lib.co")
 local logger = require("imm.logger")
+local imm = require("imm")
 
 --- @class imm.Task.Download.Co
 --- @field blacklistUrls? table<string>
 --- @field modlist imm.Mod[]
 --- @field errors string[]
 local IBTaskDownCo = {
+    allowNoReleaseUseCommit = not imm.config.noAutoDownloadUnreleasedMods,
     installMissings = true
 }
 
@@ -66,8 +68,14 @@ function IBTaskDownCo:downloadMissingModEntry(id, list)
     local mod = self.tasks.repo:getMod(id)
     if not mod then return logger.fmt('warn', 'Mod id %s does not exist in repo', id) end
 
-    mod:getReleasesCo()
+    local releases = mod:getReleasesCo()
     local release, pre = mod:findModVersionToDownload(list)
+
+    if not release and self.allowNoReleaseUseCommit and mod.bmi and #releases == 0 then
+        logger.fmt('warn', 'Mod %s does not have any release, using source', mod:id())
+        release = { format = 'bmi', url = mod.bmi.download_url, version = 'Source' }
+    end
+
     if not release then
         logger.fmt('warn', 'Failed to download missing dependencies %s', mod:title())
         return
