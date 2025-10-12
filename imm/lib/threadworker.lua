@@ -1,5 +1,6 @@
 local constructor = require("imm.lib.constructor")
 local co = require("imm.lib.co")
+local util = require("imm.lib.util")
 
 local gid = 0
 --- @type table<number, imm.ThreadWorker>
@@ -55,6 +56,18 @@ function ITasks:handleRes(id, res)
     cb(res)
 end
 
+function ITasks:recountThreads()
+    local i = 1
+    while i <= #self.threads do
+        local thr = self.threads[i]
+        if not thr:isRunning() then
+            self.allocated = self.allocated - 1
+            util.removeswap(self.threads, i)
+        else
+            i = i + 1
+        end
+    end
+end
 
 --- @type imm.ThreadWorker<any, any>
 local _ITasks = ITasks

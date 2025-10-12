@@ -4,36 +4,63 @@ local co = require("imm.lib.co")
 local https = require("imm.https_agent")
 local logger= require("imm.logger")
 
+--- @alias imm.Fetch.ResType 'json' | 'string' | 'data'
+--- @alias imm.Fetch.SaveType 'json' | 'string' | 'filedata'
+
+--- @class imm.Fetch.InitOpts
+--- If true, the data from response will be parsed as JSON data.
+--- @field resType? imm.Fetch.ResType
+--- If true, the data will be saved/loaded as JSON.
+--- @field cacheType? imm.Fetch.SaveType
+--- Never cache response
+--- @field neverCache? boolean
+--- How long a cache should last, in seconds
+--- @field cacheTime? number
+
 --- @class imm.Fetch<A, T>: balatro.Object, {
 ---     fetch: fun(self, arg: A, cb: fun(err?: string, res?: T), refreshCache?: boolean, useCache?: boolean);
 ---     fetchCo: async fun(self, arg: A, refreshCache?: boolean, useCache?: boolean): string?, T;
 --- }
+--- @field resType imm.Fetch.ResType
+--- @field cacheType imm.Fetch.SaveType
 local IFetch = {
-    cacheLasts = 3600 * 24
+    cacheLasts = 3600 * 24,
+    resType = 'string',
+    cacheType = 'string',
+    neverCache = false
 }
 
 --- @protected
 --- @param url string
 --- @param file string
---- @param isResJson? boolean
---- @param isJson? boolean
-function IFetch:init(url, file, isResJson, isJson)
+--- @param opts? imm.Fetch.InitOpts
+function IFetch:init(url, file, opts)
+    opts = opts or {}
     self.url = url
     self.cacheFile = file
-    self.isResJson = isResJson
-    self.isJson = isJson
+
+    self.resType = opts.resType
+    self.cacheType = opts.cacheType
+    self.neverCache = opts.neverCache
+    self.cacheTime = opts.cacheTime
 end
 
 --- @param data any
---- @return string
+--- @return string | love.Data
 function IFetch:stringifyDataToCache(data)
-    return self.isJson and JSON.encode(data) or data
+    if self.cacheType == 'json' then
+        return JSON.encode(data)
+    end
+    return data
 end
 
---- @param str string
+--- @param data string | love.FileData
 --- @return any
-function IFetch:parseCache(str)
-    return self.isJson and JSON.decode(str) or str
+function IFetch:parseCache(data)
+    if self.cacheType == 'json' then
+        return JSON.decode(data)
+    end
+    return data
 end
 
 --- @param data any
@@ -55,16 +82,16 @@ function IFetch:getCacheFileName(arg)
 end
 
 --- @param arg any
---- @return luahttps.Options?
+--- @return imm.HttpsAgent.Options?
 function IFetch:getReqOpts(arg) end
 
---- @param body string
+--- @param body string | love.Data
 --- @return string? error
 --- @return any? res
 function IFetch:handleRes(body)
     local ok, res = true, body
 
-    if self.isResJson then
+    if self.resType == 'json' then
         ok, res = pcall(JSON.decode, body)
     end
     if ok then
@@ -76,11 +103,33 @@ function IFetch:handleRes(body)
     end
 end
 
+--- @param file string
+--- @param data any
+local function writeCache(file, data)
+    local dir = util.dirname(file)
+    local ok, err = true, nil
+    if ok then
+        ok = type(data) == 'string' or type(data) == "userdata" and data:typeOf("Data") --- @diagnostic disable-line
+        if not ok then
+            err = "Cache data to write must be a string, or a Data"
+        end
+    end
+    if ok then
+        ok, err = love.filesystem.createDirectory(dir)
+    end
+    if ok then
+        ok, err = love.filesystem.write(file, data)
+    end
+    if not ok then
+        logger.fmt("warn", "Failed saving cache for %s (%s): %s", file, dir, err or '?')
+    end
+end
+
 --- @class imm.Fetch.ReqState
 --- @field cachefile string
 --- @field useCache? boolean
 --- @field url string
---- @field opts? luahttps.Options
+--- @field opts? imm.HttpsAgent.Options
 --- @field n number
 
 --- @async
@@ -103,11 +152,8 @@ function IFetch:runreqCo(state)
     end
 
     local err, res = self:handleRes(body or '')
-    if res and state.useCache ~= false then
-        local dir = util.dirname(state.cachefile)
-        local ok, err = love.filesystem.createDirectory(dir)
-        if ok then ok, err = love.filesystem.write(state.cachefile, self:stringifyDataToCache(res)) end
-        if not ok then logger.fmt("warn", "Failed saving cache for %s (%s): %s", state.cachefile, dir, err or '?') end
+    if res and state.useCache ~= false and not self.neverCache then
+        writeCache(state.cachefile, self:stringifyDataToCache(res))
     end
     return err, res
 end
@@ -116,7 +162,13 @@ end
 function IFetch:getCacheFile(file)
     local info = love.filesystem.getInfo(file)
     if not (info and info.modtime + self.cacheLasts > os.time()) then return end
-    local data = love.filesystem.read(file)
+
+    local data
+    if self.cacheType == 'filedata' then
+        data = love.filesystem.newFileData(file)
+    else
+        data = love.filesystem.read(file)
+    end
     return data
 end
 
@@ -129,12 +181,18 @@ function IFetch2:fetchCo(arg, refreshCache, useCache)
     local cache = not refreshCache and self:getCacheFile(cachefile)
     if cache then return nil, self:parseCache(cache) end
 
+    local opts = self:getReqOpts(arg)
+    if self.resType == 'data' then
+        opts = opts or {}
+        opts.restype = self.resType == 'data' and 'data' or nil
+    end
+
     return self:runreqCo({
         cachefile = cachefile,
         useCache = useCache,
         n = 10,
         url = self:getUrl(arg),
-        opts = self:getReqOpts(arg)
+        opts = opts
     })
 end
 
@@ -144,7 +202,7 @@ function IFetch2:fetch(arg, cb, refreshCache, useCache)
     end)
 end
 
---- @alias imm.Fetch.C p.Constructor<imm.Fetch, nil> | fun(url: string, file: string, isResJson?: boolean, isJson?: boolean): imm.Fetch<any, any>
+--- @alias imm.Fetch.C p.Constructor<imm.Fetch, nil> | fun(url: string, file: string, opts?: imm.Fetch.InitOpts): imm.Fetch<any, any>
 --- @type imm.Fetch.C
 local Fetch = constructor(IFetch)
 return Fetch

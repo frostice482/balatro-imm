@@ -2,13 +2,16 @@ local Tasks = require("imm.lib.threadworker")
 local imm = require("imm")
 local threadcode = imm.resbundle and imm.resbundle.https_thread or assert(NFS.newFileData(imm.path..'/imm/https_thread.lua'))
 
+--- @class imm.HttpsAgent.Options: luahttps.Options
+--- @field restype? 'string' | 'data'
+
 --- @class imm.HttpsAgent.Req
 --- @field url string
---- @field options? luahttps.Options
+--- @field options? imm.HttpsAgent.Options
 
 --- @class imm.HttpsAgent.Res
 --- @field [1]? number
---- @field [2]? string
+--- @field [2]? string | love.Data
 --- @field [3]? table<string, string>
 
 --- @class imm.HttpsAgent
@@ -18,15 +21,15 @@ local agent = {
     userAgent = 'imm (https://github.com/frostice482/balatro-imm)'
 }
 
---- @param options luahttps.Options
+--- @param options imm.HttpsAgent.Options
 function agent.addUa(options)
     options.headers = options.headers or {}
     options.headers['user-agent'] = options.headers['user-agent'] or agent.userAgent
 end
 
 --- @param url string
---- @param options? luahttps.Options
---- @param cb fun(code: number, body?: string, headers: table<string, string>)
+--- @param options? imm.HttpsAgent.Options
+--- @param cb fun(code: number, body?: string | love.Data, headers: table<string, string>)
 function agent:request(url, options, cb)
     options = options or {}
     agent.addUa(options)
@@ -35,7 +38,7 @@ end
 
 --- @async
 --- @param url string
---- @param options? luahttps.Options
+--- @param options? imm.HttpsAgent.Options
 function agent:requestCo(url, options)
     options = options or {}
     agent.addUa(options)

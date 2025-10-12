@@ -53,7 +53,7 @@ function IBTaskDownCo:download(url, extra)
     else
         status:done('')
         done()
-        self:installModFromZip(love.data.newByteData(res))
+        self:installModFromZip(res)
     end
 
     return err

@@ -5,12 +5,15 @@ local co = require("imm.lib.co")
 local imm = require("imm")
 
 --- @type imm.Fetch<nil, bmi.Meta[]>
-local fetch_list = Fetch('https://github.com/frostice482/balatro-mod-index-tiny/raw/master/out.json.gz', 'immcache/list/bmi.json', false, true)
-fetch_list.cacheLasts = 3600 * 6
+local fetch_list = Fetch('https://github.com/frostice482/balatro-mod-index-tiny/raw/master/out.json.gz', 'immcache/list/bmi.json', {
+    resType = 'data',
+    cacheType = 'json',
+    cacheTime = 3600 * 6
+})
 
 local excludeProps = {'metafmt'}
 
---- @param str string
+--- @param str love.Data
 function fetch_list:interpretRes(str)
     --- @type bmi.Meta[]
     local list = JSON.decode(love.data.decompress("string", 'gzip', str))
@@ -21,7 +24,7 @@ function fetch_list:interpretRes(str)
 end
 
 --- @type imm.Fetch<string, ghapi.Releases>
-local fetch_gh_releases = Fetch('https://api.github.com/repos/%s/releases', 'immcache/release/%s', true, true)
+local fetch_gh_releases = Fetch('https://api.github.com/repos/%s/releases', 'immcache/release/%s', { resType = 'json', cacheType = 'json' })
 
 local excludeRelProps = {'id', 'upload_url', 'html_url', 'node_id', 'target_commitish', 'tarball_url', 'body', 'reactions', 'mentions_count', 'immutable', 'created_at', 'published_at', 'assets_url', 'author'}
 local excludeAssetProps = {'id', 'node_id', 'label', 'uploader', 'content_type', 'state', 'digest', 'created_at'}
@@ -38,7 +41,7 @@ function fetch_gh_releases:interpretRes(data)
 end
 
 function fetch_gh_releases:getReqOpts()
-    --- @type luahttps.Options
+    --- @type imm.HttpsAgent.Options
     return {
         headers = {
             Authorization = imm.config.githubToken and 'Bearer '..imm.config.githubToken or nil
@@ -51,17 +54,18 @@ end
 --- @field repo string
 
 --- @type imm.Fetch<imm.HostInfo, ghapi.Releases[]>
-local fetch_releases_generic = Fetch('https://%s/api/v1/repos/%s/releases', 'immcache/release/%s', true, true)
+local fetch_releases_generic = Fetch('https://%s/api/v1/repos/%s/releases', 'immcache/release/%s', { resType = 'json', cacheType = 'json' })
 
 function fetch_releases_generic:getUrl(arg)
     return self.url:format(arg.host, arg.repo)
 end
 
---- @type imm.Fetch<string, string>
-local fetch_thumb = Fetch('https://raw.githubusercontent.com/skyline69/balatro-mod-index/main/mods/%s/thumbnail.jpg', 'immcache/thumb/%s')
+--- @type imm.Fetch<string, love.Data>
+local fetch_thumb = Fetch('https://raw.githubusercontent.com/skyline69/balatro-mod-index/main/mods/%s/thumbnail.jpg', 'immcache/thumb/%s', { resType = 'data', cacheType = 'filedata' })
 
+--- @param data love.Data
 function fetch_thumb:interpretRes(data)
-    local img = love.graphics.newImage(love.data.newByteData(data)) --- @diagnostic disable-line
+    local img = love.graphics.newImage(data) --- @diagnostic disable-line
     local scale = 240 / img:getHeight()
     local wd, hd = math.floor(img:getWidth() * scale), math.floor(img:getHeight() * scale)
 

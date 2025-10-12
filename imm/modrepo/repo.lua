@@ -6,9 +6,11 @@ local PhotonRepo = require("imm.modrepo.photon")
 local Fetch = require("imm.lib.fetch")
 local util = require("imm.lib.util")
 
---- @type imm.Fetch<string, string>
-local fetch_blob = Fetch('%s', 'immcache/blob/%s')
-fetch_blob.cacheLasts = 3600 * 1
+--- @type imm.Fetch<string, love.Data>
+local fetch_blob = Fetch('%s', 'immcache/blob/%s', {
+    resType = 'data',
+    cacheType = 'filedata'
+})
 
 function fetch_blob:getCacheFileName(arg)
     return self.cacheFile:format(love.data.encode('string', 'hex', love.data.hash('md5', arg)))

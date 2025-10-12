@@ -4,11 +4,14 @@ local util  = require("imm.lib.util")
 local logger= require("imm.logger")
 
 --- @type imm.Fetch<nil, thunderstore.Package[]>
-local fetch_list = Fetch('https://thunderstore.io/c/balatro/api/v1/package/', 'immcache/list/thunderstore.json', false, true)
-fetch_list.cacheLasts = 3600 * 12
+local fetch_list = Fetch('https://thunderstore.io/c/balatro/api/v1/package/', 'immcache/list/thunderstore.json', {
+    resType = 'json',
+    cacheType = 'json',
+    cacheTime = 3600 * 12
+})
 
---- @type imm.Fetch<string, string>
-local fetch_thumb_blob = Fetch('%s', 'immcache/thumb_blob/%s')
+--- @type imm.Fetch<string, love.Data>
+local fetch_thumb_blob = Fetch('%s', 'immcache/thumb_blob/%s', { resType = 'data', cacheType = 'filedata' })
 
 function fetch_thumb_blob:getCacheFileName(arg)
     return self.cacheFile:format(love.data.encode('string', 'hex', love.data.hash('md5', arg)))
@@ -21,16 +24,14 @@ local blacklistedPackages = {
     lovely = true
 }
 
---- @param str string
-function fetch_list:interpretRes(str)
-    --- @type thunderstore.Package[]
-    local parsed = JSON.decode(str)
+--- @param data thunderstore.Package[]
+function fetch_list:interpretRes(data)
     local i = 1
-    while i <= #parsed do
-        local package = parsed[i]
+    while i <= #data do
+        local package = data[i]
         if blacklistedPackages[package.name] or package.is_deprecated then
             logger.dbg('Ignored TS package', package.owner, package.name)
-            util.removeswap(parsed, i)
+            util.removeswap(data, i)
             i = i - 1
         else
             for _, omitProp in ipairs(omitProps) do
@@ -44,7 +45,7 @@ function fetch_list:interpretRes(str)
         end
         i = i + 1
     end
-    return parsed
+    return data
 end
 
 --- @class imm.Repo.TS: imm.Repo.Generic

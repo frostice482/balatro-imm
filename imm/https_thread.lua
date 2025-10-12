@@ -2,6 +2,9 @@
 local i = ...
 local hok, https
 require('love.event')
+require('love.filesystem')
+
+local emptydata = love.filesystem.newFileData("", "")
 
 local function process(req)
     if not https then
@@ -12,7 +15,13 @@ local function process(req)
     end
 
     local res = { pcall(https.request, req.url, req.options) }
-    return res[1] and {unpack(res, 2, 4)} or {-1, res[2]}
+    if not res[1] then return { -1, res[2] } end
+
+    if req.options and req.options.restype == 'data' then
+        local str = res[3]
+        res[3] = str and str:len() > 0 and love.data.newByteData(str) or emptydata
+    end
+    return {unpack(res, 2, 4)}
 end
 
 while true do

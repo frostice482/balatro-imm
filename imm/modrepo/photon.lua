@@ -3,8 +3,11 @@ local GRepo = require("imm.modrepo.generic")
 local util = require("imm.lib.util")
 
 --- @type imm.Fetch<nil, bmi.Meta[]>
-local fetch_list = Fetch('https://photonmodmanager.onrender.com/data', 'immcache/list/photon.json', false, true)
-fetch_list.cacheLasts = 3600 * 24
+local fetch_list = Fetch('https://photonmodmanager.onrender.com/data', 'immcache/list/photon.json', {
+    resType = 'json',
+    cacheType = 'json',
+    cacheTime = 3600 * 24
+})
 
 local excludeProps = {'git_owner', 'git_repo', 'mod_path', 'subpath', 'download_suffix', 'update_mandatory', 'target_version', 'type', 'published_at', 'readme', 'badge_colour', 'favourites'}
 local tagTransform = {
@@ -20,10 +23,8 @@ local tagTransform = {
     ['Misc'] = 'Miscellaneous'
 }
 
-function fetch_list:interpretRes(str)
-    --- @type table<string, photon.Package>
-    local parsed = JSON.decode(str)
-
+--- @param parsed table<string, photon.Package>
+function fetch_list:interpretRes(parsed)
     --- @type bmi.Meta[]
     local interpreted = {}
     for k, entry in pairs(parsed) do
