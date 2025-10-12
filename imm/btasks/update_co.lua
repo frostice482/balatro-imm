@@ -19,7 +19,6 @@ local IUpdateCo = {
 function IUpdateCo:init(tasks)
     self.tasks = tasks
     self.down = tasks:createDownloadCoSes()
-    self.ses = tasks.ses
     self.newMods = {}
 end
 
@@ -84,10 +83,12 @@ function IUpdateCo:updateMod(installed, meta)
     self:statusAddDone()
 end
 
-function IUpdateCo:enableAll()
+function IUpdateCo:uiEnableAll()
+    if not self.tasks.ses then return end
+
     UICT = UICT or require("imm.ui.confirm_toggle")
 
-    local ll = self.tasks.ses.ctrl:createLoadList()
+    local ll = self.tasks.ctrl:createLoadList()
     for i,v in ipairs(self.down.modlist) do
         if v.list.active then ll:tryEnable(v) end
     end
@@ -101,12 +102,12 @@ end
 --- @async
 function IUpdateCo:updateAll()
     --self.ses.repo:clearList()
-    self.ses.repo:clearReleases()
+    self.tasks.repo:clearReleases()
     self.status = self.tasks.status:new()
 
     local queues = {}
-    for id, modlist in pairs(self.ses.ctrl.mods) do
-        local meta = self.ses.repo.listMapped[id]
+    for id, modlist in pairs(self.tasks.ctrl.mods) do
+        local meta = self.tasks.repo.listMapped[id]
         local latest = modlist:list()[1]
         if latest and meta then
             self.count = self.count + 1
@@ -117,7 +118,7 @@ function IUpdateCo:updateAll()
     self:statusUpdate()
     co.all(queues)
     self:statusDone()
-    self:enableAll()
+    self:uiEnableAll()
 end
 
 --- @alias imm.Task.Update.C p.Constructor<imm.Task.Update, nil> | fun(tasks: imm.Tasks): imm.Task.Update

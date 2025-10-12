@@ -18,7 +18,6 @@ local IBTaskDownCo = {
 --- @param tasks imm.Tasks
 function IBTaskDownCo:init(tasks)
     self.tasks = tasks
-    self.ses = tasks.ses
     self.blacklistUrls = {}
     self.modlistSets = {}
     self.modlist = {}
@@ -44,7 +43,7 @@ function IBTaskDownCo:download(url, extra)
     if size then t = string.format('%s (%.1fMB)', t, size / 1048576) end
     status:update(t)
 
-    local err, res = self.ses.repo.api.blob:fetchCo(url)
+    local err, res = self.tasks.repo.api.blob:fetchCo(url)
     if not res then
         self.blacklistUrls[url] = false
         local errfmt = string.format('Failed downloading %s: %s', name, err)
@@ -64,7 +63,7 @@ end
 --- @param id string
 --- @param list imm.Dependency.Rule[][]
 function IBTaskDownCo:downloadMissingModEntry(id, list)
-    local mod = self.ses.repo:getMod(id)
+    local mod = self.tasks.repo:getMod(id)
     if not mod then return logger.fmt('warn', 'Mod id %s does not exist in repo', id) end
 
     mod:getReleasesCo()
@@ -84,7 +83,7 @@ end
 --- @async
 --- @param mod imm.Mod
 function IBTaskDownCo:downloadMissings(mod)
-    local missings = self.ses.ctrl:getMissingDeps(mod.deps)
+    local missings = self.tasks.ctrl:getMissingDeps(mod.deps)
 
     local queues = {}
     for missingid, missingList in pairs(missings) do

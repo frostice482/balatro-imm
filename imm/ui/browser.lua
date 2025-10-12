@@ -61,11 +61,13 @@ local IUISes = {
 }
 
 --- @protected
---- @param modctrl? imm.ModController
---- @param repo? imm.Repo
-function IUISes:init(modctrl, repo)
-    self.ctrl = modctrl or require('imm.modctrl')
-    self.repo = repo or require('imm.repo')
+--- @param tasks? imm.Tasks
+function IUISes:init(tasks)
+    self.tasks = tasks or BrowserTask()
+    self.tasks.ses = self
+    self.repo = self.tasks.repo
+    self.ctrl = self.tasks.ctrl
+
     self.tags = {}
     self.filteredList = {}
     self.categories = {
@@ -79,7 +81,6 @@ function IUISes:init(modctrl, repo)
         {'Libraries'},
         {'Tools'},
     }
-    self.tasks = BrowserTask(self)
     self.sidebarBase = { padding = 0.15, r = true, hover = true, shadow = true, colour = self.colorButtons }
 end
 

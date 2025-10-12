@@ -7,13 +7,16 @@ local lovelyUrl = require('imm.lovely_downloads')
 local https = require('imm.https_agent')
 
 --- @class imm.Tasks
+--- @field ses? imm.UI.Browser
 local IBTasks = {}
 
 --- @protected
---- @param ses imm.UI.Browser
-function IBTasks:init(ses)
+--- @param repo? imm.Repo
+--- @param modctrl? imm.ModController
+function IBTasks:init(repo, modctrl)
+    self.ctrl = modctrl or require('imm.modctrl')
+    self.repo = repo or require('imm.repo')
     self.queues = Queue(3)
-    self.ses = ses
     self.status = UITaskStatusReg()
 end
 
@@ -79,16 +82,16 @@ end
 
 ---@param data love.Data
 function IBTasks:installModFromZip(data)
-    return self:handleInstallResult(self.ses.ctrl:installFromZip(data))
+    return self:handleInstallResult(self.ctrl:installFromZip(data))
 end
 
 ---@param dir string
 ---@param sorucenfs boolean
 function IBTasks:installModFromDir(dir, sorucenfs)
-    return self:handleInstallResult(self.ses.ctrl:installFromDir(dir, sorucenfs))
+    return self:handleInstallResult(self.ctrl:installFromDir(dir, sorucenfs))
 end
 
---- @alias imm.Tasks.C p.Constructor<imm.Tasks, nil> | fun(ses: imm.UI.Browser): imm.Tasks
+--- @alias imm.Tasks.C p.Constructor<imm.Tasks, nil> | fun(repo?: imm.Repo, modctrl?: imm.ModController): imm.Tasks
 --- @type imm.Tasks.C
 local BTasks = constructor(IBTasks)
 return BTasks
