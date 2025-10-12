@@ -29,6 +29,12 @@
 --- Maximum concurrent tasks. Defaults to 4.
 --- Currently only used for number of downloads at once.
 --- @field concurrentTasks? string
+---
+--- Disables safety warning after everytime the manager is open.
+--- @field disableSafetyWarning? string
+---
+--- Disables flavor text after everytime the manager is open.
+--- @field disableFlavor? string
 
 --- @class imm.Resbundle
 --- @field assets table

@@ -77,6 +77,14 @@ Specifies maximum number of running tasks at once. Defaults to 4.
 Tasks are:
 - Downloading a mod release
 
+### `disableFlavor`
+
+Disables flavor text.
+
+### `disableSafetyWarning`
+
+Disables safety warning.
+
 ### `githubToken`
 
 Allows player to specify the GitHub API token.

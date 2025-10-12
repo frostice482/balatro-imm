@@ -3,6 +3,7 @@ local LoveMoveable = require("imm.lib.love_moveable")
 local UIMod = require("imm.ui.mod")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
+local imm= require("imm")
 
 --- @class imm.UI.Browser.Funcs
 local funcs = {
@@ -59,6 +60,57 @@ local IUISes = {
     colorMod = G.C.BOOSTER
 }
 
+--- @alias imm.UI.Browser.C imm.UI.Browser.Static | p.Constructor<imm.UI.Browser, nil> | fun(modctrl?: imm.ModController, modrepo?: imm.Repo): imm.UI.Browser
+--- @type imm.UI.Browser.C
+local UISes = constructor(IUISes)
+
+--- @class imm.UI.Browser.Static
+local BrowserStatic = UISes
+
+BrowserStatic.funcs = funcs
+
+BrowserStatic.categories = {
+    {'Content'},
+    {'Joker'},
+    {'QoL', 'Quality of Life'},
+    {'Misc', 'Miscellaneous'},
+    {'Resources', 'Resource Packs'},
+    {'Technical'},
+    {'API'},
+    {'Libraries'},
+    {'Tools'},
+}
+
+-- NOTE: this section can be moved to tasks but kinda irrelevant idk
+
+BrowserStatic.flavors = {
+    'Crash logs are important when a mod crashes. Be sure to include them when repoting a crash.',
+}
+
+--- @type (fun(browser: imm.UI.Browser): string?)[]
+BrowserStatic.specialFlavors = {
+    function (browser)
+        if (#G.P_CENTER_POOLS.Back <= 25 and #G.P_CENTER_POOLS.Stake <= 20) or browser.ctrl.mods.galdur then return end
+        return 'If you are having trouble with selecting a deck, try Galdur.'
+    end,
+    function (browser)
+        if not (browser.ctrl.mods.Talisman and browser.ctrl.mods.Talisman.active) then return end
+        return 'Some mods are not compatible with Talisman.'
+    end,
+    function (browser)
+        if not browser.ctrl.mods.yorick then return end
+        return 'If you need stackable Jokers / Consumables, try Yorick.'
+    end,
+    --[[
+    function (browser)
+        if browser.ctrl.mods.aikoyorisshenanigans then return end
+        return 'play my mod - aikoyori'
+    end,
+    ]]
+}
+
+BrowserStatic.safetyWarning = 'Safety warning: Not all mods are safe to download. Install only the mods you trust.'
+
 --- @protected
 --- @param tasks? imm.Tasks
 function IUISes:init(tasks)
@@ -69,18 +121,35 @@ function IUISes:init(tasks)
 
     self.tags = {}
     self.filteredList = {}
-    self.categories = {
-        {'Content'},
-        {'Joker'},
-        {'QoL', 'Quality of Life'},
-        {'Misc', 'Miscellaneous'},
-        {'Resources', 'Resource Packs'},
-        {'Technical'},
-        {'API'},
-        {'Libraries'},
-        {'Tools'},
-    }
+    self.categories = copy_table(BrowserStatic.categories)
     self.sidebarBase = { padding = 0.15, r = true, hover = true, shadow = true, colour = self.colorButtons }
+
+    self:generateFlavor()
+end
+
+-- NOTE: this function can be moved to tasks but kinda irrelevant idk
+
+function IUISes:selectFlavor()
+    local specials = {}
+    for i, fn in ipairs(BrowserStatic.specialFlavors) do
+        local text = fn(self)
+        if text then table.insert(specials, text) end
+    end
+
+    local flavors = BrowserStatic.flavors
+    local flavorsLen = #flavors
+    local r = math.random(1, flavorsLen + #specials)
+    if r <= flavorsLen then return flavors[r] end
+    return specials[r - flavorsLen]
+end
+
+function IUISes:generateFlavor()
+    local f, w
+    if not imm.config.disableFlavor then f = self:selectFlavor() end
+    if not imm.config.disableSafetyWarning then w = BrowserStatic.safetyWarning end
+    if f or w then
+        self.tasks.status:update(f, w)
+    end
 end
 
 function IUISes:updateContainers()
@@ -577,11 +646,4 @@ function IUISes:queueUpdateNext()
     return true
 end
 
---- @class imm.UI.Browser.Static
---- @field funcs imm.UI.Browser.Funcs
-
---- @alias imm.UI.Browser.C imm.UI.Browser.Static | p.Constructor<imm.UI.Browser, nil> | fun(modctrl?: imm.ModController, modrepo?: imm.Repo): imm.UI.Browser
---- @type imm.UI.Browser.C
-local UISes = constructor(IUISes)
-UISes.funcs = funcs
 return UISes
