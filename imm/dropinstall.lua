@@ -26,10 +26,22 @@ local function dropinstall(browser, file)
     handleresult(browser, info)
 end
 
+local mnttmp = 0
+
 --- @param browser imm.UI.Browser
 --- @param dir string
 local function dirinstall(browser, dir)
-    local info = browser.tasks:createDownloadCoSes():installModFromDir(dir, false)
+    mnttmp = mnttmp + 1
+    local tmpdir = 'imm-tmpd-'..mnttmp
+    local ok = love.filesystem.mount(dir, tmpdir)
+    if not ok then
+        browser.tasks.status:update(nil, "Failed mounting temp folder")
+        return
+    end
+
+    local info = browser.tasks:createDownloadCoSes():installModFromDir(tmpdir, false)
+
+    love.filesystem.unmount(tmpdir)
     handleresult(browser, info)
 end
 
