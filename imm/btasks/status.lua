@@ -42,7 +42,6 @@ local IUITaskStatus = {
 
 --- @protected
 function IUITaskStatus:init()
-    self.containerCfg = { colour = G.C.CLEAR, func = funcs.statusInit, ref_table = self }
     self.labelCfg = { colour = G.C.WHITE, minw = 0.1 }
     self.textCfg = { ref_table = self, ref_value = 'text', scale = 0.3 } --- hardcoded value!
 
@@ -90,7 +89,11 @@ function IUITaskStatus:render()
     --- @type balatro.UIElement.Definition
     return {
         n = G.UIT.R,
-        config = self.containerCfg,
+        config = {
+            colour = G.C.CLEAR,
+            func = funcs.statusInit,
+            ref_table = self
+        },
         nodes = {
             { n = G.UIT.C, config = self.labelCfg },
             --- hardcoded value!
@@ -180,7 +183,8 @@ function ITaskStatusReg:render()
     return ui.C{
         func = funcs.statusRegInit,
         ref_table = self,
-        nodes = list
+        nodes = list,
+        insta_func = true
     }
 end
 
