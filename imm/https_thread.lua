@@ -15,7 +15,7 @@ local function process(req)
     end
 
     local res = { pcall(https.request, req.url, req.options) }
-    if not res[1] then return { -1, res[2] } end
+    if not res[1] then return { -162, res[2] } end
 
     if req.options and req.options.restype == 'data' then
         local str = res[3]
