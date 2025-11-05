@@ -1,7 +1,7 @@
 local constructor = require("imm.lib.constructor")
 local util = require("imm.lib.util")
 local co = require("imm.lib.co")
-local https = require("imm.https_agent")
+local https = require("imm.https.agent")
 local logger= require("imm.logger")
 
 --- @alias imm.Fetch.ResType 'json' | 'string' | 'data'

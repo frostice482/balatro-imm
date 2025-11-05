@@ -1,6 +1,6 @@
 local constructor = require("imm.lib.constructor")
 local UIBrowser = require("imm.ui.browser")
-local httpsAgent = require('imm.https_agent')
+local httpsAgent = require('imm.https.agent')
 local ui = require('imm.lib.ui')
 local imm = require("imm")
 

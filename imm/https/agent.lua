@@ -1,6 +1,6 @@
 local Tasks = require("imm.lib.threadworker")
 local imm = require("imm")
-local threadcode = imm.resbundle and imm.resbundle.https_thread or assert(NFS.newFileData(imm.path..'/imm/https_thread.lua'))
+local threadcode = imm.resbundle and imm.resbundle.https_thread or assert(NFS.newFileData(imm.path..'/imm/https/thread.lua'))
 
 --- @class imm.HttpsAgent.Options: luahttps.Options
 --- @field restype? 'string' | 'data'

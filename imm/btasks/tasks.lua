@@ -4,7 +4,7 @@ local UITaskStatusReg = require("imm.btasks.status")
 local TaskDownloadCo = require("imm.btasks.download_co")
 local TaskUpdateCo = require("imm.btasks.update_co")
 local lovelyUrl = require('imm.lovely_downloads')
-local https = require('imm.https_agent')
+local https = require('imm.https.agent')
 local imm = require("imm")
 
 --- @class imm.Tasks
