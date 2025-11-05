@@ -1,11 +1,5 @@
-- Add mod profiles
+- UX Enhancement
 
-    - Ability to store what mods is loaded to a mod profile (maybe together with a save)
-    - Ability to load a mod profile
-
-- Auto-update detection (Thunderstore)
-
-- Auto-update detection (BMI)
-
-    - Method 1: check for version / download URL change
-    - Method 2: check for releases change
+    - The delete button should be in No / Yes instead of Yes / No (questioning)
+    - After a mod is installed, enable it automatically (questioning)
+    - After a mod is installed, switch to installed tab
