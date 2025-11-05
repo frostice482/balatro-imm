@@ -38,7 +38,7 @@ function IBTasks:downloadLovelyCo()
     local task = self.status:new()
     task:update("Downloading lovely")
 
-    local status, content = https:requestCo(lovelyUrl) --- @diagnostic disable-line
+    local status, content = https:requestCo(lovelyUrl)
     if status ~= 200 then
         local err = string.format("Failed downloading lovely: HTTP %d", status)
         task:error(err)

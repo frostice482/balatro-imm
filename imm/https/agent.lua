@@ -1,5 +1,6 @@
 local Tasks = require("imm.lib.threadworker")
 local imm = require("imm")
+local curlh = imm.resbundle and imm.resbundle.curl_h or assert(NFS.newFileData(imm.path..'/imm/https/curl.h'))
 local threadcode = imm.resbundle and imm.resbundle.https_thread or assert(NFS.newFileData(imm.path..'/imm/https/thread.lua'))
 
 --- @class imm.HttpsAgent.Options: luahttps.Options
@@ -21,6 +22,10 @@ local agent = {
     userAgent = 'imm (https://github.com/frostice482/balatro-imm)'
 }
 agent.task.autoRecountThreads = true
+
+function agent.task:handleSpawnAdditionalParams(thread)
+    return curlh
+end
 
 --- @param options imm.HttpsAgent.Options
 function agent.addUa(options)

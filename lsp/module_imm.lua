@@ -45,6 +45,7 @@
 --- @class imm.Resbundle
 --- @field assets table
 --- @field https_thread string
+--- @field curl_h string
 
 --- @class imm.Base
 --- Where the IMM is located at
