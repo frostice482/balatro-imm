@@ -41,6 +41,9 @@
 ---
 --- Disallows downloading a mod dependency from latest commit if the mod does not have any release.
 --- @field noAutoDownloadUnreleasedMods? string
+---
+--- If present, forces using curl bindings to do HTTPS request.
+--- @field enforceCurl? string
 
 --- @class imm.Resbundle
 --- @field assets table

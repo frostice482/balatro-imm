@@ -1,12 +1,13 @@
 --- @type love.Channel, love.FileData
-local i, curlh = ...
+local i, curlh, forcecurl = ...
 require('love.event')
 require('love.filesystem')
 local emptydata = love.filesystem.newFileData("", "")
 
-local hok, https = pcall(require, 'https')
-local process
+local hok, https
+if not forcecurl then hok, https = pcall(require, 'https') end
 
+local process
 if hok then
     function process(req)
         local res = { pcall(https.request, req.url, req.options) }

@@ -24,7 +24,7 @@ local agent = {
 agent.task.autoRecountThreads = true
 
 function agent.task:handleSpawnAdditionalParams(thread)
-    return curlh
+    return curlh, imm.config.enforceCurl
 end
 
 --- @param options imm.HttpsAgent.Options

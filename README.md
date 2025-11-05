@@ -60,6 +60,10 @@ Linux with Steam Proton:
 Make a configuration file in `<Balatro>/config/imm.txt`.
 Config is formatted in a `key=value` pair.
 
+### `enforceCurl`
+
+If present, forces imm to use curl bindings to do HTTPS request.
+
 ### `handleEarlyError`
 
 Disables imm's early crash handing.
