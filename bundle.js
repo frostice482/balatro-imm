@@ -92,8 +92,9 @@ async function main() {
         opts[item] = true
     }
 
-    const [httpsThreadCode, loaderCode] = await Promise.all([
-        fsp.readFile('imm/https_thread.lua'),
+    const [httpsThreadCode, curlHCode, loaderCode] = await Promise.all([
+        fsp.readFile('imm/https/thread.lua'),
+        fsp.readFile('imm/https/curl.h'),
         fsp.readFile('early_error.lua', 'ascii'),
         processModule('main'),
         processModule('imm.init'),
@@ -103,7 +104,8 @@ async function main() {
 
     const mainInjects = [
         `_imm.resbundle = { assets = {} }`,
-        `_imm.resbundle.https_thread = love.filesystem.newFileData([[${httpsThreadCode}]], "(bundle)imm/https_thread.lua")`
+        `_imm.resbundle.https_thread = love.filesystem.newFileData([==[${httpsThreadCode}]==], "(bundle)imm/https/thread.lua")`,
+        `_imm.resbundle.curl_h = love.filesystem.newFileData([==[${curlHCode}]==], "(bundle)imm/curl.h")`
     ]
     for (const [k, v] of Object.entries(assetBundles)) {
         mainInjects.push(`_imm.resbundle.assets[${JSON.stringify(k)}] = love.data.decode("data", "base64", "${v.toString('base64')}")`)
