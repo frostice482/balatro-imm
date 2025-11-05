@@ -38,14 +38,13 @@ function IBTasks:downloadLovelyCo()
     local task = self.status:new()
     task:update("Downloading lovely")
 
-    local status, content = https:requestCo(lovelyUrl)
+    local status, data = https:requestCo(lovelyUrl, { restype = 'data' })
     if status ~= 200 then
         local err = string.format("Failed downloading lovely: HTTP %d", status)
         task:error(err)
         return err
     end
 
-    local data = love.data.newByteData(content)
     local ok = love.filesystem.mount(data, "tmp.zip", tmplovely)
     if not ok then
         local err = string.format("Failed mounting temp folder")

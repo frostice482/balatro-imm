@@ -59,7 +59,7 @@ function IGRepo:getImageCo(url, cacheKey)
 
     --- @type boolean, any?
     local ok, img = false, err
-    if res then ok, img = pcall(love.graphics.newImage, love.data.newByteData(res)) end
+    if res then ok, img = pcall(love.graphics.newImage, res) end
     if not ok then
         self.imageCache[cacheKey] = false
         return img, nil
