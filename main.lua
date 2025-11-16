@@ -126,18 +126,8 @@ function _imm.init()
         local lovely = require('lovely')
         moddir = lovely.mod_dir
         _imm.lovelyver = lovely.version
-        for i, item in ipairs(NFS.getDirectoryItems(moddir)) do
-            local base = moddir..'/'..item
-            if not NFS.getInfo(base..'/.lovelyignore') and NFS.read(base..'/imm/sig') == 'balatro-imm' then
-                selfdir = base
-                break
-            end
-        end
-        if not selfdir then
-            print('imm: error: could not determine path')
-            return false, 'could not determine imm path'
-        end
-        if not NFS.mount(selfdir..'/imm', 'imm') then return false, 'imm mount failed' end
+        selfdir = _mod_dir_immpath
+        if not NFS.mount(_mod_dir_immpath..'/imm', 'imm') then return false, 'imm mount failed' end
     end
 
     _imm.path = selfdir

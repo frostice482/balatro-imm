@@ -2,6 +2,23 @@
 version = "1.0.0"
 priority = 2147483647
 
+# my day will be slightly nicer when lovely 0.9.0 is released
+#[[patches]]
+#[patches.copy]
+#target = "main.lua"
+#position = "append"
+#payload = '''_mod_dir_immpath = "{{lovely_hack:patch_dir}}"'''
+
+[[patches]]
+[patches.regex]
+target = "main.lua"
+position = "after"
+pattern = ""
+payload = '''
+_mod_dir_immpath = "{{lovely_hack:patch_dir}}"
+'''
+times = 1
+
 [[patches]]
 [patches.copy]
 target = "main.lua"
