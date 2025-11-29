@@ -68,12 +68,15 @@ end
 
 --- @param content string
 function get.parseHeader(content)
-    local values = {}
+    local values = {
+        version = "0"
+    }
     local lines = util.strsplit(content, '\r?\n', false)
     for i, line in ipairs(lines), lines, 1 do
         local s, e, attr = line:find('^--- *([%w_]+): *')
-        if not s then break end
-        if get.headerFields[attr] then
+        if not s then
+            if line ~= "" then break end
+        elseif get.headerFields[attr] then
             local info = get.headerFields[attr]
             local val = line:sub(e+1)
 
