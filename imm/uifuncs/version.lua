@@ -12,11 +12,13 @@ G.FUNCS[funcs.download] = function(elm)
     if not r.opts.downloadUrl then return end
 
     co.create(function ()
-        r.ses.tasks:createDownloadCoSes():download(r.opts.downloadUrl, {
+        local res = r.ses.tasks:createDownloadCoSes():download(r.opts.downloadUrl, {
             name = r.mod..' '..r.ver,
             size = r.opts.downloadSize,
-            cb = function (err) if not err then r.ses:updateSelectedMod(r.ses.repo.listMapped[r.mod]) end end
         })
+        if not res then
+            r.ses:updateSelectedMod(r.mod)
+        end
     end)
 end
 

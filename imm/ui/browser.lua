@@ -405,10 +405,10 @@ function IUISes:selectMod(mod)
     self.uibox:recalculate()
 end
 
---- @param ifMod? imm.ModMeta
+--- @param ifMod? string
 function IUISes:updateSelectedMod(ifMod)
     local mod = self.selectedMod and self.selectedMod
-    if not ifMod or ifMod == mod then
+    if not ifMod or mod and mod:id() == ifMod then
         return self:selectMod(mod)
     end
 end
