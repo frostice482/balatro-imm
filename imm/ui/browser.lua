@@ -107,6 +107,15 @@ BrowserStatic.specialFlavors = {
 
 BrowserStatic.safetyWarning = 'Safety warning: Not all mods are safe to download. Install only the mods you trust.'
 
+--- @param contents balatro.UIElement.Definition[]
+function IUISes:subcontainer(contents)
+    return create_UIBox_generic_options({
+        contents = contents,
+        back_func = UISes.funcs.back,
+        ref_table = self
+    })
+end
+
 --- @protected
 --- @param tasks? imm.Tasks
 function IUISes:init(tasks)

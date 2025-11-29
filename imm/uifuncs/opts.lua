@@ -1,6 +1,6 @@
-local UIBrowser = require("imm.ui.browser")
 local UICT = require("imm.ui.confirm_toggle")
 local UIOpts = require("imm.ui.options")
+local UIConf = require("imm.ui.config")
 local util = require("imm.lib.util")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
@@ -57,6 +57,11 @@ G.FUNCS[funcs.clearCache] = function(elm)
     end
 
     ses:showOverlay(true)
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.config] = function(elm)
+    ui.overlay(UIConf(elm.config.ref_table):render())
 end
 
 --- @param elm balatro.UIElement
