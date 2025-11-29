@@ -94,6 +94,7 @@ function ui.confirm(contentColumn, button, ref_table, yesButton, noButton)
             n = G.UIT.C,
             nodes = {
                 contentColumn,
+                ui.R{padding = 0.2},
                 ui.yesno(button, ref_table, yesButton, noButton)
             }
         }},
