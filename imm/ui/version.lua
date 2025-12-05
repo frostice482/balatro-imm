@@ -96,6 +96,7 @@ end
 function IUIVer:partTitle()
     return ui.C{
         minw = self.ses.fontscale * 10,
+        maxw = self.ses.fontscale * 10,
         ui.R{ ui.T(self.ver, self:partTitleConfig()) },
         self.sub and self.sub ~= '' and self.ses:uiTextRow(self.sub, 0.5) or nil
     }

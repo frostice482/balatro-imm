@@ -45,10 +45,17 @@ else
         ]])
     end
 
+    local tries = {
+        "curl",
+        "curl.so.4",
+    }
+
     local function cinit()
         if curl then return end
-        cok, curl = pcall(ffi.load, "curl")
-        if cok then return end
+        for i,v in ipairs(tries) do
+            cok, curl = pcall(ffi.load, v)
+            if cok then return end
+        end
         curl = nil
         return false
     end
