@@ -39,6 +39,16 @@ function IUIModSes:uiVersion(version, opts)
     return UIVersion(self.ses, self.mod:id(), version, opts)
 end
 
+--- @param mod imm.Mod
+function IUIModSes:uiVersionMod(mod)
+    return UIVersion(self.ses, self.mod:id(), mod.version, {
+        installed = true,
+        enabled = mod:isActive(),
+        locked = mod.isLocked,
+        sub = mod.path:sub(imm.modsDir:len()+2)
+    })
+end
+
 --- @param release imm.ModMeta.Release
 function IUIModSes:uiVersionRelease(release)
     return UIVersion.fromRelease(self.ses, self.mod:id(), release)
@@ -56,11 +66,8 @@ function IUIModSes:uiTabInstalled()
 
     --- @type imm.UI.Version[]
     local versions = {}
-    for _, entry in ipairs(l:list()) do
-        local ver = self:uiVersion(entry.version, {
-            sub = entry.path:sub(imm.modsDir:len()+2),
-            installed = true
-        })
+    for _, mod in ipairs(l:list()) do
+        local ver = self:uiVersionMod(mod)
         table.insert(versions, ver)
     end
 

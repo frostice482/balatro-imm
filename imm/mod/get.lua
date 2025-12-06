@@ -235,7 +235,6 @@ function get.processFile(ctx, base, depth, file)
 
     --- extract mod meta
     local id, version, deps, conflicts, provides = get.parseInfo(mod, fmt)
-    local ignored = prov.getInfo(base..'/.lovelyignore')
 
     --- modify version
     if id == "Steamodded" then
@@ -256,7 +255,8 @@ function get.processFile(ctx, base, depth, file)
         provides = provides,
         pathDepth = depth,
         description = mod.description,
-        loaded = not ignored
+        loaded = not prov.getInfo(base..'/.lovelyignore'),
+        locked = not not prov.getInfo(base..'/.immlock'),
     })
 end
 

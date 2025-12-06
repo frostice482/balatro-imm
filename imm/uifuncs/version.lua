@@ -71,6 +71,22 @@ G.FUNCS[funcs.toggle] = function(elm)
     end
 end
 
+G.FUNCS[funcs.lock] = function (elm)
+    --- @type table
+    local t = elm.config.ref_table
+    --- @type imm.UI.Version, boolean
+    local ver, locked = t.ver, t.locked
+    local ses = ver.ses
+
+    local m = ver:getMod()
+    local ok, err = false, 'mod not found'
+    if m and not locked then ok, err = m:lock() end
+    if m and locked then ok, err = m:unlock() end
+
+    ses.tasks.status:update(nil, err)
+    ses:updateSelectedMod()
+end
+
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.deleteConfirm] = function(elm)
     local r = elm.config.ref_table or {}
