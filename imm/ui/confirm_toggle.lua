@@ -21,7 +21,11 @@ local actionsRank = {
 --- @field mod? imm.Mod
 --- @field uiButtonConf balatro.UI.ButtonParam
 local IUICT = {
-    allowDownloadMissing = true
+    allowDownloadMissing = true,
+    buttonDownload = funcs.download,
+    buttonConfirm = funcs.confirm,
+    buttonConfirmOne = funcs.confirmOne,
+    buttonBack = browser_funcs.back,
 }
 
 --- @param ses imm.UI.Browser
@@ -167,33 +171,52 @@ function IUICT:partMissing()
     return list
 end
 
+function IUICT:uiButtonDownload()
+    --- @type balatro.UI.ButtonParam
+    return {
+        button = self.buttonDownload,
+        label = {'Download missings'},
+        colour = G.C.BLUE
+    }
+end
+
+
+function IUICT:uiButtonConfirm(hasErr)
+    --- @type balatro.UI.ButtonParam
+    return {
+        button = self.buttonConfirm,
+        label = {hasErr and 'Confirm anyway' or 'Confirm'},
+        colour = hasErr and G.C.ORANGE or G.C.BLUE
+    }
+end
+
+function IUICT:uiButtonConfirmOne()
+    --- @type balatro.UI.ButtonParam
+    return {
+        button = self.buttonConfirmOne,
+        label = {'JUST '..self.mod.name},
+        colour = G.C.ORANGE
+    }
+end
+
+function IUICT:uiButtonCancel()
+    --- @type balatro.UI.ButtonParam
+    return {
+        button = self.buttonBack,
+        label = {'Cancel'},
+        colour = G.C.GREY,
+        ref_table = self.ses
+    }
+end
+
 function IUICT:uiButtonOptions(hasMissing, hasErr)
     --- @type balatro.UI.ButtonParam[]
     local buttonOpts = {}
 
-    if hasMissing and self.allowDownloadMissing then table.insert(buttonOpts, {
-        button = funcs.download,
-        label = {'Download missings'},
-        colour = G.C.BLUE
-    }) end
-
-    table.insert(buttonOpts, {
-        button = funcs.confirm,
-        label = {hasErr and 'Confirm anyway' or 'Confirm'},
-        colour = hasErr and G.C.ORANGE or G.C.BLUE
-    })
-
-    table.insert(buttonOpts, self.mod and {
-        button = funcs.confirmOne,
-        label = {'JUST '..self.mod.name},
-        colour = G.C.ORANGE
-    } or nil)
-
-    table.insert(buttonOpts, {
-        button = browser_funcs.back,
-        label = {'Cancel'},
-        colour = G.C.GREY, ref_table = self.ses
-    })
+    table.insert(buttonOpts, hasMissing and self.allowDownloadMissing and self:uiButtonDownload() or nil)
+    table.insert(buttonOpts, self:uiButtonConfirm(hasErr))
+    table.insert(buttonOpts, self.mod and self:uiButtonConfirmOne() or nil)
+    table.insert(buttonOpts, self:uiButtonCancel())
 
     return buttonOpts
 end
