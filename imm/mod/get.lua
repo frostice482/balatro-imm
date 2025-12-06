@@ -257,7 +257,7 @@ function get.processFile(ctx, base, depth, file)
         pathDepth = depth,
         description = mod.description,
         loaded = not ignored
-    }, not ignored)
+    })
 end
 
 get.excludedDirs = {

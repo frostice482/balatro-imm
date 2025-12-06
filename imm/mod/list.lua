@@ -35,11 +35,10 @@ end
 
 --- @param version string
 --- @param opts? imm.ModOpts
---- @param enabled? boolean
-function IModList:createVersion(version, opts, enabled)
+function IModList:createVersion(version, opts)
     local m = Mod(self, version, opts)
     self.versions[version] = m
-    if enabled then self.active = m end
+    if opts and opts.loaded then self.active = m end
     self.listRequiresUpdate = true
     return m
 end
