@@ -145,7 +145,7 @@ function IMod:unlock()
 end
 
 function IMod:isExcluded()
-    return self.mod == 'balatro_imm' or self.list.native
+    return self.mod == 'balatro_imm' or self.list.native or self.isLocked
 end
 
 function IMod:isActive()
