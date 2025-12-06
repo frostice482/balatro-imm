@@ -53,15 +53,8 @@ end
 
 --- @return boolean ok, string? err
 function IModList:disable()
-    if self.native then return self:errNative() end
     if not self.active then return true end
-
-    local ok, err = NFS.write(self.active.path .. '/.lovelyignore', '')
-    if not ok then return false, err end
-
-    logger.fmt('log', 'Disabled %s %s', self.mod, self.active.version)
-    self.active = nil
-    return true
+    return self.active:disable()
 end
 
 --- @param version string

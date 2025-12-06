@@ -98,6 +98,19 @@ function IMod:enable()
     return true
 end
 
+--- @return boolean ok, string? err
+function IMod:disable()
+    if self.list.native then return self:errNative() end
+    if not self:isActive() then return false, 'not active' end
+
+    local ok, err = NFS.write(self.path .. '/.lovelyignore', '')
+    if not ok then return false, err end
+
+    logger.fmt('log', 'Disabled %s %s', self.mod, self.version)
+    self.list.active = nil
+    return true
+end
+
 function IMod:isExcluded()
     return self.mod == 'balatro_imm' or self.list.native
 end
