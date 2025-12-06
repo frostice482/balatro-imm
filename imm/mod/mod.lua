@@ -86,8 +86,8 @@ function IMod:uninstall()
     if self:isActive() then return self:errActiveUninstall() end
     if not self:isSafePath() then return self:errUnsafe() end
 
-    local ok = util.rmdir(self.path, true)
-    if not ok then return false, 'Failed deleting moddir' end
+    local ok, x = util.rmdir(self.path, true)
+    if not ok then return false, 'Failed deleting moddir ' .. x end
 
     logger.fmt('log', 'Deleted %s %s (%s)', self.mod, self.version, self.path)
     self.list.versions[self.version] = nil
