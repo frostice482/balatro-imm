@@ -64,7 +64,7 @@ G.FUNCS[funcs.toggle] = function(elm)
         end
 
         ses.tasks.status:update(nil, err)
-        ses:updateSelectedMod()
+        modses:rerender()
         if ok then ses.hasChanges = true end
     else
         ui.overlay(UICT(ses, test, mod, enabled):render())
@@ -84,7 +84,7 @@ G.FUNCS[funcs.lock] = function (elm)
     if m and locked then ok, err = m:unlock() end
 
     ses.tasks.status:update(nil, err)
-    ses:updateSelectedMod()
+    ver:rerender()
 end
 
 G.FUNCS[funcs.hide] = function (elm)
@@ -100,7 +100,7 @@ G.FUNCS[funcs.hide] = function (elm)
     if m and hidden then ok, err = m:unhide() end
 
     ses.tasks.status:update(nil, err)
-    ses:updateSelectedMod()
+    ver:rerender()
 end
 
 --- @param elm balatro.UIElement
@@ -117,6 +117,12 @@ G.FUNCS[funcs.deleteConfirm] = function(elm)
     end
 
     ses:showOverlay(true)
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.init] = function(elm)
+    elm.config.func = nil
+    elm.config.ref_table.uie = elm
 end
 
 return funcs

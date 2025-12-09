@@ -10,6 +10,7 @@ local funcs = {
     toggle         = 'imm_v_toggle',
     lock           = 'imm_v_lock',
     hide           = 'imm_v_hide',
+    init           = 'imm_v_init',
 }
 local sprites = {
     switchOn = { x = 1, y = 0 },
@@ -43,7 +44,10 @@ local thunderstoreColor = mix_colours(copy_table(G.C.BLUE), {1, 1, 1, 1}, 0.6)
 
 --- @class imm.UI.Version
 --- @field tooltips string[]
-local IUIVer = {}
+--- @field uie? balatro.UIElement
+local IUIVer = {
+    titleWidth = 9
+}
 
 --- @protected
 --- @param ses imm.UI.Browser
@@ -115,8 +119,8 @@ end
 
 function IUIVer:partTitle()
     return ui.C{
-        minw = self.ses.fontscale * 10,
-        maxw = self.ses.fontscale * 10,
+        minw = self.ses.fontscale * self.titleWidth,
+        maxw = self.ses.fontscale * self.titleWidth,
         ui.R{ ui.T(self.ver, self:partTitleConfig()) },
         self.sub and self.sub ~= '' and self.ses:uiTextRow(self.sub, 0.5) or nil
     }
@@ -182,10 +186,10 @@ function IUIVer:partActions()
     table.insert(list, self:partSwitchButton())
     table.insert(list, self:partActionsButton())
     table.insert(list, self:partLockButton())
-    table.insert(list, self:partHideButton())
+    --table.insert(list, self:partHideButton())
 
     return ui.C{
-        minw = self.ses.fontscale * (15/9 + 1 + 1 + 2/5),
+        minw = self.ses.fontscale * (15/9 + 1 + 1 + 1 + 3/5),
         align = 'cr',
         ui.R{
             align = 'c',
@@ -200,10 +204,10 @@ function IUIVer:syncInfo()
     local mod = self:getMod()
     if not mod then return end
 
-    if opts.installed == nil then opts.installed = true end
-    if opts.enabled == nil then opts.enabled = mod:isActive() end
-    if opts.locked == nil then opts.locked = mod.locked end
-    if opts.hidden == nil then opts.hidden = mod.hidden end
+    opts.installed = true
+    opts.enabled = mod:isActive()
+    opts.locked = mod.locked
+    opts.hidden = mod.hidden
 end
 
 function IUIVer:renderParts()
@@ -213,8 +217,11 @@ function IUIVer:renderParts()
     }
 end
 
-function IUIVer:render()
-    return ui.R{
+function IUIVer:renderLow()
+    return ui.ROOT{
+        func = funcs.init,
+        ref_table = self,
+
         ui.R{
             colour = self.opts.color or self.opts.enabled and G.C.GREEN or G.C.BLUE,
             padding = 0.1,
@@ -224,6 +231,19 @@ function IUIVer:render()
         },
         ui.gap('R', 0.1)
     }
+end
+
+function IUIVer:rerender()
+    if not self.uie then return end
+    self:syncInfo()
+    self.uie.UIBox.UIRoot:remove()
+    self.uie.UIBox.UIRoot = nil
+    self.uie.UIBox:add_child(self:renderLow())
+    self.uie.UIBox:recalculate()
+end
+
+function IUIVer:render()
+    return ui.R{ui.O(UIBox{definition = self:renderLow(), config = {}})}
 end
 
 --- @class imm.UI.Version.Static
