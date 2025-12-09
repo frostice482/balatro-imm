@@ -44,7 +44,7 @@ function IUIModSes:uiVersionMod(mod)
     return UIVersion(self.ses, self.mod:id(), mod.version, {
         installed = true,
         enabled = mod:isActive(),
-        locked = mod.isLocked,
+        locked = mod.locked,
         sub = mod.path:sub(imm.modsDir:len()+2)
     })
 end

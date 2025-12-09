@@ -28,12 +28,14 @@ local imm = require('imm')
 --- @field description? string
 --- @field loaded? boolean
 --- @field locked? boolean
+--- @field hidden? boolean
 
 --- @class imm.Mod
 local IMod = {
     name = '',
-    isLoaded = false,
-    isLocked = false
+    loaded = false,
+    locked = false,
+    hidden = false
 }
 
 --- @protected
@@ -55,8 +57,9 @@ function IMod:init(list, ver, opts)
     self.pathDepth = opts.pathDepth or 0
     self.description = opts.description
     self.name = opts.info and opts.info.name or list.mod
-    self.isLoaded = opts.loaded
-    self.isLocked = opts.locked
+    self.loaded = opts.loaded
+    self.locked = opts.locked
+    self.hidden = opts.hidden
 end
 
 --- @return boolean ok, string err
@@ -82,7 +85,7 @@ end
 --- @return boolean ok, string? err
 function IMod:uninstall()
     if self.list.native then return self:errNative() end
-    if self.isLocked then return self:errLocked() end
+    if self.locked then return self:errLocked() end
     if self:isActive() then return self:errActiveUninstall() end
     if not self:isSafePath() then return self:errUnsafe() end
 
@@ -98,7 +101,7 @@ end
 --- @return boolean ok, string? err
 function IMod:enable()
     if self.list.native then return self:errNative() end
-    if self.isLocked then return self:errLocked() end
+    if self.locked then return self:errLocked() end
 
     if self.list.active then self.list:disable() end
 
@@ -113,7 +116,7 @@ end
 --- @return boolean ok, string? err
 function IMod:disable()
     if self.list.native then return self:errNative() end
-    if self.isLocked then return self:errLocked() end
+    if self.locked then return self:errLocked() end
     if not self:isActive() then return false, 'not active' end
 
     local ok, err = NFS.write(self.path .. '/.lovelyignore', '')
@@ -126,26 +129,50 @@ end
 
 --- @return boolean ok, string? err
 function IMod:lock()
-    if self.isLocked then return true end
+    if self.locked then return true end
 
     local ok, err = NFS.write(self.path .. '/.immlock', '')
     if not ok then return false, err end
-    self.isLocked = true
+    self.locked = true
     return true
 end
 
 --- @return boolean ok, string? err
 function IMod:unlock()
-    if not self.isLocked then return true end
+    if not self.locked then return true end
 
     local ok, err = NFS.remove(self.path .. '/.immlock', '')
     if not ok then return false, err end
-    self.isLocked = false
+    self.locked = false
+    return true
+end
+
+--- @return boolean ok, string? err
+function IMod:hide()
+    if self.hidden then return true end
+
+    local ok, err = NFS.write(self.path .. '/.immhide', '')
+    if not ok then return false, err end
+    self.hidden = true
+    return true
+end
+
+--- @return boolean ok, string? err
+function IMod:unhide()
+    if not self.hidden then return true end
+
+    local ok, err = NFS.remove(self.path .. '/.immhide', '')
+    if not ok then return false, err end
+    self.hidden = false
     return true
 end
 
 function IMod:isExcluded()
-    return self.mod == 'balatro_imm' or self.list.native or self.isLocked
+    return self.mod == 'balatro_imm' or self.list.native or self.locked
+end
+
+function IMod:isHidden()
+    return self.mod == 'balatro_imm' or self.list.native or self.hidden
 end
 
 function IMod:isActive()

@@ -9,25 +9,30 @@ local funcs = {
     download       = 'imm_v_download',
     toggle         = 'imm_v_toggle',
     lock           = 'imm_v_lock',
+    hide           = 'imm_v_hide',
 }
 local sprites = {
     switchOn = { x = 1, y = 0 },
     switchOff = { x = 0, y = 0 },
-    iconDelete = { x = 0, y = 0 },
-    iconDownload = { x = 1, y = 0 },
-    iconUnLocked = { x = 0, y = 1 },
-    iconLocked = { x = 1, y = 1 },
+    delete = { x = 0, y = 0 },
+    download = { x = 1, y = 0 },
+    unlocked = { x = 0, y = 1 },
+    locked = { x = 1, y = 1 },
+    shown = { x = 2, y = 0 },
+    hidden = { x = 3, y = 0 },
 }
 
 local thunderstoreColor = mix_colours(copy_table(G.C.BLUE), {1, 1, 1, 1}, 0.6)
 
 --- @class imm.UI.Version.Opts
 --- @field sub? string
+--- @field color? ColorHex
+--- @field tooltips? string[]
+---
 --- @field installed? boolean
 --- @field enabled? boolean
 --- @field locked? boolean
---- @field color? ColorHex
---- @field tooltips? string[]
+--- @field hidden? boolean
 ---
 --- @field downloadUrl? string
 --- @field downloadSize? number
@@ -117,44 +122,59 @@ function IUIVer:partTitle()
     }
 end
 
-function IUIVer:atlas(pos, atlas, wm, hm)
-    return Sprite(0, 0, self.ses.fontscale * (wm or 1), self.ses.fontscale * (hm or 1), G.ASSET_ATLAS[atlas or 'imm_icons'], pos)
+function IUIVer:atlasBtn(pos, btn, ref, atlas, wm, hm)
+    local spr = Sprite(0, 0, self.ses.fontscale * (wm or 1), self.ses.fontscale * (hm or 1), G.ASSET_ATLAS[atlas or 'imm_icons'], pos)
+    return ui.O(spr, {
+        button = btn,
+        button_dist = 0.4,
+        ref_table = ref or self
+    })
 end
 
 function IUIVer:partSwitchButton()
     local opts = self.opts
     if opts.locked or not opts.installed then return nil end
 
-    local spr = self:atlas(opts.enabled and sprites.switchOn or sprites.switchOff, 'imm_toggle', 15/9, 1)
-    return ui.O(spr, {
-        button = funcs.toggle,
-        button_dist = 0.4,
-        ref_table = { ses = self, toggle = opts.enabled }
-    })
+    return self:atlasBtn(
+        opts.enabled and sprites.switchOn or sprites.switchOff,
+        funcs.toggle,
+        { ses = self, toggle = opts.enabled },
+        'imm_toggle',
+        15/9,
+        1
+    )
 end
 
 function IUIVer:partActionsButton()
     local opts = self.opts
     if opts.locked or opts.enabled or not (opts.installed or opts.downloadUrl) then return nil end
 
-    local spr = self:atlas(opts.installed and sprites.iconDelete or sprites.iconDownload)
-    return ui.O(spr, {
-        button = opts.installed and funcs.delete or funcs.download,
-        button_dist = 0.4,
-        ref_table = self
-    })
+    return self:atlasBtn(
+        opts.installed and sprites.delete or sprites.download,
+        opts.installed and funcs.delete or funcs.download
+    )
 end
 
 function IUIVer:partLockButton()
     local opts = self.opts
     if not opts.installed then return nil end
 
-    local spr = self:atlas(opts.locked and sprites.iconLocked or sprites.iconUnLocked)
-    return ui.O(spr, {
-        button = funcs.lock,
-        button_dist = 0.4,
-        ref_table = { ver = self, locked = opts.locked }
-    })
+    return self:atlasBtn(
+        opts.locked and sprites.locked or sprites.unlocked,
+        funcs.lock,
+        { ver = self, locked = opts.locked }
+    )
+end
+
+function IUIVer:partHideButton()
+    local opts = self.opts
+    if not opts.installed then return nil end
+
+    return self:atlasBtn(
+        opts.hidden and sprites.hidden or sprites.shown,
+        funcs.hide,
+        { ver = self, hidden = opts.hidden }
+    )
 end
 
 function IUIVer:partActions()
@@ -162,6 +182,7 @@ function IUIVer:partActions()
     table.insert(list, self:partSwitchButton())
     table.insert(list, self:partActionsButton())
     table.insert(list, self:partLockButton())
+    table.insert(list, self:partHideButton())
 
     return ui.C{
         minw = self.ses.fontscale * (15/9 + 1 + 1 + 2/5),
@@ -181,7 +202,8 @@ function IUIVer:syncInfo()
 
     if opts.installed == nil then opts.installed = true end
     if opts.enabled == nil then opts.enabled = mod:isActive() end
-    if opts.locked == nil then opts.locked = mod.isLocked end
+    if opts.locked == nil then opts.locked = mod.locked end
+    if opts.hidden == nil then opts.hidden = mod.hidden end
 end
 
 function IUIVer:renderParts()

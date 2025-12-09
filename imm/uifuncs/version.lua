@@ -87,6 +87,22 @@ G.FUNCS[funcs.lock] = function (elm)
     ses:updateSelectedMod()
 end
 
+G.FUNCS[funcs.hide] = function (elm)
+    --- @type table
+    local t = elm.config.ref_table
+    --- @type imm.UI.Version, boolean
+    local ver, hidden = t.ver, t.hidden
+    local ses = ver.ses
+
+    local m = ver:getMod()
+    local ok, err = false, 'mod not found'
+    if m and not hidden then ok, err = m:hide() end
+    if m and hidden then ok, err = m:unhide() end
+
+    ses.tasks.status:update(nil, err)
+    ses:updateSelectedMod()
+end
+
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.deleteConfirm] = function(elm)
     local r = elm.config.ref_table or {}

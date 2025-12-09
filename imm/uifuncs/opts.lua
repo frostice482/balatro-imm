@@ -176,7 +176,7 @@ local modlisthead = '# '..modlistfmt:format("id", "version", "status", "path")
 
 --- @param mod imm.Mod
 local function fmtmod(mod)
-    return '- '..modlistfmt:format(mod.mod, mod.version, mod.isLoaded and 'loaded' or '-', mod.path:sub(imm.modsDir:len()+2))
+    return '- '..modlistfmt:format(mod.mod, mod.version, mod.loaded and 'loaded' or '-', mod.path:sub(imm.modsDir:len()+2))
 end
 
 --- @param elm balatro.UIElement

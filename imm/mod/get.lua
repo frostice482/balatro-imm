@@ -257,6 +257,7 @@ function get.processFile(ctx, base, depth, file)
         description = mod.description,
         loaded = not prov.getInfo(base..'/.lovelyignore'),
         locked = not not prov.getInfo(base..'/.immlock'),
+        hidden = not not prov.getInfo(base..'/.immhide'),
     })
 end
 
