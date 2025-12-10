@@ -60,6 +60,9 @@ function IUICT:init(ses, list, mod, isDisable)
         minw = 3,
         maxw = 3
     }
+
+    local tgltext = self.isDisable and 'Disable' or 'Enable'
+    self.titleText = self.mod and string.format('%s %s %s?', tgltext, self.mod.name, self.mod.version) or string.format('%s?', tgltext)
 end
 
 --- @protected
@@ -249,12 +252,9 @@ end
 
 --- @protected
 function IUICT:renderContent()
-    local tgltext = self.isDisable and 'Disable' or 'Enable'
-    local titleText = self.mod and string.format('%s %s %s?', tgltext, self.mod.name, self.mod.version) or string.format('%s?', tgltext)
-
     --- @type balatro.UIElement.Definition[]
     local nodes = {}
-    table.insert(nodes, ui.TRS(titleText, self.fontscaleTitle * 1.25))
+    table.insert(nodes, ui.TRS(self.titleText, self.fontscaleTitle * 1.25))
 
     local missings = self:partMissing()
     local impossibles, changes = self:partActions()
