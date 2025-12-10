@@ -1,10 +1,3 @@
-require("imm.ui.browser")
-require('imm.dropinstall')
-require('imm.uifuncs.browser')
-require('imm.uifuncs.confirm_toggle')
-require('imm.uifuncs.mod')
-require('imm.uifuncs.opts')
-require('imm.uifuncs.version')
 
 local imm = require("imm")
 local function atlas(key, path, px, py)

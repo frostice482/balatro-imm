@@ -1,57 +1,34 @@
 local util = require("imm.lib.util")
 local ui = require("imm.lib.ui")
-local imm = require('imm')
 
-local updateConfig = false
-
---- Processing configs
-
-if imm.config.nextEnable then
-    local ctrl = require('imm.ctrl')
-    local logger = require('imm.logger')
-
-    local mods = util.strsplit(imm.config.nextEnable, '%s*==%s*')
-    for i,entry in ipairs(mods) do
-        local mod, ver = entry:match('^([^=]+)=(.*)')
-        if mod and ver then
-            local ok, err = ctrl:enable(mod, ver)
-            if ok then logger.log('Postenabled:', mod, ver)
-            else logger.err('Postenable failed:', err or '?') end
-        else
-            logger.fmt('invalid nextEnable entry "%s"', entry)
-        end
-    end
-
-    imm.config.nextEnable = nil
-    updateConfig = true
-end
-
-if not imm.config.init then
-    local ctrl = require('imm.ctrl')
-    local hasOtherMod = false
-    for i, list in ipairs(ctrl:list()) do
-        if not list:isExcluded() then
-            hasOtherMod = true
-            break
-        end
-    end
-    if not hasOtherMod then
-        require("imm.welcome")
-    else
-        imm.config.init = '1'
-        updateConfig = true
-    end
-end
-
-if updateConfig then
-    _imm.saveconfig()
-end
-
---- UI-related
+package.preload['imm.tasks'] = function () return require("imm.btasks.tasks")() end
+package.preload['imm.repo'] = function () return require("imm.modrepo.repo")() end
 
 local funcs = {
     restartConf = 'imm_s_restart_conf',
+    browse = 'imm_browse',
+    restart = 'imm_restart',
 }
+
+--- @class balatro.Functions.Uidef
+--- @field imm_restart fun(): balatro.UIElement.Definition
+
+--- @param text string
+--- @param button string
+--- @param col? boolean
+local function wrap(text, button, col)
+    --- @type balatro.UIElement.Definition
+    return {
+        n = col and G.UIT.C or G.UIT.R, config = { align = "cm", padding = 0.2, r = 0.1, emboss = 0.1, colour = G.C.L_BLACK },
+        nodes = {{
+            n = G.UIT.R,
+            config = { align = "cm", padding = 0.15, r = 0.1, hover = true, colour = G.C.PURPLE, shadow = true, button = button },
+            nodes = {{
+                n = G.UIT.T, config = { text = text, scale = 0.5, colour = G.C.UI.TEXT_LIGHT, shadow = true }
+            }}
+        }}
+    }
+end
 
 local exit_overlay = G.FUNCS.exit_overlay_menu
 G.FUNCS.exit_overlay_menu = function()
@@ -61,10 +38,7 @@ G.FUNCS.exit_overlay_menu = function()
     ui.overlay(G.UIDEF.imm_restart())
 end
 
---- @class balatro.Functions.Uidef
---- @field imm_restart fun(): balatro.UIElement.Definition
-
-G.UIDEF.imm_restart = function()
+G.UIDEF[funcs.restart] = function()
     return ui.confirm( ui.TRS('Restart balatro now?', 0.6), funcs.restartConf, {} )
 end
 
@@ -74,32 +48,10 @@ G.FUNCS[funcs.restartConf] = function(elm)
     util.restart()
 end
 
--- Taken from balamod, modified
--- https://github.com/balamod/balamod_lua/blob/main/src/balamod_uidefs.lua
---- @param content balatro.UIElement.Definition[]
---- @param button string
---- @param col? boolean
-local function wrap(content, button, col)
-    --- @type balatro.UIElement.Definition
-    return {
-        n = col and G.UIT.C or G.UIT.R, config = { align = "cm", padding = 0.2, r = 0.1, emboss = 0.1, colour = G.C.L_BLACK },
-        nodes = {{
-            n = G.UIT.R,
-            config = { align = "cm", padding = 0.15, r = 0.1, hover = true, colour = G.C.PURPLE, shadow = true, button = button },
-            nodes = content
-        }}
-    }
-end
+local Browser
 
-local function browse_button()
-    --- @type balatro.UIElement.Definition
-    return {
-        n = G.UIT.T, config = { text = "Browse", scale = 0.5, colour = G.C.UI.TEXT_LIGHT, shadow = true }
-    }
-end
-
-function G.FUNCS.imm_browse()
-    require('imm.init_ui')
+G.FUNCS[funcs.browse] = function()
+    require('imm.ui.init_funcs')
     Browser = Browser or require("imm.ui.browser")
 
     local b = Browser()
@@ -110,6 +62,6 @@ end
 local o1 = create_UIBox_main_menu_buttons
 function create_UIBox_main_menu_buttons()
     local r = o1()
-    table.insert(r.nodes[2].nodes, 1, wrap({browse_button()}, 'imm_browse'))
+    table.insert(r.nodes[2].nodes, 1, wrap("Browse", funcs.browse))
     return r
 end
