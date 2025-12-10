@@ -128,14 +128,27 @@ function IUIVer:renderTitle()
     }
 end
 
+--- @class _imm.UI.Version.AtlasButton
+--- @field pos Position
+--- @field btn string
+--- @field ref? any
+--- @field atlas? string
+--- @field wm? number
+--- @field hm? number
+--- @field tooltipText? string[]
+
 --- @protected
-function IUIVer:atlasBtn(pos, btn, ref, atlas, wm, hm)
-    local spr = Sprite(0, 0, self.ses.fontscale * (wm or 1), self.ses.fontscale * (hm or 1), G.ASSET_ATLAS[atlas or 'imm_icons'], pos)
-    return ui.O(spr, {
-        button = btn,
+--- @param opts _imm.UI.Version.AtlasButton
+function IUIVer:atlasBtn(opts)
+    local spr = Sprite(0, 0, self.ses.fontscale * (opts.wm or 1), self.ses.fontscale * (opts.hm or 1), G.ASSET_ATLAS[opts.atlas or 'imm_icons'], opts.pos)
+    return ui.C{
+        tooltip = opts.tooltipText and { text = opts.tooltipText, text_scale = self.ses.fontscale * 0.8 } or nil,
+        button = opts.btn,
         button_dist = 0.4,
-        ref_table = ref or self
-    })
+        ref_table = opts.ref or self,
+
+        ui.O(spr)
+    }
 end
 
 --- @protected
@@ -143,14 +156,13 @@ function IUIVer:renderButtonSwitch()
     local opts = self.opts
     if opts.locked or not opts.installed then return nil end
 
-    return self:atlasBtn(
-        opts.enabled and sprites.switchOn or sprites.switchOff,
-        funcs.toggle,
-        { ses = self, toggle = opts.enabled },
-        'imm_toggle',
-        15/9,
-        1
-    )
+    return self:atlasBtn({
+        pos = opts.enabled and sprites.switchOn or sprites.switchOff,
+        btn = funcs.toggle,
+        ref = { ses = self, toggle = opts.enabled },
+        atlas = 'imm_toggle', wm = 15/9, hm = 1,
+        tooltipText = opts.enabled and {'Enabled'} or {'Disabled'}
+    })
 end
 
 --- @protected
@@ -158,10 +170,15 @@ function IUIVer:renderButtonAction()
     local opts = self.opts
     if opts.locked or opts.enabled or not (opts.installed or opts.downloadUrl) then return nil end
 
-    return self:atlasBtn(
-        opts.installed and sprites.delete or sprites.download,
-        opts.installed and funcs.delete or funcs.download
-    )
+    return self:atlasBtn(opts.installed and {
+        pos = sprites.delete,
+        btn = funcs.delete,
+        tooltipText = {'Delete'}
+    } or {
+        pos = sprites.download,
+        btn = funcs.download,
+        tooltipText = {'Download'}
+    })
 end
 
 --- @protected
@@ -169,11 +186,12 @@ function IUIVer:renderButtonLock()
     local opts = self.opts
     if not opts.installed then return nil end
 
-    return self:atlasBtn(
-        opts.locked and sprites.locked or sprites.unlocked,
-        funcs.lock,
-        { ver = self, locked = opts.locked }
-    )
+    return self:atlasBtn({
+        pos = opts.locked and sprites.locked or sprites.unlocked,
+        btn = funcs.lock,
+        ref = { ver = self, locked = opts.locked },
+        tooltipText = opts.locked and {'Locked'} or {'Unlocked'}
+    })
 end
 
 --- @protected
@@ -181,11 +199,12 @@ function IUIVer:renderButtonHide()
     local opts = self.opts
     if not opts.installed then return nil end
 
-    return self:atlasBtn(
-        opts.hidden and sprites.hidden or sprites.shown,
-        funcs.hide,
-        { ver = self, hidden = opts.hidden }
-    )
+    return self:atlasBtn({
+        pos = opts.hidden and sprites.hidden or sprites.shown,
+        btn = funcs.hide,
+        ref = { ver = self, hidden = opts.hidden },
+        tooltipText = opts.hidden and {'Hidden'} or {'Shown'}
+    })
 end
 
 --- @protected
