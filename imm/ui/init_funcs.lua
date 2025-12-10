@@ -1,5 +1,5 @@
 require("imm.ui.browser")
-require('imm.dropinstall')
+require('imm.ui.dropinstall')
 require('imm.ui.init_atlas')
 require('imm.uifuncs.browser')
 require('imm.uifuncs.confirm_toggle')
