@@ -2,6 +2,7 @@ local constructor = require("imm.lib.constructor")
 local co = require("imm.lib.co")
 local logger = require("imm.logger")
 local imm = require("imm")
+local util= require("imm.lib.util")
 
 --- @class imm.Task.Download.Co
 --- @field blacklistUrls? table<string>
@@ -110,8 +111,8 @@ function IBTaskDownCo:handleInstallResult(info)
         co.all(queues)
     end
 
-    for i,v in ipairs(info.installed) do table.insert(self.modlist, v) end
-    for i,v in ipairs(info.errors) do table.insert(self.errors, v) end
+    util.insertBatch(self.modlist, info.installed)
+    util.insertBatch(self.errors, info.errors)
 
     return info
 end

@@ -301,11 +301,7 @@ function IModCtrl:installFromZip(zipData)
 end
 
 function IModCtrl:list()
-    --- @type imm.ModList[]
-    local l = {}
-    for k,v in pairs(self.mods) do table.insert(l, v) end
-    table.sort(l, function (a, b) return a.mod < b.mod end)
-    return l
+    return util.values(self.mods, function (va, vb) return va.mod < vb.mod end)
 end
 
 function IModCtrl:listAll()

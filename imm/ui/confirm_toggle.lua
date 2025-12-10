@@ -166,8 +166,7 @@ function IUICT:partMissing()
     local list = {}
 
     for i, entry in ipairs(missings) do
-        local str = {}
-        for i, entry in pairs(entry[2]) do table.insert(str, entry) end
+        local str = util.values(entry[2])
 
         local base = self:renderEntry({
             {ui.TS(string.format('? %s', entry[1]), self.fontscale, G.C.YELLOW)},

@@ -181,8 +181,8 @@ end
 function IMeta:getReleasesCached()
     --- @type imm.ModMeta.Release[]
     local list = {}
-    if self.tsVersionsCache then for i,v in ipairs(self.tsVersionsCache) do table.insert(list, v) end end
-    if self.bmiVersionsCache then for i,v in ipairs(self.bmiVersionsCache) do table.insert(list, v) end end
+    if self.tsVersionsCache then util.insertBatch(list, self.tsVersionsCache) end
+    if self.bmiVersionsCache then util.insertBatch(list, self.bmiVersionsCache) end
     table.sort(list, compareVersion)
     return list
 end

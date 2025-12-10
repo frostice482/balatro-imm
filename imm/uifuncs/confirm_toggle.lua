@@ -1,5 +1,6 @@
 local UICT = require("imm.ui.confirm_toggle")
 local co = require("imm.lib.co")
+local util = require("imm.lib.util")
 local funcs = UICT.funcs
 
 --- @param elm balatro.UIElement
@@ -12,9 +13,7 @@ G.FUNCS[funcs.download] = function (elm)
 
         r.ses:showOverlay(true)
         for id,entries in pairs(r.list.missingDeps) do
-            local rules = {}
-            for mod, rule in pairs(entries) do table.insert(rules, rule) end
-            down:downloadMissingModEntry(id, rules)
+            down:downloadMissingModEntry(id, util.values(entries))
         end
     end)
 end

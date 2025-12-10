@@ -1,6 +1,7 @@
 local constructor = require('imm.lib.constructor')
 local ProvidedList = require('imm.mod.providedlist')
 local logger = require('imm.logger')
+local util   = require('imm.lib.util')
 
 --- @alias imm.LoadList.ModList table<string, table<imm.Mod, imm.Dependency.Rule[]>>
 
@@ -244,7 +245,7 @@ function ILoadList:_tryEnable(mod, rules, cause)
     local a = self.actions[id]
     if a then
         if a.impossible then return end
-        if rules then for i, rule in ipairs(rules) do table.insert(a.enableRules, rule) end end -- concat rules
+        if rules then util.insertBatch(a.enableRules, rules) end -- concat rules
 
         -- enabling from disabled
         if a.action == 'disable' then

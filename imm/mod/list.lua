@@ -1,6 +1,7 @@
 local constructor = require("imm.lib.constructor")
 local Mod = require("imm.mod.mod")
 local logger = require("imm.logger")
+local util   = require("imm.lib.util")
 
 --- @class imm.ModList
 --- @field versions table<string, imm.Mod>
@@ -77,9 +78,7 @@ end
 function IModList:list()
     if not self.listRequiresUpdate then return self.cachedList end
     self.listRequiresUpdate = false
-    self.cachedList = {}
-    for k,v in pairs(self.versions) do table.insert(self.cachedList, v) end
-    table.sort(self.cachedList, function (a, b) return a.versionParsed > b.versionParsed end)
+    self.cachedList = util.values(self.versions, function (va, vb) return va.versionParsed > vb.versionParsed end)
     return self.cachedList
 end
 

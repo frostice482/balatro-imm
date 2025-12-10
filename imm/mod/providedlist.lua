@@ -1,5 +1,6 @@
 local constructor = require('imm.lib.constructor')
 local V = require('imm.lib.version')
+local util = require('imm.lib.util')
 
 --- @class imm.ProvidedList.Entry.Version
 --- @field version string
@@ -44,17 +45,13 @@ function IProvidedEntry:list(ascending, modsAscending)
     --- @type [Version, imm.Mod[]][]
     local versions = {}
     for str, list in pairs(self.versions) do
-        --- @type imm.Mod[]
-        local mods = {}
-        for mod in pairs(list.mods) do table.insert(mods, mod) end
-        table.sort(mods, function (a, b)
+        local mods = util.keys(list. mods, function (a, b)
             if a.mod ~= b.mod then
                 if modsAscending then return a.mod < b.mod end
                 return a.mod > b.mod
             end
             return a > b
         end)
-
         table.insert(versions, {list.parsed, mods})
     end
     table.sort(versions, function (a, b)
