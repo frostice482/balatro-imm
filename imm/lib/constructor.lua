@@ -2,7 +2,7 @@
 --- proto: Proto;
 --- super: Super;
 --- className: string;
---- extendTo: fun(constructor: self, other: table, name?: string);
+--- extendTo: fun(constructor: self, other: table, name?: string, static?: any);
 --- is: fun(constructor: self, other: any): boolean;
 --- }
 --- @alias p.C.Default p.Constructor<any, fun(...)>
@@ -33,6 +33,15 @@ function Proto:is(other)
     return false
 end
 
+--- @generic T
+--- @param object `T`
+--- @return T
+function Proto:setStatic(object)
+    local m = getmetatable(self)
+    m.__index = setmetatable(object, { __index = m.__index })
+    return object
+end
+
 --- Creates a new constructor object.
 --- Set prototype should contain `init` or `_init`, which first argument takes the target object that is being initialized.
 --- @generic T: table
@@ -41,7 +50,7 @@ end
 --- @param super? `S`
 --- @param classname? string
 --- @return p.Constructor<T, S> | fun(...): T
-createConstructor = function(proto, super, classname)
+createConstructor = function(proto, super, classname, static)
     proto.__index = proto --- @diagnostic disable-line
     if super then setmetatable(proto, super.proto) end --- @diagnostic disable-line
     local obj = {
@@ -53,6 +62,7 @@ createConstructor = function(proto, super, classname)
         __call = Proto.new,
         __index = Proto
     })
+    if static then obj:setStatic(static) end
     return obj
 end
 
