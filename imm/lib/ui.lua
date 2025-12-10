@@ -171,6 +171,8 @@ function ui.cycle(opts, cycleOpts)
     }
     setmetatable(overopts, { __index = cycleOpts })
 
+    if opts.currentPage then opts.currentPage = math.min(opts.currentPage, math.ceil(opts.length / opts.pagesize)) end
+
     local elm = create_option_cycle(overopts)
     elm.config.ref_table = {
         opts = opts,

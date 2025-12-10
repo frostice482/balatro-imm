@@ -49,7 +49,7 @@ function IUICT:init(list, opts)
     self.whoColor = G.C.WHITE
     self.versionColor = G.C.BLUE
 
-    self.fontscale = (opts.ses and opts.ses.fontscale * 0.4) * 0.9
+    self.fontscale = (opts.ses and opts.ses.fontscale or 0.4) * 0.9
     self.fontscaleTitle = self.fontscale
     self.fontscaleVersion = self.fontscale * 0.70
     self.fontscaleSub = self.fontscale * 0.75

@@ -2,13 +2,13 @@
 version = "1.0.0"
 priority = -10
 
-# add @ and # to extended text input
+# add some extra characters to extended text input
 [[patches]]
 [patches.regex]
 target = "functions/button_callbacks.lua"
 pattern = '''extended_corpus and "'''
 position = "after"
-payload = "@#"
+payload = "@#/"
 
 # allow text_scale for tooltips
 [[patches]]
@@ -44,7 +44,7 @@ payload = '''
 # fix multiple text input focus
 [[patches]]
 [patches.pattern]
-target = "functions/UI_definitions.lua"
+target = "functions/button_callbacks.lua"
 pattern = '''if G.CONTROLLER.text_input_hook then'''
 position = "at"
 payload = '''if G.CONTROLLER.text_input_hook == e.parent then'''

@@ -4,9 +4,10 @@ local logger = require('imm.logger')
 local util   = require('imm.lib.util')
 
 --- @alias imm.LoadList.ModList table<string, table<imm.Mod, imm.Dependency.Rule[]>>
+--- @alias imm.LoadList.ModAction.Action 'enable' | 'disable' | 'switch'
 
 --- @class imm.LoadList.ModAction
---- @field action 'enable' | 'disable' | 'switch'
+--- @field action imm.LoadList.ModAction.Action
 --- @field enableRules imm.Dependency.Rule[] AND
 --- @field disableRules imm.Dependency.Rule[][] OR
 --- @field impossible? boolean
@@ -112,6 +113,18 @@ function ILoadList:disable(mod)
     return true
 end
 
+--- @param mod imm.Mod
+--- @param act imm.LoadList.ModAction.Action
+function ILoadList:action(mod, act)
+    if self.actions[mod.mod] then return end
+    self.actions[mod.mod] = {
+        mod = mod,
+        action = act,
+        disableRules = {},
+        enableRules = {}
+    }
+end
+
 --- @param mod string
 --- @param rules imm.Dependency.Rule[]
 --- @param excludesOr? imm.Dependency.Mod[][]
@@ -197,6 +210,8 @@ end
 --- @param rules? imm.Dependency.Rule[]
 --- @param cause? imm.Mod
 function ILoadList:_tryDisable(mod, rules, cause)
+    if mod.list.native or mod.locked then return end
+
     logger.fmt('debug', 'Disable %s %s', mod.mod, mod.version)
     local id = mod.mod
 
@@ -237,7 +252,7 @@ end
 --- @param rules? imm.Dependency.Rule[]
 --- @param cause? imm.Mod
 function ILoadList:_tryEnable(mod, rules, cause)
-    if mod.list.native then return end
+    if mod.list.native or mod.locked then return end
 
     logger.fmt('debug', 'Enable %s %s', mod.mod, mod.version)
     local id = mod.mod

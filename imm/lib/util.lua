@@ -18,4 +18,29 @@ function util.restart()
     love.event.quit()
 end
 
+function util.random()
+    return (math.random()..""):sub(3, 12)
+end
+
+--- @param func fun(): ...
+function util.sleeperTimeout(func)
+    local c = 0
+    --- @param delay number
+    return function (delay)
+        c = c + 1
+        G.E_MANAGER:add_event(Event{
+            blockable = false,
+            blocking = false,
+            trigger = 'after',
+            timer = 'REAL',
+            delay = delay,
+            func = function ()
+                c = c - 1
+                if c == 0 then func(c) end
+                return true
+            end
+        })
+    end
+end
+
 return util

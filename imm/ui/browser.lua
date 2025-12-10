@@ -4,6 +4,7 @@ local UIMod = require("imm.ui.mod")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
 local imm= require("imm")
+local util = require("imm.lib.util")
 
 --- @class imm.UI.Browser.Funcs
 local funcs = {
@@ -34,7 +35,6 @@ local IUISes = {
     search = '',
     prevSearch = '',
     queueTimer = 0.3,
-    queueCount = 0,
 
     maxPage = 1,
     listPage = 1,
@@ -129,6 +129,7 @@ function IUISes:init(tasks)
     self.categories = copy_table(BrowserStatic.categories)
     self.sidebarBase = { padding = 0.15, r = true, hover = true, shadow = true, colour = self.colorButtons }
 
+    self.queuer = util.sleeperTimeout(function () return self:queueUpdateNext() end)
     self:generateFlavor()
 end
 
@@ -676,20 +677,12 @@ function IUISes:showOverlay(update)
 end
 
 function IUISes:queueUpdate()
-    self.queueCount = self.queueCount + 1
-    G.E_MANAGER:add_event(Event{
-        blockable = false,
-        trigger = 'after',
-        timer = 'REAL',
-        delay = self.queueTimer,
-        func = function () return self:queueUpdateNext() end
-    })
+    self.queuer(self.queueTimer)
 end
 
 --- @protected
 function IUISes:queueUpdateNext()
-    self.queueCount = self.queueCount - 1
-    if self.queueCount == 0 then self:update() end
+    if c == 0 then self:update() end
     return true
 end
 

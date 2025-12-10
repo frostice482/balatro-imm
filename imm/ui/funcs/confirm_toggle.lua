@@ -27,15 +27,19 @@ G.FUNCS[funcs.confirm] = function (elm)
         if not act.impossible then
             local mod = act.mod
             if act.action == 'enable' or act.action == 'switch' then
-                assert(r.ses.ctrl:enableMod(mod))
+                assert(r.ctrl:enableMod(mod))
             elseif act.action == 'disable' then
-                assert(r.ses.ctrl:disableMod(mod))
+                assert(r.ctrl:disableMod(mod))
             end
         end
     end
 
-    r.ses.hasChanges = true
-    r.ses:showOverlay(true)
+    if r.ses then
+        r.ses.hasChanges = true
+        r.ses:showOverlay(true)
+    else
+        G.FUNCS.exit_overlay_menu()
+    end
 end
 
 --- @param elm balatro.UIElement

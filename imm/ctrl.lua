@@ -15,6 +15,9 @@ if imm.lovelyver then
     ctrl:addEntry(ctrl.mods.lovely:createVersion(imm.lovelyver, { loaded = true }))
 end
 
+ctrl.mods[""] = ModList("", true)
+ctrl:addEntry(ctrl.mods[""]:createVersion("1.0.0", { loaded = true }))
+
 _G.immctrl = ctrl
 
 return ctrl
