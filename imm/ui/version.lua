@@ -255,10 +255,7 @@ end
 function IUIVer:rerender()
     if not self.uie then return end
     self:syncInfo()
-    self.uie.UIBox.UIRoot:remove()
-    self.uie.UIBox.UIRoot = nil
-    self.uie.UIBox:add_child(self:renderLow())
-    self.uie.UIBox:recalculate()
+    ui.changeRoot(self.uie.UIBox, self:renderLow())
 end
 
 function IUIVer:render()
