@@ -98,7 +98,8 @@ function IUIVer:initInfo()
     end
 end
 
-function IUIVer:partTitleConfig()
+--- @protected
+function IUIVer:getTitleConfig()
     local opts = self.opts
     --- @type balatro.UIElement.Config
     return {
@@ -117,15 +118,17 @@ function IUIVer:partTitleConfig()
     }
 end
 
-function IUIVer:partTitle()
+--- @protected
+function IUIVer:renderTitle()
     return ui.C{
         minw = self.ses.fontscale * self.titleWidth,
         maxw = self.ses.fontscale * self.titleWidth,
-        ui.R{ ui.T(self.ver, self:partTitleConfig()) },
-        self.sub and self.sub ~= '' and self.ses:uiTextRow(self.sub, 0.5) or nil
+        ui.R{ ui.T(self.ver, self:getTitleConfig()) },
+        self.sub and self.sub ~= '' and self.ses:renderTextRow(self.sub, 0.5) or nil
     }
 end
 
+--- @protected
 function IUIVer:atlasBtn(pos, btn, ref, atlas, wm, hm)
     local spr = Sprite(0, 0, self.ses.fontscale * (wm or 1), self.ses.fontscale * (hm or 1), G.ASSET_ATLAS[atlas or 'imm_icons'], pos)
     return ui.O(spr, {
@@ -135,7 +138,8 @@ function IUIVer:atlasBtn(pos, btn, ref, atlas, wm, hm)
     })
 end
 
-function IUIVer:partSwitchButton()
+--- @protected
+function IUIVer:renderButtonSwitch()
     local opts = self.opts
     if opts.locked or not opts.installed then return nil end
 
@@ -149,7 +153,8 @@ function IUIVer:partSwitchButton()
     )
 end
 
-function IUIVer:partActionsButton()
+--- @protected
+function IUIVer:renderButtonAction()
     local opts = self.opts
     if opts.locked or opts.enabled or not (opts.installed or opts.downloadUrl) then return nil end
 
@@ -159,7 +164,8 @@ function IUIVer:partActionsButton()
     )
 end
 
-function IUIVer:partLockButton()
+--- @protected
+function IUIVer:renderButtonLock()
     local opts = self.opts
     if not opts.installed then return nil end
 
@@ -170,7 +176,8 @@ function IUIVer:partLockButton()
     )
 end
 
-function IUIVer:partHideButton()
+--- @protected
+function IUIVer:renderButtonHide()
     local opts = self.opts
     if not opts.installed then return nil end
 
@@ -181,19 +188,29 @@ function IUIVer:partHideButton()
     )
 end
 
-function IUIVer:partActions()
+--- @protected
+function IUIVer:renderActions()
     local list = {}
-    table.insert(list, self:partSwitchButton())
-    table.insert(list, self:partActionsButton())
-    table.insert(list, self:partLockButton())
+    table.insert(list, self:renderButtonSwitch())
+    table.insert(list, self:renderButtonAction())
+    table.insert(list, self:renderButtonLock())
     --table.insert(list, self:partHideButton())
+    return list
+end
 
+--- @protected
+function IUIVer:getActionsWidth()
+    return 15/9 + 1 + 1 + 1 + 3/5
+end
+
+--- @protected
+function IUIVer:renderActionsContainer()
     return ui.C{
-        minw = self.ses.fontscale * (15/9 + 1 + 1 + 1 + 3/5),
+        minw = self.ses.fontscale * self:getActionsWidth(),
         align = 'cr',
         ui.R{
             align = 'c',
-            nodes = ui.gapList('C', self.ses.fontscale / 5, list)
+            nodes = ui.gapList('C', self.ses.fontscale / 5, self:renderActions())
         }
     }
 end
@@ -210,13 +227,15 @@ function IUIVer:syncInfo()
     opts.hidden = mod.hidden
 end
 
+--- @protected
 function IUIVer:renderParts()
     return {
-        self:partTitle(),
-        self:partActions()
+        self:renderTitle(),
+        self:renderActionsContainer()
     }
 end
 
+--- @protected
 function IUIVer:renderLow()
     return ui.ROOT{
         func = funcs.init,

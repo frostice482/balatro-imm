@@ -117,7 +117,7 @@ G.FUNCS[funcs.deleteOld] = function(elm)
     local list = r.ses.ctrl:getOlderMods()
     if #list == 0 then return r.ses:showOverlay(true) end
 
-    ui.overlay(r:uiRenderRemoveMods(list))
+    ui.overlay(r:renderRemoveMods(list))
 end
 
 --- @param elm balatro.UIElement

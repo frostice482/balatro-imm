@@ -157,6 +157,7 @@ function IUISes:generateFlavor()
     end
 end
 
+--- @protected
 function IUISes:updateContainers()
     self.contCycle = ui.boxContainer()
     self.contSelect = ui.boxContainer()
@@ -172,20 +173,27 @@ end
 --- @param text string
 --- @param scale? number
 --- @param col? ColorHex
-function IUISes:uiText(text, scale, col)
+function IUISes:renderText(text, scale, col)
     return ui.T(text, { scale = (scale or 1) * self.fontscale, colour = col })
 end
 
 --- @param text string
 --- @param scale? number
 --- @param col? ColorHex
-function IUISes:uiTextRow(text, scale, col)
+function IUISes:renderTextRow(text, scale, col)
     return ui.TRS(text, (scale or 1) * self.fontscale, col)
+end
+
+--- @protected
+--- @param mode 'R' | 'C'
+--- @param list balatro.UIElement.Definition[]
+function IUISes:uiGap(mode, list)
+    return ui.gapList(mode, self.spacing, list)
 end
 
 --- @param title string
 --- @param maxw? number
-function IUISes:uiModText(title, maxw)
+function IUISes:renderModText(title, maxw)
     local obj = DynaText({
         string = title,
         scale = self.fontscale,
@@ -202,7 +210,10 @@ function IUISes:uiModText(title, maxw)
     }
 end
 
-function IUISes:uiCategory(label, category)
+--- @protected
+--- @param label string
+--- @param category? string
+function IUISes:renderCategory(label, category)
     category = category or label
     return ui.R{
         align = 'm',
@@ -215,60 +226,71 @@ function IUISes:uiCategory(label, category)
         r = true,
         button = funcs.setCategory,
         ref_table = { ses = self, cat = category },
-        self:uiText(label)
+        self:renderText(label)
     }
 end
 
-function IUISes:uiSidebarHeaderExit()
+--- @protected
+function IUISes:renderOptExit()
     return ui.C({
         tooltip = { text = {'Exit'} },
         button = 'exit_overlay_menu',
 
-        self:uiText('X')
+        self:renderText('X')
     }, self.sidebarBase)
 end
 
-function IUISes:uiSidebarHeaderRefresh()
+--- @protected
+function IUISes:renderOptRefresh()
     return ui.C({
         tooltip = { text = {'Refresh'} },
         button = funcs.refresh,
         ref_table = self,
 
-        self:uiText('R')
+        self:renderText('R')
     }, self.sidebarBase)
 end
 
-function IUISes:uiSidebarHeaderOptions()
+--- @protected
+function IUISes:renderOptMore()
     return ui.C({
         tooltip = { text = {'More Options'} },
         button = funcs.options,
         ref_table = self,
 
-        self:uiText('O')
+        self:renderText('O')
     }, self.sidebarBase)
 end
 
-function IUISes:uiSidebarHeader()
-    local uis = {
-        self:uiSidebarHeaderExit(),
-        self:uiSidebarHeaderRefresh(),
-        self:uiSidebarHeaderOptions(),
+--- @protected
+function IUISes:renderOptions()
+    --- @type balatro.UIElement.Definition[]
+    return {
+        self:renderOptExit(),
+        self:renderOptRefresh(),
+        self:renderOptMore(),
     }
+end
+
+--- @protected
+function IUISes:renderOptionsContainer()
     return ui.R{
         align = 'm',
-        nodes = ui.gapList('C', self.spacing, uis)
+        nodes = self:uiGap('C', self:renderOptions())
     }
 end
 
-function IUISes:uiSidebar()
+--- @protected
+function IUISes:renderSidebar()
     local categories = {}
-    table.insert(categories, self:uiSidebarHeader())
-    for i,entry in ipairs(self.categories) do table.insert(categories, self:uiCategory(entry[1], entry[2])) end
-    return ui.C(ui.gapList('R', self.spacing, categories))
+    table.insert(categories, self:renderOptionsContainer())
+    for i,entry in ipairs(self.categories) do table.insert(categories, self:renderCategory(entry[1], entry[2])) end
+    return ui.C(self:uiGap('R', categories))
 end
 
+--- @protected
 --- @param mod imm.ModMeta
-function IUISes:uiModEntry(mod)
+function IUISes:renderModEntry(mod)
     local w, textDescs
     local desc = mod:description()
     if desc then
@@ -301,12 +323,13 @@ function IUISes:uiModEntry(mod)
             },
 
             ui.R{ align = 'cm', minw = self.thumbW, ui.O(thumb) },
-            self:uiModText(mod:title(), self.thumbW),
+            self:renderModText(mod:title(), self.thumbW),
         }
     }
 end
 
-function IUISes:uiHeaderInput()
+--- @protected
+function IUISes:renderInput()
     return create_text_input({
         ref_table = self,
         ref_value = 'search',
@@ -319,16 +342,19 @@ function IUISes:uiHeaderInput()
     })
 end
 
-function IUISes:uiHeader()
-    return ui.R{ align = 'cm', self:uiHeaderInput()
+--- @protected
+function IUISes:renderHeader()
+    return ui.R{ align = 'cm', self:renderInput()
     }
 end
 
-function IUISes:uiCycleContainer()
+--- @protected
+function IUISes:renderCycleContainer()
     return ui.R{ align = 'cm', ui.O(self.contCycle) }
 end
 
-function IUISes:uiModGrid()
+--- @protected
+function IUISes:renderModGrid()
     local col = {}
 
     for i_col=1, self.listH, 1 do
@@ -345,26 +371,29 @@ function IUISes:uiModGrid()
     return ui.R{ padding = self.spacing / 2, ui.C(col) }
 end
 
-function IUISes:uiMain()
-    local col = {
-        self:uiHeader(),
-        self:uiModGrid(),
-        self:uiCycleContainer()
+--- @protected
+function IUISes:renderMain()
+    --- @type balatro.UIElement.Definition[]
+    return {
+        self:renderHeader(),
+        self:renderModGrid(),
+        self:renderCycleContainer()
     }
-    return ui.C(col)
 end
 
-function IUISes:uiBody()
-    local uis = {
-        self:uiSidebar(),
-        self:uiMain(),
+--- @protected
+function IUISes:renderBody()
+    --- @type balatro.UIElement.Definition[]
+    return {
+        self:renderSidebar(),
+        ui.C(self:renderMain()),
         ui.C{ui.O(self.contSelect)}
     }
-    return ui.R(uis)
 end
 
-function IUISes:uiCycle()
-    return ui.ROOT{create_option_cycle({
+--- @protected
+function IUISes:renderCycle()
+    return create_option_cycle({
         options = ui.cycleOptions(self.maxPage),
         current_option = self.listPage,
         ref_table = self,
@@ -373,22 +402,27 @@ function IUISes:uiCycle()
         opt_callback = funcs.cyclePage,
         no_pips = true,
         colour = self.colorHeader
-    })}
+    })
 end
 
-function IUISes:uiBrowse()
-    local uis = {
-        self:uiBody(),
-        ui.gap('R', self.spacing),
+--- @protected
+function IUISes:renderBrowseColumns()
+    --- @type balatro.UIElement.Definition[]
+    return {
+        ui.R(self:renderBody()),
         ui.R{self.tasks.status:render()}
     }
+end
+
+--- @protected
+function IUISes:renderBrowse()
     return ui.C{
         minw = self.w,
         minh = self.h,
         align = 'cr',
         func = funcs.update,
         ref_table = self,
-        nodes = uis
+        nodes = self:uiGap('R', self:renderBrowseColumns())
     }
 end
 
@@ -436,6 +470,7 @@ function IUISes:_updateModImageCo(mod, n, nocheckUpdate)
     root:recalculate()
 end
 
+--- @protected
 --- @param mod imm.ModMeta
 --- @param n number
 --- @param nocheckUpdate? boolean
@@ -444,6 +479,7 @@ function IUISes:updateModImage(mod, n, nocheckUpdate)
     co.create(self._updateModImageCo, self, mod, n, nocheckUpdate)
 end
 
+--- @protected
 --- @param mod? imm.ModMeta
 --- @param n number
 function IUISes:updateMod(mod, n)
@@ -451,7 +487,7 @@ function IUISes:updateMod(mod, n)
     if not root then return end
 
     if mod then
-        ui.changeRoot(root, self:uiModEntry(mod))
+        ui.changeRoot(root, self:renderModEntry(mod))
         self:updateModImage(mod, n)
     else
         ui.changeRoot(root, ui.ROOT())
@@ -472,6 +508,7 @@ end
 --- @field id? boolean
 --- @field search? string
 
+--- @protected
 --- @param mod imm.ModMeta
 --- @param filter imm.Filter
 function IUISes:matchFilter(mod, filter)
@@ -495,6 +532,7 @@ function IUISes:matchFilter(mod, filter)
     return true
 end
 
+--- @protected
 function IUISes:createFilter()
     local search = self.search:lower()
     local isAuthor, isInstalled, isId
@@ -582,7 +620,7 @@ function IUISes:update()
 
     self.maxPage = math.max(math.ceil(#self.filteredList/(self.listW*self.listH)), 1)
     self.listPage = math.min(self.listPage, self.maxPage)
-    ui.changeRoot(self.contCycle, self:uiCycle())
+    ui.changeRoot(self.contCycle, ui.ROOT{self:renderCycle()})
 
     self:updateMods()
 
@@ -608,11 +646,14 @@ function IUISes:prepare()
         return
     end
 
+    self:initRepo()
+    self.prepared = true
+end
+
+function IUISes:initRepo()
     self.repo.bmi:getList(function (err) self:_updateList('BMI', err) end)
     self.repo.ts:getList(function (err) self:_updateList('TS', err) end)
     self.repo.photon:getList(function (err) self:_updateList('Photon', err) end)
-
-    self.prepared = true
 end
 
 function IUISes:render()
@@ -620,7 +661,7 @@ function IUISes:render()
     return create_UIBox_generic_options({
         padding = 0.25,
         no_back = true,
-        contents = { self:uiBrowse() }
+        contents = { self:renderBrowse() }
     })
 end
 
@@ -645,6 +686,7 @@ function IUISes:queueUpdate()
     })
 end
 
+--- @protected
 function IUISes:queueUpdateNext()
     self.queueCount = self.queueCount - 1
     if self.queueCount == 0 then self:update() end

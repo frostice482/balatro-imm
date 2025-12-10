@@ -5,6 +5,7 @@ local ui = require('imm.lib.ui')
 --- @class imm.UI.VerDel
 local IUIVerDel = {}
 
+--- @protected
 --- @param ses imm.UI.Browser
 --- @param mod string
 --- @param ver string
@@ -14,6 +15,7 @@ function IUIVerDel:init(ses, mod, ver)
     self.ver = ver
 end
 
+--- @protected
 function IUIVerDel:uiDeleteVersionMessage()
     local mod = self.ses.ctrl:getMod(self.mod, self.ver)
     local stat = mod and NFS.getInfo(mod.path)

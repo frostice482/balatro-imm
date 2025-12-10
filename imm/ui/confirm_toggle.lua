@@ -28,6 +28,7 @@ local IUICT = {
     buttonBack = browser_funcs.back,
 }
 
+--- @protected
 --- @param ses imm.UI.Browser
 --- @param list imm.LoadList
 --- @param mod? imm.Mod
@@ -61,14 +62,16 @@ function IUICT:init(ses, list, mod, isDisable)
     }
 end
 
+--- @protected
 --- @param cols balatro.UIElement.Definition[][]
-function IUICT:uiEntry(cols)
+function IUICT:renderEntry(cols)
     for i, v in ipairs(cols) do
         cols[i] = { n = G.UIT.R, config = self.entryConfig, nodes = v }
     end
     return ui.C(cols)
 end
 
+--- @protected
 --- @param act imm.LoadList.ModAction
 function IUICT:partAct(act)
     local name = act.mod.name
@@ -97,9 +100,10 @@ function IUICT:partAct(act)
     table.insert(t2, verElm)
     --table.insert(t2, byElm)
 
-    return self:uiEntry({ t, t2 })
+    return self:renderEntry({ t, t2 })
 end
 
+--- @protected
 --- @return balatro.UIElement.Definition[] impossibleList
 --- @return balatro.UIElement.Definition[] changeList
 function IUICT:partActions()
@@ -132,6 +136,7 @@ function IUICT:partActions()
     return impossibleList, changeList
 end
 
+--- @protected
 --- @return balatro.UIElement.Definition[] list
 function IUICT:partMissing()
     -- 1 month from now i will probably forget how this code does
@@ -161,7 +166,7 @@ function IUICT:partMissing()
         local str = {}
         for i, entry in pairs(entry[2]) do table.insert(str, entry) end
 
-        local base = self:uiEntry({
+        local base = self:renderEntry({
             {ui.TS(string.format('? %s', entry[1]), self.fontscale, G.C.YELLOW)},
             {ui.TS(' '..table.concat(str, ', '), self.fontscaleSub)}
         })
@@ -171,7 +176,8 @@ function IUICT:partMissing()
     return list
 end
 
-function IUICT:uiButtonDownload()
+--- @protected
+function IUICT:renderButtonDownload()
     --- @type balatro.UI.ButtonParam
     return {
         button = self.buttonDownload,
@@ -180,8 +186,8 @@ function IUICT:uiButtonDownload()
     }
 end
 
-
-function IUICT:uiButtonConfirm(hasErr)
+--- @protected
+function IUICT:renderButtonConfirm(hasErr)
     --- @type balatro.UI.ButtonParam
     return {
         button = self.buttonConfirm,
@@ -190,7 +196,8 @@ function IUICT:uiButtonConfirm(hasErr)
     }
 end
 
-function IUICT:uiButtonConfirmOne()
+--- @protected
+function IUICT:renderButtonConfirmOne()
     --- @type balatro.UI.ButtonParam
     return {
         button = self.buttonConfirmOne,
@@ -199,7 +206,8 @@ function IUICT:uiButtonConfirmOne()
     }
 end
 
-function IUICT:uiButtonCancel()
+--- @protected
+function IUICT:renderButtonCancel()
     --- @type balatro.UI.ButtonParam
     return {
         button = self.buttonBack,
@@ -209,33 +217,37 @@ function IUICT:uiButtonCancel()
     }
 end
 
-function IUICT:uiButtonOptions(hasMissing, hasErr)
+--- @protected
+function IUICT:renderButtonOptions(hasMissing, hasErr)
     --- @type balatro.UI.ButtonParam[]
     local buttonOpts = {}
 
-    table.insert(buttonOpts, hasMissing and self.allowDownloadMissing and self:uiButtonDownload() or nil)
-    table.insert(buttonOpts, self:uiButtonConfirm(hasErr))
-    table.insert(buttonOpts, self.mod and self:uiButtonConfirmOne() or nil)
-    table.insert(buttonOpts, self:uiButtonCancel())
+    table.insert(buttonOpts, hasMissing and self.allowDownloadMissing and self:renderButtonDownload() or nil)
+    table.insert(buttonOpts, self:renderButtonConfirm(hasErr))
+    table.insert(buttonOpts, self.mod and self:renderButtonConfirmOne() or nil)
+    table.insert(buttonOpts, self:renderButtonCancel())
 
     return buttonOpts
 end
 
-function IUICT:uiButtons(hasMissing, hasErr)
+--- @protected
+function IUICT:renderButtons(hasMissing, hasErr)
     --- @type balatro.UIElement.Definition[]
     local buttons = {}
-    local buttonOpts = self:uiButtonOptions(hasMissing, hasErr)
+    local buttonOpts = self:renderButtonOptions(hasMissing, hasErr)
     for i,v in ipairs(buttonOpts) do
         table.insert(buttons, UIBox_button(setmetatable(v, { __index = self.uiButtonConf })))
     end
     return buttons
 end
 
+--- @protected
 --- @param elms balatro.UIElement.Definition[]
-function IUICT:uiGridList(elms)
+function IUICT:renderGrid(elms)
     return ui.gapGrid(0.1, 0.1, util.grid(elms, 7), true)
 end
 
+--- @protected
 function IUICT:renderContent()
     local tgltext = self.isDisable and 'Disable' or 'Enable'
     local titleText = self.mod and string.format('%s %s %s?', tgltext, self.mod.name, self.mod.version) or string.format('%s?', tgltext)
@@ -252,19 +264,19 @@ function IUICT:renderContent()
 
     if hasImpossibles then
         table.insert(nodes, ui.TRS('These mods are impossible to load:', self.fontscale))
-        table.insert(nodes, ui.R(self:uiGridList(impossibles)))
+        table.insert(nodes, ui.R(self:renderGrid(impossibles)))
     end
     if hasMissing then
         table.insert(nodes, ui.TRS('These mods are missing:', self.fontscale))
-        table.insert(nodes, ui.R(self:uiGridList(missings)))
+        table.insert(nodes, ui.R(self:renderGrid(missings)))
     end
     if hasChanges then
         table.insert(nodes, ui.TRS('These mods will take effect:', self.fontscale))
-        table.insert(nodes, ui.R(self:uiGridList(changes)))
+        table.insert(nodes, ui.R(self:renderGrid(changes)))
     end
 
     local hasErr = hasMissing or hasImpossibles
-    local buttons = self:uiButtons(hasMissing, hasErr)
+    local buttons = self:renderButtons(hasMissing, hasErr)
     table.insert(nodes, ui.R(ui.gapList('C', 0.1, buttons)))
 
     return nodes

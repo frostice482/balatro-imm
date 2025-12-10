@@ -30,11 +30,13 @@ local IUIOpts = {
     optionSpacing = 0.2
 }
 
+--- @protected
 --- @param ses imm.UI.Browser
 function IUIOpts:init(ses)
     self.ses = ses
 end
 
+--- @protected
 --- @return balatro.UIElement.Definition[]
 function IUIOpts:gridOptions()
     return {{
@@ -49,6 +51,7 @@ function IUIOpts:gridOptions()
     }}
 end
 
+--- @protected
 --- @return balatro.UIElement.Definition[][]
 function IUIOpts:gridMods()
     local opts = { __index = { minw = self.buttonWidth, button = funcs.clearCache } }
@@ -63,6 +66,7 @@ function IUIOpts:gridMods()
     }}
 end
 
+--- @protected
 --- @return balatro.UIElement.Definition[][]
 function IUIOpts:gridClearCache()
     local opts = { __index = { minw = self.buttonWidth, button = funcs.clearCache } }
@@ -74,6 +78,7 @@ function IUIOpts:gridClearCache()
     }}
 end
 
+--- @protected
 --- @param grid balatro.UIElement.Definition[][]
 function IUIOpts:gridRow(grid)
     return {
@@ -87,7 +92,7 @@ function IUIOpts:render()
 end
 
 --- @param mods? imm.Mod[]
-function IUIOpts:uiRenderRemoveMods(mods)
+function IUIOpts:renderRemoveMods(mods)
     mods = mods or self.ses.ctrl:getOlderMods()
     local scale = self.ses.fontscale
 

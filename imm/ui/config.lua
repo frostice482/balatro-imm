@@ -20,6 +20,7 @@ local IUIConf = {
     optionSpacing = 0.2
 }
 
+--- @protected
 --- @param ses imm.UI.Browser
 function IUIConf:init(ses)
     self.ses = ses

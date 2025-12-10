@@ -33,12 +33,14 @@ function IUIModSes:init(ses, mod)
     self.mod = mod
 end
 
+--- @protected
 --- @param version string
 --- @param opts imm.UI.Version.Opts
 function IUIModSes:uiVersion(version, opts)
     return UIVersion(self.ses, self.mod:id(), version, opts)
 end
 
+--- @protected
 --- @param mod imm.Mod
 function IUIModSes:uiVersionMod(mod)
     return UIVersion(self.ses, self.mod:id(), mod.version, {
@@ -49,20 +51,23 @@ function IUIModSes:uiVersionMod(mod)
     })
 end
 
+--- @protected
 --- @param release imm.ModMeta.Release
 function IUIModSes:uiVersionRelease(release)
     return UIVersion.fromRelease(self.ses, self.mod:id(), release)
 end
 
+--- @protected
 --- @param asset ghapi.Releases.Assets
 --- @param ver? string
 function IUIModSes:uiVersionAsset(asset, ver)
     return UIVersion.fromGithubAsset(self.ses, self.mod:id(), asset, ver)
 end
 
-function IUIModSes:uiTabInstalled()
+--- @protected
+function IUIModSes:renderTabInstalled()
     local l = self.ses.ctrl.mods[self.mod:id()]
-    if not l or not next(l.versions) then return self.ses:uiText('No installed\nversions', 1.25, G.C.ORANGE) end
+    if not l or not next(l.versions) then return self.ses:renderText('No installed\nversions', 1.25, G.C.ORANGE) end
 
     --- @type imm.UI.Version[]
     local versions = {}
@@ -72,19 +77,20 @@ function IUIModSes:uiTabInstalled()
     end
 
     return ui.C{
-        self:uiCycle(versions),
+        self:renderCycle(versions),
         ui.container(self.idListCnt, true)
     }
 end
 
+--- @protected
 --- @param func string
-function IUIModSes:uiReleasesContainer(func)
-    if not (self.mod.bmi and self.mod.bmi.repo or self.mod.ts) then return self.ses:uiText("Repo info\nunavailable", 1.25, G.C.ORANGE) end
+function IUIModSes:renderReleasesContainer(func)
+    if not (self.mod.bmi and self.mod.bmi.repo or self.mod.ts) then return self.ses:renderText("Repo info\nunavailable", 1.25, G.C.ORANGE) end
 
     return ui.C{
         func = func,
         ref_table = self,
-        self.ses:uiTextRow('Please wait', 1.25)
+        self.ses:renderTextRow('Please wait', 1.25)
     }
 end
 
@@ -134,7 +140,7 @@ function IUIModSes:updateReleases(elm, res)
         table.insert(list, ui)
     end
 
-    self:uiAdd(elm, list)
+    self:uiAddCycle(elm, list)
 end
 
 --- @param elm balatro.UIElement
@@ -144,21 +150,23 @@ function IUIModSes:updateOther(elm, res)
     local list = {}
     for k,release in pairs(res) do table.insert(list, self:uiVersionRelease(release)) end
 
-    self:uiAdd(elm, list)
+    self:uiAddCycle(elm, list)
 end
 
+--- @protected
 --- @param elm balatro.UIElement
 --- @param list imm.UI.Version[]
-function IUIModSes:uiAdd(elm, list)
+function IUIModSes:uiAddCycle(elm, list)
     local uibox = elm.UIBox
-    uibox:add_child(self:uiCycle(list), elm)
+    uibox:add_child(self:renderCycle(list), elm)
     uibox:add_child(ui.container(self.idListCnt, true), elm)
     uibox:recalculate()
     self.ses.uibox:recalculate()
 end
 
+--- @protected
 --- @param list imm.UI.Version[]
-function IUIModSes:uiCycle(list)
+function IUIModSes:renderCycle(list)
     return ui.cycle({
         func = function (i) return list[i] and list[i]:render() end,
         length = #list,
@@ -171,7 +179,34 @@ function IUIModSes:uiCycle(list)
     }, { no_pips = true })
 end
 
-function IUIModSes:uiTabs()
+--- @protected
+function IUIModSes:getTabs()
+    local mod = self.mod
+    local hasVersion = not not ( self.ses.ctrl.mods[mod:id()] and next(self.ses.ctrl.mods[mod:id()].versions) )
+
+    --- @type balatro.UI.Tab.Tab[]
+    return {{
+        chosen = hasVersion,
+        label = 'Installed',
+        tab_definition_function = function (arg)
+            return ui.ROOT{self:renderTabInstalled()}
+        end
+    }, {
+        chosen = not hasVersion,
+        label = 'Releases',
+        tab_definition_function = function (arg)
+            return ui.ROOT{self:renderReleasesContainer(funcs.releasesInit)}
+        end
+    }, {
+        label = 'Older',
+        tab_definition_function = function (arg)
+            return ui.ROOT{self:renderReleasesContainer(funcs.otherInit)}
+        end
+    }}
+end
+
+--- @protected
+function IUIModSes:renderTabs()
     local mod = self.mod
     local hasVersion = not not ( self.ses.ctrl.mods[mod:id()] and next(self.ses.ctrl.mods[mod:id()].versions) )
 
@@ -180,30 +215,14 @@ function IUIModSes:uiTabs()
         text_scale = self.ses.fontscale,
         snap_to_nav = true,
 
-        tabs = {{
-            chosen = hasVersion,
-            label = 'Installed',
-            tab_definition_function = function (arg)
-                return ui.ROOT{self:uiTabInstalled()}
-            end
-        }, {
-            chosen = not hasVersion,
-            label = 'Releases',
-            tab_definition_function = function (arg)
-                return ui.ROOT{self:uiReleasesContainer(funcs.releasesInit)}
-            end
-        }, {
-            label = 'Older',
-            tab_definition_function = function (arg)
-                return ui.ROOT{self:uiReleasesContainer(funcs.otherInit)}
-            end
-        }}
+        tabs = self:getTabs()
     })
 end
 
+--- @protected
 --- @param url string
 --- @param text string
-function IUIModSes:uiRepoButtonUrl(url, text)
+function IUIModSes:renderRepoButtonUrl(url, text)
     return ui.C{
         colour = G.C.PURPLE,
         padding = 0.1,
@@ -216,46 +235,53 @@ function IUIModSes:uiRepoButtonUrl(url, text)
             text = { url },
             text_scale = self.ses.fontscale * 0.8
         },
-        self.ses:uiText(text)
+        self.ses:renderText(text)
     }
 end
 
-function IUIModSes:uiRepoButton()
+--- @protected
+function IUIModSes:renderRepoButtons()
+    --- @type balatro.UIElement.Definition[]
     local cols = {}
-
     if self.mod.bmi and self.mod.bmi.repo then
-        table.insert(cols, self:uiRepoButtonUrl(self.mod.bmi.repo, 'Repo'))
+        table.insert(cols, self:renderRepoButtonUrl(self.mod.bmi.repo, 'Repo'))
     end
     if self.mod.ts and self.mod.ts.package_url then
-        table.insert(cols, self:uiRepoButtonUrl(self.mod.ts.package_url, 'Package'))
+        table.insert(cols, self:renderRepoButtonUrl(self.mod.ts.package_url, 'Package'))
     end
     if self.mod.tsLatest and self.mod.tsLatest.website_url then
-        table.insert(cols, self:uiRepoButtonUrl(self.mod.tsLatest.website_url, 'Website'))
+        table.insert(cols, self:renderRepoButtonUrl(self.mod.tsLatest.website_url, 'Website'))
     end
     if self.mod.ts and self.mod.ts.donation_link then
-        table.insert(cols, self:uiRepoButtonUrl(self.mod.ts.donation_link, 'Donate'))
+        table.insert(cols, self:renderRepoButtonUrl(self.mod.ts.donation_link, 'Donate'))
     end
-
-    return ui.R{ align = 'm', padding = 0.1, nodes = cols }
+    return cols
 end
 
+--- @protected
+function IUIModSes:renderRepoButtonContainer()
+    return ui.R{ align = 'm', padding = 0.1, nodes = self:renderRepoButtons() }
+end
+
+--- @protected
 --- @param text string
-function IUIModSes:uiModAuthor(text)
-    return ui.R{ align = 'm', self.ses:uiText('By '..text, 0.75) }
+function IUIModSes:renderModAuthor(text)
+    return ui.R{ align = 'm', self.ses:renderText('By '..text, 0.75) }
 end
 
-function IUIModSes:uiImageContainer()
+--- @protected
+function IUIModSes:renderImageContainer()
     self.contImage = LoveMoveable(nil, 0, 0, self.ses.thumbW * self.thumbScale, self.ses.thumbH * self.thumbScale)
     return ui.R{ align = 'm', ui.O(self.contImage) }
 end
 
 function IUIModSes:render()
     local uis = {
-        self:uiImageContainer(),
-        self.ses:uiModText(self.mod:title()),
-        self:uiModAuthor(self.mod:author()),
-        self:uiRepoButton(),
-        self:uiTabs()
+        self:renderImageContainer(),
+        self.ses:renderModText(self.mod:title()),
+        self:renderModAuthor(self.mod:author()),
+        self:renderRepoButtonContainer(),
+        self:renderTabs()
     }
     return ui.ROOT(uis)
 end
