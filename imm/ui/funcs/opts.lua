@@ -165,7 +165,7 @@ G.FUNCS[funcs.enableAll] = function(elm)
     end
 
     if next(vlist.actions) then
-        ui.overlay(UICT(r, vlist):render())
+        UICT(vlist, { ses = r }):showOverlay()
     else
         r:showOverlay(true)
     end

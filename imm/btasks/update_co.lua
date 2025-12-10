@@ -96,8 +96,7 @@ function IUpdateCo:uiEnableAll()
     end
 
     if next(ll.actions) then
-        local confirm = UICT(self.tasks.ses, ll)
-        ui.overlay(confirm:render())
+        UICT(ll, { ses = self.tasks.ses }):showOverlay()
     end
 end
 

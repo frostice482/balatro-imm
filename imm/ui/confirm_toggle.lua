@@ -17,9 +17,16 @@ local actionsRank = {
     enable = 1,
 }
 
+--- @class imm.UI.ConfirmToggle.Opts
+--- @field ses? imm.UI.Browser
+--- @field ctrl? imm.ModController
+--- @field mod? imm.Mod
+--- @field isDisable? boolean
+
 --- @class imm.UI.ConfirmToggle
 --- @field mod? imm.Mod
 --- @field uiButtonConf balatro.UI.ButtonParam
+--- @field ses? imm.UI.Browser
 local IUICT = {
     allowDownloadMissing = true,
     buttonDownload = funcs.download,
@@ -29,20 +36,20 @@ local IUICT = {
 }
 
 --- @protected
---- @param ses imm.UI.Browser
 --- @param list imm.LoadList
---- @param mod? imm.Mod
---- @param isDisable? boolean
-function IUICT:init(ses, list, mod, isDisable)
-    self.ses = ses
+--- @param opts imm.UI.ConfirmToggle.Opts
+function IUICT:init(list, opts)
+    opts = opts or {}
+    self.ses = opts.ses
+    self.ctrl = opts.ctrl or self.ses and self.ses.ctrl or require"imm.ctrl"
     self.list = list
-    self.mod = mod
-    self.isDisable = isDisable
+    self.mod = opts.mod
+    self.isDisable = opts.isDisable
 
     self.whoColor = G.C.WHITE
     self.versionColor = G.C.BLUE
 
-    self.fontscale = ses.fontscale * 0.9
+    self.fontscale = (opts.ses and opts.ses.fontscale * 0.4) * 0.9
     self.fontscaleTitle = self.fontscale
     self.fontscaleVersion = self.fontscale * 0.70
     self.fontscaleSub = self.fontscale * 0.75
@@ -50,7 +57,7 @@ function IUICT:init(ses, list, mod, isDisable)
     self.uiButtonConf = {
         minh = 0.6,
         minw = 4,
-        scale = self.ses.fontscale,
+        scale = self.ses and self.ses.fontscale or 0.4,
         col = true,
         ref_table = self
     }
@@ -95,7 +102,7 @@ function IUICT:partAct(act)
         t = { ui.TS('- '..name, entryScale,G.C.ORANGE) }
     elseif act.action == 'switch' then
         t = { ui.TS('/ '..name..' ', entryScale, G.C.YELLOW), }
-        local from = (self.ses.ctrl.loadlist.loadedMods[act.mod.mod] or {}).version or '?'
+        local from = (self.ctrl.loadlist.loadedMods[act.mod.mod] or {}).version or '?'
         table.insert(t2, ui.TS(from, self.fontscaleVersion, self.versionColor))
         table.insert(t2, ui.TS(' ->', self.fontscaleVersion, G.C.UI.TEXT_LIGHT))
     end
@@ -116,7 +123,7 @@ function IUICT:partActions()
     local actions = {}
     for k, act in pairs(self.list.actions) do
         if act.impossible or act.mod ~= self.mod then
-            if act.action == 'enable' and self.ses.ctrl.loadlist.loadedMods[act.mod.mod] then act.action = 'switch' end
+            if act.action == 'enable' and self.ctrl.loadlist.loadedMods[act.mod.mod] then act.action = 'switch' end
             table.insert(act.impossible and impossibles or actions, act)
         end
     end
@@ -288,10 +295,14 @@ function IUICT:render()
     })
 end
 
+function IUICT:showOverlay()
+    ui.overlay(self:render())
+end
+
 --- @class imm.UI.ConfirmToggle.Static
 --- @field funcs imm.UI.ConfirmToggle.Funcs
 
---- @alias imm.UI.ConfirmToggle.C imm.UI.ConfirmToggle.Static | p.Constructor<imm.UI.ConfirmToggle, nil> | fun(ses: imm.UI.Browser, list: imm.LoadList, mod?: imm.Mod, disable?: boolean): imm.UI.ConfirmToggle
+--- @alias imm.UI.ConfirmToggle.C imm.UI.ConfirmToggle.Static | p.Constructor<imm.UI.ConfirmToggle, nil> | fun(list: imm.LoadList, opts?: imm.UI.ConfirmToggle.Opts): imm.UI.ConfirmToggle
 --- @type imm.UI.ConfirmToggle.C
 local UICT = constructor(IUICT)
 UICT.funcs = funcs

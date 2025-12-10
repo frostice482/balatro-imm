@@ -67,7 +67,7 @@ G.FUNCS[funcs.toggle] = function(elm)
         modses:rerender()
         if ok then ses.hasChanges = true end
     else
-        ui.overlay(UICT(ses, test, mod, enabled):render())
+        UICT(test, { ses = ses, mod = mod, isDisable = enabled }):showOverlay()
     end
 end
 
