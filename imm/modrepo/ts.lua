@@ -51,7 +51,8 @@ end
 --- @class imm.Repo.TS: imm.Repo.Generic
 local ITSRepo = {
     listApi = fetch_list,
-    thumbApi = fetch_thumb_blob
+    thumbApi = fetch_thumb_blob,
+    name = 'thunderstore'
 }
 
 --- @alias imm.Repo.TS.C p.Constructor<imm.Repo.TS, nil> | fun(repo: imm.Repo): imm.Repo.TS

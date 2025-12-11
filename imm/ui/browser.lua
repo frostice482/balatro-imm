@@ -652,9 +652,9 @@ function IUISes:prepare()
 end
 
 function IUISes:initRepo()
-    self.repo.bmi:getList(function (err) self:_updateList('BMI', err) end)
-    self.repo.ts:getList(function (err) self:_updateList('TS', err) end)
-    self.repo.photon:getList(function (err) self:_updateList('Photon', err) end)
+    self.repo:getLists(function (provider, err)
+        self:_updateList(provider.name, err)
+    end)
 end
 
 function IUISes:render()

@@ -6,7 +6,8 @@ local co = require("imm.lib.co")
 --- @field listApi imm.Fetch<any, any>
 --- @field thumbApi imm.Fetch<any, any>
 local IGRepo = {
-    listDone = false
+    listDone = false,
+    name = 'Generic'
 }
 
 --- @alias imm.Repo.Generic.C p.Constructor<imm.Repo.Generic, nil> | fun(repo: imm.Repo): imm.Repo.Generic
@@ -19,6 +20,9 @@ function IGRepo:init(repo)
     self.repo = repo
     if not self.listApi then self.listApi = self.repo.api.blob end
     if not self.thumbApi then self.thumbApi = self.repo.api.blob end
+
+    self.listBusy = false
+    self.listCb = {}
 end
 
 function IGRepo:clear()
@@ -31,15 +35,22 @@ function IGRepo:updateList(entry) end
 --- @param cb fun(err?: string)
 function IGRepo:getList(cb)
     if self.listDone then cb(nil) end
-    local ocb = cb
-    cb = function (err, res) --- @diagnostic disable-line
+    if self.listBusy then
+        table.insert(self.listCb, cb)
+        return
+    end
+    self.listBusy = true
+    self.listCb = { cb }
+
+    local function handle (err, res)
         if res then
             self.listDone = true
             for i, entry in pairs(res) do self:updateList(entry) end
         end
-        return ocb(err)
+        self.listBusy = false
+        for i,v in ipairs(self.listCb) do v(err) end
     end
-    self.listApi:fetch(nil, cb)
+    self.listApi:fetch(nil, handle)
 end
 
 --- @async

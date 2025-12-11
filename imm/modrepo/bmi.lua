@@ -87,7 +87,8 @@ end
 --- @field releasesCb table<string, imm.Repo.ReleasesCb[]>
 local IBMIRepo = {
     listApi = fetch_list,
-    thumbApi = fetch_thumb
+    thumbApi = fetch_thumb,
+    name = 'BMI'
 }
 
 --- @class imm.Repo.BMI.Static

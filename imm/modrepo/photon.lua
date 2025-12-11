@@ -55,7 +55,8 @@ end
 
 --- @class imm.Repo.Photon: imm.Repo.Generic
 local IPhotonRepo = {
-    listApi = fetch_list
+    listApi = fetch_list,
+    name = 'Photon'
 }
 
 --- @alias imm.Repo.Photon.C p.Constructor<imm.Repo.Photon, nil> | fun(repo: imm.Repo): imm.Repo.Photon

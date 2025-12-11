@@ -5,6 +5,7 @@ local TSRepo = require("imm.modrepo.ts")
 local PhotonRepo = require("imm.modrepo.photon")
 local Fetch = require("imm.lib.fetch")
 local util = require("imm.lib.util")
+local co = require("imm.lib.co")
 
 --- @type imm.Fetch<string, love.Data>
 local fetch_blob = Fetch('%s', 'immcache/blob/%s', {
@@ -23,6 +24,7 @@ end
 --- @field list imm.ModMeta[]
 --- @field listMapped table<string, imm.ModMeta>
 --- @field listProviders table<string, imm.ModMeta[]>
+--- @field repoList imm.Repo.Generic[]
 local IRepo = {}
 
 --- @alias imm.RepoProviderType 'github' | 'generic'
@@ -39,6 +41,7 @@ function IRepo:init()
     self.ts = TSRepo(self)
     self.photon = PhotonRepo(self)
     self:clear()
+    self.repoList = { self.bmi, self.ts, self.photon }
 end
 
 function IRepo:clear()
@@ -99,6 +102,26 @@ function IRepo:createVirtualEntry(mod)
         provides = mod.info.provides
     }
     return m
+end
+
+--- @param prog? fun(provider: imm.Repo.Generic, err?: string)
+--- @param done? fun()
+function IRepo:getLists(prog, done)
+    local c = #self.repoList
+    for i,v in ipairs(self.repoList) do
+        v:getList(function (err)
+            c = c - 1
+            if prog then prog(v, err) end
+            if c == 0 and done then done() end
+        end)
+    end
+end
+
+--- @param prog? fun(provider: imm.Repo.Generic, err?: string)
+function IRepo:getListsCo(prog)
+    co.wrapCallbackStyle(function (res)
+        return self:getLists(prog, res)
+    end)
 end
 
 --- @alias imm.Repo.C p.Constructor<imm.Repo, nil> | fun(): imm.Repo
