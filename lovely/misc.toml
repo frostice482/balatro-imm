@@ -49,6 +49,14 @@ pattern = '''if G.CONTROLLER.text_input_hook then'''
 position = "at"
 payload = '''if G.CONTROLLER.text_input_hook == e.parent then'''
 
+# fix 0 inputted as o
+[[patches]]
+[patches.pattern]
+target = "functions/button_callbacks.lua"
+pattern = '''if args.key == '0' then args.key = 'o' end'''
+position = "at"
+payload = ''''''
+
 [[patches]]
 [patches.module]
 source = "include/nativefs.lua"

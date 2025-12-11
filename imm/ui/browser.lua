@@ -501,6 +501,7 @@ function IUISes:updateMods()
     for i=1, self.listH * self.listW, 1 do
         self:updateMod(self.filteredList[i+off], i)
     end
+    self.uibox:recalculate()
 end
 
 --- @class imm.Filter

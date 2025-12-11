@@ -1,3 +1,5 @@
+local util = require("imm.lib.util")
+
 local coutil = {}
 
 --- @param init fun(res: fun(...))
@@ -76,19 +78,16 @@ function coutil.waitFrames(frames)
     local co = coroutine.running()
     if not co then error('Not in coroutine') end
 
-    local n = 0
-    G.E_MANAGER:add_event(Event{
-        blockable = false,
-        blocking = false,
-        no_delete = true,
-        func = function ()
-            n = n + 1
-            if n < frames then return false end
-            assert(coroutine.resume(co))
-            return true
-        end
-    })
+    util.waitFrames(frames, function () return assert(coroutine.resume(co)) end)
+    coroutine.yield()
+end
 
+--- @param delay number
+function coutil.wait(delay)
+    local co = coroutine.running()
+    if not co then error('Not in coroutine') end
+
+    util.delay(delay, function () return assert(coroutine.resume(co)) end)
     coroutine.yield()
 end
 

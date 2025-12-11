@@ -25,22 +25,50 @@ end
 --- @param func fun(): ...
 function util.sleeperTimeout(func)
     local c = 0
+    local function f()
+        c = c - 1
+        if c == 0 then func() end
+        return true
+    end
+
     --- @param delay number
     return function (delay)
         c = c + 1
-        G.E_MANAGER:add_event(Event{
-            blockable = false,
-            blocking = false,
-            trigger = 'after',
-            timer = 'REAL',
-            delay = delay,
-            func = function ()
-                c = c - 1
-                if c == 0 then func() end
-                return true
-            end
-        })
+        util.delay(delay, f)
     end
+end
+
+--- @param frames number
+--- @param func fun(): ...
+function util.waitFrames(frames, func)
+    local n = 0
+    G.E_MANAGER:add_event(Event{
+        blockable = false,
+        blocking = false,
+        no_delete = true,
+        func = function ()
+            n = n + 1
+            if n < frames then return false end
+            func()
+            return true
+        end
+    })
+end
+
+--- @param time number
+--- @param func fun(): ...
+function util.delay(time, func)
+    G.E_MANAGER:add_event(Event{
+        blockable = false,
+        blocking = false,
+        trigger = 'after',
+        timer = 'REAL',
+        delay = time,
+        func = function ()
+            func()
+            return true
+        end
+    })
 end
 
 return util

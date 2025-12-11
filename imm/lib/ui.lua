@@ -27,17 +27,20 @@ G.FUNCS[funcs.cycle] = function (ev)
     --- @type imm.UI.CycleOptions
     local opts = ev.cycle_config.extra
     local uibox = opts.uibox or opts.elm.UIBox
+    local page = ev.to_key
+
+    opts.currentPage = page
 
     ui.removeChildrens(opts.elm)
 
-    local off = (ev.to_key - 1) * opts.pagesize
+    local off = (page - 1) * opts.pagesize
     for i=1, opts.pagesize, 1 do
         local elm = opts.func(i+off)
         if elm then uibox:add_child(elm, opts.elm) end
     end
 
     uibox:recalculate()
-    if opts.onCycle then opts.onCycle(ev.to_key) end
+    if opts.onCycle then opts.onCycle(page) end
 end
 
 --- @param elm balatro.UIElement
@@ -46,13 +49,12 @@ G.FUNCS[funcs.cycleInit] = function (elm)
     elm.config.func = nil
     elm.config.ref_table = r.table
 
+    --- @type imm.UI.CycleOptions
     local opts = r.opts
     opts.elm = elm.UIBox:get_UIE_by_ID(opts.id)
+    opts.elmc = elm
     if not opts.noImmediate then
-        G.FUNCS[funcs.cycle]({
-            cycle_config = { extra = opts },
-            to_key = opts.currentPage or 1
-        })
+        ui.cycleExec(opts, opts.currentPage or 1)
     end
 end
 
@@ -109,21 +111,13 @@ function ui.container(id, row, nodes)
     --- @type balatro.UIElement.Definition
     return {
         n = row and G.UIT.R or G.UIT.C,
+        config = {},
         nodes = {{
             n = row and G.UIT.C or G.UIT.R,
             config = { id = id },
             nodes = nodes
         }}
     }
-end
-
---- @param n number
-function ui.cycleOptions(n)
-    n = math.ceil(n)
-    --- @type string[]
-    local opts = {}
-    for i=1, n, 1 do table.insert(opts, string.format('%d/%d', i, n)) end
-    return  opts
 end
 
 --- @param elm balatro.Node
@@ -138,48 +132,95 @@ end
 
 --- @param elm balatro.UIElement
 function ui.removeElement(elm)
+    if elm.REMOVED then return end
     elm:remove()
-
     if not elm.parent then return end
 
     local i = get_index(elm.parent.children, elm)
-
     if not i then error('unknown child -> parent -> child') end
     table.remove(elm.parent.children, i)
 end
 
+local cycleexecswap = {
+    cycle_config = {
+        extra = 1
+    },
+    to_key = 1
+}
+
+--- @param opts imm.UI.CycleOptions
+--- @param page number
+function ui.cycleExec(opts, page)
+    cycleexecswap.cycle_config.extra = opts
+    cycleexecswap.to_key = page
+    G.FUNCS[funcs.cycle](cycleexecswap)
+end
+
+--- @param n number
+function ui.cycleOptions(n)
+    n = math.ceil(n)
+    --- @type string[]
+    local opts = {}
+    for i=1, n, 1 do table.insert(opts, string.format('%d/%d', i, n)) end
+    return  opts
+end
+
+--- @param cur number
+--- @param len number
+--- @param size number
+function ui.cyclePage(cur, len, size)
+    return math.max(math.min(cur, math.ceil(len / size)), 1)
+end
+
 --- @class imm.UI.CycleOptions
 --- @field func fun(i: number): balatro.UIElement.Definition?
+--- @field id string
 --- @field length number
 --- @field pagesize number
 --- @field currentPage? number
 --- @field noImmediate? boolean
 --- @field onCycle? fun(page: number)
---- @field id string
---- @field elm? balatro.UIElement
 --- @field uibox? balatro.UIBox
+--- @field elm? balatro.UIElement internal state, the target element to update
+--- @field elmc? balatro.UIElement internal state, the cycle element
 
 --- @param opts imm.UI.CycleOptions
 --- @param cycleOpts? balatro.UI.OptionCycleParam
 function ui.cycle(opts, cycleOpts)
+    if opts.currentPage then opts.currentPage = ui.cyclePage(opts.currentPage, opts.length, opts.pagesize) end
+
     --- @type balatro.UI.OptionCycleParam
     local overopts = {
         options = ui.cycleOptions(opts.length / opts.pagesize),
-        current_option = 1,
+        current_option = opts.currentPage or 1,
         opt_callback = funcs.cycle,
         extra = opts
     }
     setmetatable(overopts, { __index = cycleOpts })
 
-    if opts.currentPage then opts.currentPage = math.min(opts.currentPage, math.ceil(opts.length / opts.pagesize)) end
-
     local elm = create_option_cycle(overopts)
-    elm.config.ref_table = {
-        opts = opts,
-        table = elm.config.ref_table
-    }
+    elm.config.ref_table = { opts = opts, table = elm.config.ref_table }
     elm.config.func = funcs.cycleInit
+
     return elm
+end
+
+--- @param opts imm.UI.CycleOptions
+--- @param cycleopts? balatro.UI.OptionCycleParam
+function ui.cycleUpdate(opts, cycleopts)
+    if not opts.elmc then return end
+
+    ui.replaceElement(opts.elmc, ui.cycle(opts, cycleopts))
+    opts.elmc.UIBox:recalculate()
+end
+
+--- @param a balatro.UIElement
+--- @param b balatro.UIElement.Definition
+function ui.replaceElement(a, b)
+    local p = a.parent
+    if not p then return end
+    ui.removeElement(a)
+    a.UIBox:set_parent_child(b, p)
 end
 
 --- @param mode 'R' | 'C'
