@@ -51,7 +51,9 @@ end
 local filehook = love.filedropped
 function love.filedropped(file) --- @diagnostic disable-line
     if G.OVERLAY_MENU and G.OVERLAY_MENU.config.imm then
-        return co.create(dropinstall, G.OVERLAY_MENU.config.imm, file)
+        co.create(dropinstall, G.OVERLAY_MENU.config.imm, file)
+        file:seek(0)
+        return
     end
     if filehook then return filehook(file) end
 end

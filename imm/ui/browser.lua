@@ -129,7 +129,7 @@ function IUISes:init(tasks)
     self.categories = copy_table(BrowserStatic.categories)
     self.sidebarBase = { padding = 0.15, r = true, hover = true, shadow = true, colour = self.colorButtons }
 
-    self.queuer = util.sleeperTimeout(function () return self:queueUpdateNext() end)
+    self.queuer = util.sleeperTimeout(function () return self:update() end)
     self:generateFlavor()
 end
 
@@ -678,12 +678,6 @@ end
 
 function IUISes:queueUpdate()
     self.queuer(self.queueTimer)
-end
-
---- @protected
-function IUISes:queueUpdateNext()
-    if c == 0 then self:update() end
-    return true
 end
 
 return UISes

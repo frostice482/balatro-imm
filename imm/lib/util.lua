@@ -36,7 +36,7 @@ function util.sleeperTimeout(func)
             delay = delay,
             func = function ()
                 c = c - 1
-                if c == 0 then func(c) end
+                if c == 0 then func() end
                 return true
             end
         })
