@@ -35,6 +35,18 @@ function IUI:renderButton()
 end
 
 --- @protected
+function IUI:renderMissings()
+	local ctrl = self:getCtrl()
+	local r = {}
+	for k,e in pairs(self.mp.mods) do
+		if not ctrl:getMod(k, e.version) and e.bundle then
+			table.insert(r, ui.TRS(string.format('Missing: %s %s', k, e.version), self.ses.fontScale * 0.9))
+		end
+	end
+	return r
+end
+
+--- @protected
 function IUI:renderWarnings()
 	local r = {}
 	for i,v in ipairs(self.warnings) do
@@ -46,10 +58,12 @@ end
 function IUI:render()
 	return ui.ROOT{
 		ui.R{
-			minh = 2,
-			minw = 5,
+			padding = 0.8,
 			align = 'cm',
-			self:renderButton()
+			ui.C{
+				ui.R{align = 'cm', self:renderButton()},
+				ui.R{ui.C(self:renderMissings())}
+			}
 		},
 		ui.R{
 			align = "cm",
