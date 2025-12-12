@@ -99,7 +99,10 @@ function IUI:renderSearch()
 		onSet = function (v) self:updateList() end,
 
 		w = self.searchWidth,
-		max_length = 5 * self.searchWidth
+		max_length = 5 * self.searchWidth,
+		prompt_text = 'Search',
+		colour = G.C.BOOSTER,
+		hooked_colour = lighten(G.C.BOOSTER, 0.2)
 	})
 end
 
