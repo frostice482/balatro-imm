@@ -10,7 +10,6 @@ local util = require("imm.lib.util")
 local funcs = {
     refresh     = 'imm_b_refresh',
     setCategory = 'imm_b_setcat',
-    update      = 'imm_b_update',
     cyclePage   = 'imm_b_cycle',
     chooseMod   = 'imm_b_choosemod',
     back        = 'imm_b_back',
@@ -33,8 +32,7 @@ local funcs = {
 --- @field sidebarBase balatro.UIElement.Config
 local IUISes = {
     search = '',
-    prevSearch = '',
-    queueTimer = 0.3,
+    searchTimeout = 0.3,
 
     maxPage = 1,
     listPage = 1,
@@ -129,7 +127,6 @@ function IUISes:init(tasks)
     self.categories = copy_table(BrowserStatic.categories)
     self.sidebarBase = { padding = 0.15, r = true, hover = true, shadow = true, colour = self.colorButtons }
 
-    self.queuer = util.sleeperTimeout(function () return self:update() end)
     self:generateFlavor()
 end
 
@@ -331,9 +328,12 @@ end
 
 --- @protected
 function IUISes:renderInput()
-    return create_text_input({
+    return ui.textInputDelaying({
         ref_table = self,
         ref_value = 'search',
+        delay = self.searchTimeout,
+        onSet = function (v) self:update() end,
+
         w = 16 * .6,
         prompt_text = 'Search (.installed, @author)',
         text_scale = self.fontscale,
@@ -421,8 +421,6 @@ function IUISes:renderBrowse()
         minw = self.w,
         minh = self.h,
         align = 'cr',
-        func = funcs.update,
-        ref_table = self,
         nodes = self:uiGap('R', self:renderBrowseColumns())
     }
 end
@@ -675,10 +673,6 @@ function IUISes:showOverlay(update)
     self.uibox.config.imm = self
     if update then self:prepare() end
     self.uibox:recalculate()
-end
-
-function IUISes:queueUpdate()
-    self.queuer(self.queueTimer)
 end
 
 return UISes

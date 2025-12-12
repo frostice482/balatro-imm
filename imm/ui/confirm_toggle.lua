@@ -37,7 +37,7 @@ local IUICT = {
 
 --- @protected
 --- @param list imm.LoadList
---- @param opts imm.UI.ConfirmToggle.Opts
+--- @param opts? imm.UI.ConfirmToggle.Opts
 function IUICT:init(list, opts)
     opts = opts or {}
     self.ses = opts.ses

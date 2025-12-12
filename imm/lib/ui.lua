@@ -1,6 +1,9 @@
+local util = require("imm.lib.util")
+
 local funcs = {
     cycle = 'imm_cycle',
-    cycleInit = 'imm_cycle_init'
+    cycleInit = 'imm_cycle_init',
+    inputUpdate = 'imm_text_input_update'
 }
 
 local ui = {
@@ -56,6 +59,17 @@ G.FUNCS[funcs.cycleInit] = function (elm)
     if not opts.noImmediate then
         ui.cycleExec(opts, opts.currentPage or 1)
     end
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.inputUpdate] = function (elm)
+    --- @type imm.UI.TextInputDelayState
+    local r = elm.config.ref_table or {}
+    if r.val == r.prev then return end
+
+    if r.opts.onChange then r.opts.onChange(r.val) end
+    r.sleeper(r.opts.delay or 0.3)
+    r.prev = r.val
 end
 
 --- @param button string
@@ -214,6 +228,13 @@ function ui.cycleUpdate(opts, cycleopts)
     opts.elmc.UIBox:recalculate()
 end
 
+--- @param opts imm.UI.CycleOptions
+function ui.cycleReset(opts, cycleopts)
+    if not opts.elmc then return end
+    opts.elmc:remove()
+    opts.elmc = nil
+end
+
 --- @param a balatro.UIElement
 --- @param b balatro.UIElement.Definition
 function ui.replaceElement(a, b)
@@ -337,6 +358,7 @@ end
 --- Text with config
 --- @param conf balatro.UIElement.Config
 function ui.TC(conf)
+    conf.scale = conf.scale or 1
     return { n = G.UIT.T, config = conf }
 end
 
@@ -396,6 +418,47 @@ function ui.grid(grid, firstRow)
     end
     --- @type balatro.UIElement.Definition
     return { n = firstRow and G.UIT.R or G.UIT.C, nodes = gappedInside }
+end
+
+--- @class imm.UI.TextInputDelayOpts: balatro.UI.TextInputParam
+--- @field ref_table? table
+--- @field initVal? string
+--- @field delay? number
+--- @field onChange? fun(v: string)
+--- @field onSet? fun(v: string)
+
+--- @class imm.UI.TextInputDelayState
+--- @field target_table? table
+--- @field target_value? any
+--- @field val string
+--- @field prev string
+--- @field opts imm.UI.TextInputDelayOpts
+--- @field sleeper fun(s: number)
+
+--- @param opts imm.UI.TextInputDelayOpts
+function ui.textInputDelaying(opts)
+    --- @type imm.UI.TextInputDelayState
+    local state
+    local iv = opts.initVal or opts.ref_table and opts.ref_table[opts.ref_value] or ''
+    state = {
+        target_table = opts.ref_table,
+        target_value = opts.ref_value,
+        val = iv,
+        prev = iv,
+        opts = opts,
+        sleeper = util.sleeperTimeout(function ()
+            if state.target_table then state.target_table[state.target_value] = opts.ref_table.val end
+            if opts.onSet then opts.onSet(opts.ref_table.val) end
+        end)
+    }
+    opts.ref_table = state
+    opts.ref_value = 'val'
+
+    local t = create_text_input(opts)
+    t.config.func = funcs.inputUpdate
+    t.config.ref_table = state
+
+    return t
 end
 
 return ui

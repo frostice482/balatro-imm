@@ -21,18 +21,7 @@ G.FUNCS[funcs.setCategory] = function(elm)
 
     ses.tags[cat] = not ses.tags[cat]
     elm.config.colour = ses.tags[cat] and ses.colorCategorySelected or ses.colorCategoryUnselected
-    ses:queueUpdate()
-end
-
---- @param elm balatro.UIElement
-G.FUNCS[funcs.update] = function(elm)
-    --- @type imm.UI.Browser
-    local ses = elm.config.ref_table
-
-    if ses.prevSearch ~= ses.search then
-        ses.prevSearch = ses.search
-        ses:queueUpdate()
-    end
+    ses:update()
 end
 
 --- @param elm balatro.UI.CycleCallbackParam
