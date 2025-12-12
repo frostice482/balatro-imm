@@ -89,7 +89,7 @@ local optsFields = {"mode", "uid", "gid", "mtime", "uname", "gname", "devmajor",
 --- | 75 `K` GNU - Long linkname for next line
 --- | 76 `L` GNU - Long name for next line
 
---- @alias Tar.EachFn fun(entry: Tar.Entry, fname: string, dir: Tar.Dir): boolean?
+--- @alias Tar.EachFn fun(entry: Tar.EntryType, fname: string, dir: Tar.Dir): boolean?
 
 --- @alias Tar.Entry.C p.Constructor<Tar.Entry, nil> | fun(root: Tar.Root, header?: Tar.Header.Opts): Tar.Entry
 --- @alias Tar.Symlink.C p.Constructor<Tar.Symlink.C, Tar.Entry.C> | fun(root: Tar.Root, link: string, header?: Tar.Header.Opts): Tar.Symlink
@@ -192,12 +192,13 @@ function IEntry:init(root, header)
 end
 
 local l = {}
-function IEntry:getPath()
+--- @param root? Tar.Entry
+function IEntry:getPath(root)
     local i = 1
 
     --- @type Tar.Entry?
     local cur = self
-    while cur and cur.parent do
+    while cur and cur.parent and cur.parent ~= root do
         i = i - 1
         l[i] = cur.parent.itemNames[cur]
         cur = cur.parent
@@ -205,12 +206,13 @@ function IEntry:getPath()
     return table.concat(l, "/", i, 0)
 end
 
-function IEntry:getPathLength()
+--- @param root? Tar.Entry
+function IEntry:getPathLength(root)
     local n = -1
 
     --- @type Tar.Entry?
     local cur = self
-    while cur and cur.parent do
+    while cur and cur.parent and cur.parent ~= root do
         n = n + cur.parent.itemNames[cur]:len() + 1
         cur = cur.parent
     end
@@ -264,6 +266,13 @@ function IEntry:estimateBlocks()
     local s = TarS.estimatePaxLengthEntries(self.header.pax)
     if s > 0 then b = b + 1 + math.ceil(s/512) end
     return b
+end
+
+--- @param type string
+function IEntry:assertType(type)
+    if self.type ~= type then
+        return error(string.format("%s: not a %s, got %s", self:getPath(), type, self.type))
+    end
 end
 
 --- @type Tar.Entry.C
