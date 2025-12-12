@@ -1,6 +1,6 @@
-local constructor = require("phantom.lib.constructor")
-local util = require("phantom.lib.util")
-local sutil = require("phantom.lib.strutil")
+local constructor = require("imm.lib.constructor")
+local util = require("imm.lib.util")
+local sutil = require("imm.lib.strutil")
 local chars = sutil.chars
 
 --#region

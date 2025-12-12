@@ -40,6 +40,7 @@ payload = '''
 {n=G.UIT.C, config={align = "cm", colour = G.C.CLEAR}, nodes = {
 {n=G.UIT.C, config={id = 'text_input', align = "cm", padding = 0.05, r = 0.1, hover = true, colour = args.colour,minw = args.w, min_h = args.h, button = 'select_text_input', shadow = true}, nodes={
 '''
+match_indent = true
 
 # fix multiple text input focus
 [[patches]]
@@ -48,6 +49,7 @@ target = "functions/button_callbacks.lua"
 pattern = '''if G.CONTROLLER.text_input_hook then'''
 position = "at"
 payload = '''if G.CONTROLLER.text_input_hook == e.parent then'''
+match_indent = true
 
 # fix 0 inputted as o
 [[patches]]
@@ -56,6 +58,7 @@ target = "functions/button_callbacks.lua"
 pattern = '''if args.key == '0' then args.key = 'o' end'''
 position = "at"
 payload = ''''''
+match_indent = true
 
 [[patches]]
 [patches.module]
