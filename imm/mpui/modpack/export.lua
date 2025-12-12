@@ -19,13 +19,9 @@ local IUI = {
 function IUI:init(ses)
 	Base.proto.init(self, ses)
 	self.warnings = {
-		"- For downloadable mods, don't modify the content directly.",
-		"  If you need to, use patching instead",
-		"- For modpack-exclusive mods, if you are updating them,",
-		"  make sure to also change their version.",
-		"- Bundled mods does not follow .gitignore.",
-		"  Make a .immbfiles file in the mod folder to list",
-		"  files to include, in lua patterns.",
+		"- For downloadable mods, don't modify the content directly. If you need to, use patching instead",
+		"- For modpack-exclusive mods, if you are updating them, make sure to also change their version.",
+		"- Bundled mods does not follow .gitignore. Make a .immbfiles file in the mod folder to list files to include, in form of lua patterns.",
 	}
 end
 
