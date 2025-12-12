@@ -7,6 +7,7 @@ local funcs = {
 	setVersion = 'imm_mp_addmod_ver',
 	add = 'imm_mp_addmod_add',
 	addEnabled = 'imm_mp_addmod_addenabled',
+	addCrashlist = 'imm_mp_addmod_addcrashlist',
 	addArb = 'imm_mp_addmod_addarb'
 }
 
@@ -232,7 +233,8 @@ end
 function IUI:renderQAs()
 	--- @return balatro.UIElement.Definition
 	return {
-		self:renderQAButton({'Add enabled mods'}, funcs.addEnabled, self)
+		self:renderQAButton({'Add enabled mods'}, funcs.addEnabled, self),
+		self:renderQAButton({'Add from crash modlist'}, funcs.addCrashlist, self)
 	}
 end
 
@@ -367,6 +369,22 @@ G.FUNCS[funcs.addEnabled] = function (e)
 			ses.mp:addMod(k, v.mod)
 		end
 	end
+	ses:updateList()
+	ses.mp:save()
+end
+
+G.FUNCS[funcs.addCrashlist] = function (e)
+	--- @type imm.UI.MP.AddMod
+	local ses = e.config.ref_table
+
+	local lines = util.strsplit(love.system.getClipboardText(), '\r?\n')
+	for i, line in ipairs(lines) do
+		local id, ver = line:match("ID: ([%w_]+),[^\r\n]+Version: ([%w_.+~-]+)")
+		if id and ver then
+			ses.mp:addMod(id, ver)
+		end
+	end
+
 	ses:updateList()
 	ses.mp:save()
 end
