@@ -590,20 +590,25 @@ end
 
 --- @param base string
 --- @param noRec? boolean
-function IDir:addFrom(base, noRec)
+--- @param filter? fun(sub: string, path: string): boolean
+--- @param basesub? string
+function IDir:addFrom(base, noRec, filter, basesub)
     local items = love.filesystem.getDirectoryItems(base)
     for i, sub in ipairs(items) do
         local subpath = base .. '/' .. sub
+        local subsub = basesub and basesub .. '/' .. sub or sub
         local stat = love.filesystem.getInfo(subpath)
 
-        if stat.type == 'file' then
-            local subitem = self:openFile(sub, { size = stat.size, mtime = stat.modtime })
-            if subitem then
-                subitem:setContentString(love.filesystem.newFileData(subpath))
+        if not filter or filter(subsub, subpath) then
+            if stat.type == 'file' then
+                local subitem = self:openFile(sub, { size = stat.size, mtime = stat.modtime })
+                if subitem then
+                    subitem:setContentString(love.filesystem.newFileData(subpath))
+                end
+            elseif stat.type == 'directory' and not noRec then
+                local subitem = self:_resolve({sub}, true)
+                if subitem and Dir:is(subitem) then subitem:addFrom(subpath, subsub) end
             end
-        elseif stat.type == 'directory' and not noRec then
-            local subitem = self:_resolve({sub}, true)
-            if subitem and Dir:is(subitem) then subitem:addFrom(subpath) end
         end
     end
 end
