@@ -152,8 +152,8 @@ function IUI:testMod(list)
 		and not list:isExcluded()
 		and (
 			self.state.search == ""
-			or list.mod:lower():find(self.state.search:lower())
-			or latest.name:lower():find(self.state.search:lower())
+			or list.mod:lower():find(self.state.search:lower(), 1, true)
+			or latest.name:lower():find(self.state.search:lower(), 1, true)
 		)
 end
 

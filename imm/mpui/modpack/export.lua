@@ -11,6 +11,7 @@ local funcs = {
 local IUI = {
 	tabId = 'export',
 	tabLabel = 'Export',
+	buttonPadding = 0.8
 }
 
 --- @protected
@@ -58,7 +59,7 @@ end
 function IUI:render()
 	return ui.ROOT{
 		ui.R{
-			padding = 0.8,
+			padding = self.buttonPadding,
 			align = 'cm',
 			ui.C{
 				ui.R{align = 'cm', self:renderButton()},

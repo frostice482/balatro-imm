@@ -1,4 +1,5 @@
 local constructor = require('imm.lib.constructor')
+local LM = require("imm.lib.love_moveable")
 local ui = require("imm.lib.ui")
 local util = require("imm.lib.util")
 local defaultTasks = require("imm.btasks.tasks")()
@@ -25,6 +26,7 @@ local funcs = {
 --- @field prioritizeId table<string, boolean>
 --- @field uibox? balatro.UIBox
 local IUI = {
+	search = '',
 	listId = 'list',
 	titleLength = 8,
 	buttonScale = 0.6,
@@ -33,6 +35,10 @@ local IUI = {
 	descLines = 5,
 	mpUpdateDelay = 1,
 	optWidth = 3.25,
+	iconSize = 1,
+	pageSize = 4,
+	searchTimeout = 0.3,
+	searchWidth = 8,
 }
 
 local sprites = {
@@ -60,7 +66,7 @@ function IUI:init(opts)
 		end,
 		id = self.listId,
 		length = 0,
-		pagesize = 5
+		pagesize = self.pageSize
 	}
 
 	self.tasks.status:update("Drag and drop a modpack here to install it.", "Only install modpacks you trust.")
@@ -82,6 +88,19 @@ function IUI:renderMpInput(mp)
 	})
 	x.nodes[1].config.tooltip = { text = self:uiMpDesc(mp) }
 	return x
+end
+
+--- @protected
+function IUI:renderSearch()
+	return ui.textInputDelaying({
+		ref_table = self,
+		ref_value = 'search',
+		delay = self.searchTimeout,
+		onSet = function (v) self:updateList() end,
+
+		w = self.searchWidth,
+		max_length = 5 * self.searchWidth
+	})
 end
 
 --- @class _imm.UI.MPList.Button
@@ -155,14 +174,13 @@ end
 
 --- @protected
 --- @param mp imm.Modpack
-function IUI:renderMp(mp)
+function IUI:renderMpRows(mp)
 	local diff = mp:diff()
+	local icon = LM(mp:getIcon(), 0, 0, self.iconSize, self.iconSize)
 
-	return ui.R{
-		colour = G.C.BOOSTER,
-		padding = 0.2,
-		r = true,
-
+	--- @type balatro.UIElement.Definition[]
+	return {
+		ui.C{ui.O(icon)},
 		self:renderMpInput(mp),
 		ui.C{ align = 'cm', ui.R{ align = 'cm', nodes = ui.gapList('C', self.buttonGap, self:renderMpActions(mp, diff)) } }
 	}
@@ -173,7 +191,12 @@ end
 function IUI:renderMpContainer(mp)
 	return ui.R{
 		padding = 0.1,
-		self:renderMp(mp)
+		ui.R{
+			colour = G.C.BOOSTER,
+			padding = 0.2,
+			r = true,
+			nodes = self:renderMpRows(mp)
+		}
 	}
 end
 
@@ -184,7 +207,9 @@ function IUI:getList()
 	local prioritized = {}
 
 	for i, mp in ipairs(self.modpacks:list()) do
-		table.insert(self.prioritizeId[mp.id] and prioritized or list, mp)
+		if self.search == "" or mp.name:lower():find(self.search:lower(), 1, true) then
+			table.insert(self.prioritizeId[mp.id] and prioritized or list, mp)
+		end
 	end
 
 	util.insertBatch(prioritized, list)
@@ -256,6 +281,7 @@ end
 function IUI:renderCols()
 	--- @type balatro.UIElement.Definition[]
 	return {
+		ui.R{align = 'cm', self:renderSearch()},
 		self:renderListContainer(),
 		ui.R{align = 'cm', nodes = self:renderCycleRow()},
 		ui.R{self.tasks.status:render()}

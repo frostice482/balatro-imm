@@ -201,8 +201,8 @@ function IUI:testMod(k)
 	local latest = list and list:latest()
 	return
 		self.state.search == ""
-		or k:lower():find(self.state.search:lower())
-		or latest and latest.name:lower():find(self.state.search:lower())
+		or k:lower():find(self.state.search:lower(),1, true)
+		or latest and latest.name:lower():find(self.state.search:lower(),1, true)
 end
 
 --- @protected
