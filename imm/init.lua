@@ -3,10 +3,16 @@ local ui = require("imm.lib.ui")
 
 package.preload['imm.tasks'] = function () return require("imm.btasks.tasks")() end
 package.preload['imm.repo'] = function () return require("imm.modrepo.repo")() end
+package.preload['imm.modpacks'] = function ()
+    local mp = require("imm.mp.list")()
+    mp:loadAll()
+    return mp
+end
 
 local funcs = {
     restartConf = 'imm_s_restart_conf',
     browse = 'imm_browse',
+    modpacks = 'imm_modpacks',
     restart = 'imm_restart',
 }
 
@@ -39,7 +45,14 @@ G.FUNCS.exit_overlay_menu = function()
 end
 
 G.UIDEF[funcs.restart] = function()
-    return ui.confirm( ui.TRS('Restart balatro now?', 0.6), funcs.restartConf, {} )
+    return ui.confirm(
+        ui.R{
+            align = 'cm',
+            ui.T('Restart balatro now?', { scale = 0.6 })
+        },
+        funcs.restartConf,
+        {}
+    )
 end
 
 --- @param elm balatro.UIElement
@@ -48,7 +61,7 @@ G.FUNCS[funcs.restartConf] = function(elm)
     util.restart()
 end
 
-local Browser
+local Browser, MP
 
 G.FUNCS[funcs.browse] = function()
     require('imm.ui.init_funcs')
@@ -59,9 +72,19 @@ G.FUNCS[funcs.browse] = function()
     return b
 end
 
+G.FUNCS[funcs.modpacks] = function()
+    require('imm.mpui.init_funcs')
+    MP = MP or require("imm.mpui.list")
+
+    local b = MP()
+    b:showOverlay()
+    return b
+end
+
 local o1 = create_UIBox_main_menu_buttons
 function create_UIBox_main_menu_buttons()
     local r = o1()
+    table.insert(r.nodes[2].nodes, 1, wrap("Modpacks", funcs.modpacks))
     table.insert(r.nodes[2].nodes, 1, wrap("Browse", funcs.browse))
     return r
 end

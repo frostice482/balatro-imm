@@ -1,0 +1,5 @@
+require("imm.ui.init_atlas")
+require("imm.mpui.funcs.list")
+require("imm.mpui.funcs.modpack")
+require("imm.mpui.funcs.confirm")
+require("imm.mpui.dropinstall")

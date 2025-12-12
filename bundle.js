@@ -16,7 +16,10 @@ const patt = /(?:--(?!\[=*\[)).*|(?:--)?\[(=*)\[[^]*?\]\1\]|(?:require\(?)?(['"]
 
 /** @type {Record<string, string|boolean>} */
 const moduleBundles = {
-    'imm.config': ''
+    'imm.config': '',
+    'imm.repo': '',
+    'imm.tasks': '',
+    'imm.modpacks': '',
 }
 /** @type {Record<string, Buffer>} */
 const assetBundles = {}
