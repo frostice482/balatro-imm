@@ -19,8 +19,6 @@ local sprites = {
     download = { x = 1, y = 0 },
     unlocked = { x = 0, y = 1 },
     locked = { x = 1, y = 1 },
-    shown = { x = 2, y = 0 },
-    hidden = { x = 3, y = 0 },
 }
 
 local thunderstoreColor = mix_colours(copy_table(G.C.BLUE), {1, 1, 1, 1}, 0.6)
@@ -195,25 +193,11 @@ function IUIVer:renderButtonLock()
 end
 
 --- @protected
-function IUIVer:renderButtonHide()
-    local opts = self.opts
-    if not opts.installed then return nil end
-
-    return self:atlasBtn({
-        pos = opts.hidden and sprites.hidden or sprites.shown,
-        btn = funcs.hide,
-        ref = { ver = self, hidden = opts.hidden },
-        tooltipText = opts.hidden and {'Hidden'} or {'Shown'}
-    })
-end
-
---- @protected
 function IUIVer:renderActions()
     local list = {}
     table.insert(list, self:renderButtonSwitch())
     table.insert(list, self:renderButtonAction())
     table.insert(list, self:renderButtonLock())
-    --table.insert(list, self:partHideButton())
     return list
 end
 
