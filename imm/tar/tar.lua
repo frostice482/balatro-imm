@@ -655,7 +655,8 @@ function IRoot:estimateBlocks()
 end
 
 --- @type Tar.Root.C
-local Tar = Dir:extendTo(IRoot, "Tar", TarS)
+local Tar = Dir:extendTo(IRoot, "Tar")
+setmetatable(Tar, { __index = TarS }) --- @diagnostic disable-line
 
 TarS.Entry = Entry
 TarS.File = File
