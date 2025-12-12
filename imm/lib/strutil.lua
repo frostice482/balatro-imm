@@ -188,5 +188,7 @@ return {
     json_arrtype = {},
     ffi = ffi,
 
+    C = ffi.C,
+
     chars = constants
 }

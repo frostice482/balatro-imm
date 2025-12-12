@@ -34,7 +34,7 @@ function IGRepo:updateList(entry) end
 
 --- @param cb fun(err?: string)
 function IGRepo:getList(cb)
-    if self.listDone then cb(nil) end
+    if self.listDone then return cb(nil) end
     if self.listBusy then
         table.insert(self.listCb, cb)
         return

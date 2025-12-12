@@ -198,7 +198,7 @@ function IEntry:getPath(root)
 
     --- @type Tar.Entry?
     local cur = self
-    while cur and cur.parent and cur.parent ~= root do
+    while cur and cur.parent and cur ~= root do
         i = i - 1
         l[i] = cur.parent.itemNames[cur]
         cur = cur.parent
@@ -212,7 +212,7 @@ function IEntry:getPathLength(root)
 
     --- @type Tar.Entry?
     local cur = self
-    while cur and cur.parent and cur.parent ~= root do
+    while cur and cur.parent and cur ~= root do
         n = n + cur.parent.itemNames[cur]:len() + 1
         cur = cur.parent
     end
@@ -615,8 +615,8 @@ function IDir:addFrom(base, noRec, filter, basesub)
                     subitem:setContentString(love.filesystem.newFileData(subpath))
                 end
             elseif stat.type == 'directory' and not noRec then
-                local subitem = self:_resolve({sub}, true)
-                if subitem and Dir:is(subitem) then subitem:addFrom(subpath, subsub) end
+                local subitem, err = self:_resolve({sub}, true)
+                if subitem and Dir:is(subitem) then subitem:addFrom(subpath, false, filter, subsub) end
             end
         end
     end
