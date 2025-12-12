@@ -481,9 +481,9 @@ end
 --- @return Tar.Dir? dir
 --- @return string filenameOrError
 function IDir:resolveDir(path)
-    local paths, len = util.strsplit(path,  "/", true)
-    local item = paths[len]
-    paths[len] = nil
+    local paths = util.strsplit(path,  "/", true)
+    local item = paths[#paths]
+    paths[#paths] = nil
 
     if item == "" or item == "." or item == ".." then
         error(string.format("illegal item name %s", item))
@@ -656,7 +656,8 @@ end
 
 --- @type Tar.Root.C
 local Tar = Dir:extendTo(IRoot, "Tar")
-setmetatable(Tar, { __index = TarS }) --- @diagnostic disable-line
+local mt = getmetatable(Tar)
+mt.__index = TarS
 
 TarS.Entry = Entry
 TarS.File = File
