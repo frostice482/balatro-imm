@@ -52,9 +52,10 @@ else
 
     local function cinit()
         if curl then return end
-        for i,v in ipairs(tries) do
-            cok, curl = pcall(ffi.load, v)
+        for i,module in ipairs(tries) do
+            cok, curl = pcall(ffi.load, module)
             if cok then return end
+            print(string.format("imm/curl failed to load %s: %s", module, curl))
         end
         curl = nil
         return false
