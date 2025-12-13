@@ -17,10 +17,10 @@ end
 
 G.FUNCS[UI.funcs.activate] = function (e)
 	local t = e.config.ref_table
-	--- @type imm.UI.MPList, imm.Modpack, imm.Modpack.Diff
-	local ses, mp, diff = t.ses, t.mp, t.diff
+	--- @type imm.UI.MPList, imm.Modpack
+	local ses, mp = t.ses, t.mp
 
-	local ll = MP.applyDiff(diff, mp.ctrl:createLoadList(), t.merge)
+	local ll = MP.applyDiff(mp:diff(), mp.ctrl:createLoadList(), t.merge)
 	UICT({ list = ll, mpses = ses, mp = mp, ctrl = mp.ctrl }):showOverlay()
 end
 
