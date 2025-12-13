@@ -26,6 +26,7 @@ local funcs = {
 --- @field prioritizeId table<string, boolean>
 --- @field uibox? balatro.UIBox
 local IUI = {
+	hasChanges = false,
 	search = '',
 	listId = 'list',
 	titleLength = 8,

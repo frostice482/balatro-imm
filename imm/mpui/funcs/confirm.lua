@@ -16,6 +16,7 @@ G.FUNCS[UI.funcs.confirm] = function (e)
         end
     end
 
+    r.mpses.hasChanges = true
 	r.mpses:showOverlay()
 end
 

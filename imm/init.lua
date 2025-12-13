@@ -38,10 +38,26 @@ end
 
 local exit_overlay = G.FUNCS.exit_overlay_menu
 G.FUNCS.exit_overlay_menu = function()
-    local ses = G.OVERLAY_MENU and G.OVERLAY_MENU.config.imm
-    if not ses or not ses.hasChanges then return exit_overlay() end
+    local c = G.OVERLAY_MENU and G.OVERLAY_MENU.config
+    if not c then return exit_overlay() end
 
-    ui.overlay(G.UIDEF.imm_restart())
+    if c.imm then
+        c.imm.repo.bmi.imageCache = {}
+        c.imm.repo.ts.imageCache = {}
+
+        if c.imm.hasChanges then
+            return ui.overlay(G.UIDEF[funcs.restart]())
+        end
+    elseif c.imm_mplist then
+        for k,v in pairs(c.imm_mplist.modpacks.modpacks) do
+            v.icon = nil
+        end
+        if c.imm_mplist.hasChanges then
+            return ui.overlay(G.UIDEF[funcs.restart]())
+        end
+    end
+
+    return exit_overlay()
 end
 
 G.UIDEF[funcs.restart] = function()
