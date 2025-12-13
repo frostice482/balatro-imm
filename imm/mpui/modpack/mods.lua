@@ -5,7 +5,8 @@ local util = require('imm.lib.util')
 --- @class imm.UI.MP.Mods.Funcs
 local funcs = {
 	paste = 'imm_mp_mods_paste',
-	remove = 'imm_mp_mods_remove'
+	remove = 'imm_mp_mods_remove',
+	versionswitch = 'imm_mp_mods_verswitch',
 }
 
 --- @class imm.UI.MP.Mods.Entry
@@ -106,7 +107,12 @@ function IUI:renderModVersions(entry)
 		current_option = i,
 		w = self.versionWidth,
 		text_scale = self.ses.fontScale,
-		colour = self.ses.inputColors
+		colour = self.ses.inputColors,
+		opt_callback = funcs.versionswitch,
+		ref_table = {
+			ses = self.ses,
+			e = entry
+		}
 	})
 end
 
@@ -296,6 +302,19 @@ G.FUNCS[funcs.remove] = function (e)
 	table.remove(ses.list, i)
 	ses:updateCycle()
 	ses.mp.mods[e.id] = nil
+	ses.mp:save()
+end
+
+G.FUNCS[funcs.versionswitch] = function (e)
+	local t = e.cycle_config.ref_table
+	--- @type imm.UI.MP.Mods, imm.UI.MP.Mods.Entry
+	local ses, ee = t.ses, t.e
+
+	ee.entry.init = nil
+	ee.entry.url = nil
+	ee.entry.bundle = true
+	ee.entry.version = e.to_val
+	ses.mp:initMod(ee.id, ee.entry)
 	ses.mp:save()
 end
 
