@@ -3,9 +3,9 @@
 Make a configuration file in `<Balatro>/config/imm.txt`.
 Config is formatted in a `key=value` pair.
 
-### `enforceCurl`
+### `debug`
 
-If present, forces imm to use curl bindings to do HTTPS request.
+If present, logs debug.
 
 ### `handleEarlyError`
 
@@ -15,19 +15,19 @@ Disables imm's early crash handing.
 
 ### `disableFlavor`
 
-Disables flavor text.
+If present, disables flavor text.
 
 ### `disableSafetyWarning`
 
-Disables safety warning.
+If present, disables safety warning.
 
 ### `noUpdateUnreleasedMods`
 
-If a mod does not have any release, don't update it from latest commit.
+If present, if a mod does not have any release, don't update it from latest commit.
 
 ### `noAutoDownloadUnreleasedMods`
 
-If a mod does not have any release, don't automatically download it as a dependency from latest commit.
+If present, if a mod does not have any release, don't automatically download it as a dependency from latest commit.
 
 ### `httpsThreads`
 
@@ -39,6 +39,17 @@ Specifies maximum number of running tasks at once. Defaults to 4.
 
 Tasks are:
 - Downloading a mod release
+
+### `mpConcurrentTasks`
+
+Specifies maximum number of running tasks at once, specific for modpacks. Defaults to 4.
+
+Tasks are:
+- Downloading a mod from URL
+
+### `enforceCurl`
+
+If present, forces imm to use curl bindings to do HTTPS request.
 
 ### `githubToken`
 

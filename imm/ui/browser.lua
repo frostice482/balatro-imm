@@ -151,7 +151,7 @@ function IUISes:generateFlavor()
     if not imm.config.disableFlavor then f = self:selectFlavor() end
     if not imm.config.disableSafetyWarning then w = BrowserStatic.safetyWarning end
     if f or w then
-        self.tasks.status:update(f, w)
+        self.tasks.status:update(f, w, true)
     end
 end
 

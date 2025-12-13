@@ -2,8 +2,9 @@ local constructor = require('imm.lib.constructor')
 local LM = require("imm.lib.love_moveable")
 local ui = require("imm.lib.ui")
 local util = require("imm.lib.util")
+local imm = require("imm")
 local defaultTasks = require("imm.btasks.tasks")()
-defaultTasks.queues.available = 6
+defaultTasks.queues.available = tonumber(imm.config.mpConcurrentTasks) or 4
 
 --- @class imm.UI.MPList.Funcs
 local funcs = {
@@ -70,7 +71,11 @@ function IUI:init(opts)
 		pagesize = self.pageSize
 	}
 
-	self.tasks.status:update("Drag and drop a modpack here to install it.", "Only install modpacks you trust.")
+	self.tasks.status:update(
+		"Drag and drop a modpack here to install it.",
+		"Only install modpacks you trust.",
+		true
+	)
 end
 
 --- @protected

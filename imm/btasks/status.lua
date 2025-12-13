@@ -159,16 +159,17 @@ end
 
 --- @param suc? string
 --- @param err? string
-function ITaskStatusReg:update(suc, err)
+--- @param nolog? boolean
+function ITaskStatusReg:update(suc, err, nolog)
     self:removeDone()
 
     if suc and suc:len() ~= 0 then
         self:new(true, true):done(suc)
-        logger.log(suc)
+        if not nolog then logger.log(suc) end
     end
     if err and err:len() ~= 0 then
         self:new(true, true):error(err)
-        logger.err(err)
+        if not nolog then logger.err(err) end
     end
 
     if self.listElm then self.listElm.UIBox:recalculate() end

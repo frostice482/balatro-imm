@@ -29,6 +29,19 @@ function IUIConf:init(ses)
 	self.earlyErrorValues = { '', 'nodisable', 'ignore' }
 end
 
+--- @param text string
+--- @param prop string
+function IUIConf:renderOptBoolProp(text, prop)
+	return create_toggle({
+		label = text,
+		ref_table = imm.config, ref_value = prop,
+		callback = function (v)
+			imm.config[prop] = v and '' or nil
+			imm.saveconfig()
+		end
+	})
+end
+
 function IUIConf:renderOptions()
 	--- @type balatro.UIElement.Definition[]
 	return {
@@ -40,38 +53,11 @@ function IUIConf:renderOptions()
 			ref_table = { imm.config, 'handleEarlyError', self.earlyErrorValues },
 			opt_callback = funcs.setearlyerr
 		}),
-		create_toggle({
-			label = 'Disable safety warning',
-			ref_table = imm.config, ref_value = 'disableSafetyWarning',
-			callback = function (v)
-				imm.config.disableSafetyWarning = v and '' or nil
-				imm.saveconfig()
-			end
-		}),
-		create_toggle({
-			label = 'Disable flavor text',
-			ref_table = imm.config, ref_value = 'disableFlavor',
-			callback = function (v)
-				imm.config.disableFlavor = v and '' or nil
-				imm.saveconfig()
-			end
-		}),
-		create_toggle({
-			label = 'Don\'t update unreleased mode',
-			ref_table = imm.config, ref_value = 'noUpdateUnreleasedMods',
-			callback = function (v)
-				imm.config.noUpdateUnreleasedMods = v and '' or nil
-				imm.saveconfig()
-			end
-		}),
-		create_toggle({
-			label = 'Don\'t autodownload unreleased mods',
-			ref_table = imm.config, ref_value = 'noAutoDownloadUnreleasedMods',
-			callback = function (v)
-				imm.config.noAutoDownloadUnreleasedMods = v and '' or nil
-				imm.saveconfig()
-			end
-		})
+		self:renderOptBoolProp('Debug Logging', 'debug'),
+		self:renderOptBoolProp('Disable safety warning', 'disableSafetyWarning'),
+		self:renderOptBoolProp('Disable flavor text', 'disableFlavor'),
+		self:renderOptBoolProp('Don\'t update unreleased mode', 'noUpdateUnreleasedMods'),
+		self:renderOptBoolProp('Don\'t autodownload unreleased mods', 'noAutoDownloadUnreleasedMods'),
 	}
 end
 

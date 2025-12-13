@@ -8,6 +8,9 @@
 ---
 --- Changes won't be applied with the next restart.
 ---
+--- If present, logs debug output.
+--- @field debug? string
+---
 --- Useful for when Balatro crashes at loading and it disables all mods.
 --- This config can be used to re-enable all disabled mods during loading crash.
 --- @field nextEnable? string
@@ -19,10 +22,6 @@
 --- If `nodisable`, only list installed mods
 --- @field handleEarlyError? string
 ---
---- If null, shows a popup player for the first time installation,
---- The popup is only shown when there's no other mods installed
---- @field init? string
----
 --- Maximum HTTPS threads. Defaults to 6.
 --- @field httpsThreads? string
 ---
@@ -30,20 +29,29 @@
 --- Currently only used for number of downloads at once.
 --- @field concurrentTasks? string
 ---
---- Disables safety warning after everytime the manager is open.
+--- Maximum concurrent tasks for modpacks. Defaults to 4.
+--- Currently only used for number of downloads at once.
+--- @field mpConcurrentTasks? string
+---
+--- If present, disables safety warning after everytime the manager is open.
 --- @field disableSafetyWarning? string
 ---
---- Disables flavor text after everytime the manager is open.
+--- If present, disables flavor text after everytime the manager is open.
 --- @field disableFlavor? string
 ---
---- Disallows updating a mod that does from latest commit if the mod does not have any release.
+--- If present, disallows updating a mod that does from latest commit if the mod does not have any release.
 --- @field noUpdateUnreleasedMods? string
 ---
---- Disallows downloading a mod dependency from latest commit if the mod does not have any release.
+--- If present, disallows downloading a mod dependency from latest commit if the mod does not have any release.
 --- @field noAutoDownloadUnreleasedMods? string
 ---
 --- If present, forces using curl bindings to do HTTPS request.
 --- @field enforceCurl? string
+---
+--- If null, shows a popup player for the first time installation,
+--- The popup is only shown when there's no other mods installed
+--- @field init? string
+---
 
 --- @class imm.Base
 --- Where the IMM is located at

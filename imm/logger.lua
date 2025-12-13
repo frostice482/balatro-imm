@@ -1,3 +1,5 @@
+local imm = require("imm")
+
 local logger = {}
 
 function logger.format(...)
@@ -11,10 +13,12 @@ function logger.format(...)
 end
 
 function logger.output(level, ...)
+    if level == "debug" and not imm.config.debug then return end
     print(string.format('imm: %s: %s', level, logger.format(...)))
 end
 
 function logger.fmt(level, format, ...)
+    if level == "debug" and not imm.config.debug then return end
     print(string.format('imm: %s: %s', level, format:format(...)))
 end
 
