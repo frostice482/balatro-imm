@@ -145,6 +145,8 @@ function IML:importTar(tar)
 		if not mod and dir then
 			local s = string.format('%s/%s-%s_%s', imm.modsDir, e.id, e.version, mp.id)
 			NFS.createDirectory(s)
+			NFS.write(s .. '/.lovelyignore', '')
+
 			dir:each(function (entry)
 				local sub = s .. '/' .. entry:getPath(dir)
 				if entry.type == "dir" then
