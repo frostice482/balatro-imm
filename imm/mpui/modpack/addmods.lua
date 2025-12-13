@@ -366,7 +366,7 @@ G.FUNCS[funcs.addEnabled] = function (e)
 
 	for k,v in pairs(ses:getCtrl().loadlist.loadedMods) do
 		if not v:isHidden() then
-			ses.mp:addMod(k, v.mod)
+			ses.mp:addMod(k, v.version)
 		end
 	end
 	ses:updateList()
