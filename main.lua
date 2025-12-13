@@ -5,8 +5,6 @@ _imm = {
     config = {},
 }
 
---bundle inject
-
 function _imm.initmodule()
     package.loaded.imm = package.loaded.imm or _imm
 end
@@ -109,29 +107,12 @@ function _imm.init()
     NFS = NFS or package.preload.nativefs and require('nativefs') or require("imm-nativefs")
     JSON = JSON or package.preload.json and require('json') or require("imm-json")
 
-    local selfdir
-    local moddir
-    if _imm.resbundle then
-        _imm.applyNonLovelyHook()
-        local lok, lovely = pcall(require, 'lovely')
-        if lok then
-            moddir = lovely.mod_dir
-            _imm.lovelyver = lovely.version
-        end
-        if not moddir then moddir = os.getenv("LOVELY_MOD_DIR") end
-        if not moddir then moddir = _imm.determineModpath() end
-        if not moddir then error("Cannot determine mod path (unsupported os?)") end
-        selfdir = {}
-    else
-        local lovely = require('lovely')
-        moddir = lovely.mod_dir
-        _imm.lovelyver = lovely.version
-        selfdir = _mod_dir_immpath
-        if not NFS.mount(_mod_dir_immpath..'/imm', 'imm') then return false, 'imm mount failed' end
-    end
+    local lovely = require('lovely')
+    _imm.lovelyver = lovely.version
+    if not NFS.mount(_mod_dir_immpath..'/imm', 'imm') then return false, 'imm mount failed' end
 
-    _imm.path = selfdir
-    _imm.modsDir = moddir
+    _imm.path = _mod_dir_immpath
+    _imm.modsDir = lovely.mod_dir
     _imm.initconfig()
 
     local loveload = love.load

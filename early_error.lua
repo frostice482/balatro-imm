@@ -101,15 +101,10 @@ local function errHandler(err)
         local ok, nerr = pcall(disableAllMods, err)
         err = ok and (nerr or err) or (err..'\n\nimm failed to disable mods: '..nerr)
     end
-    if __IMM_BUNDLE then
-        err = err.."\nYou are loading Balatro from imm's bundled main.lua! Consider removing the main.lua from the save file"
-    end
     return errhand_orig(err)
 end
 
 love.errorhandler = errHandler
-
---bundle inject
 
 assert(func, err)
 local ok, err = pcall(func)

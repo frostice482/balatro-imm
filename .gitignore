@@ -1,10 +1,7 @@
 /balatro
-/smods
-/temp
 /inmodman.zip
 /.lovelyignore
-/bundle.lua
-.vscode
-.luarc.json
-.immlock
+/.immlock
+/.vscode
+/.luarc.json
 *.aseprite

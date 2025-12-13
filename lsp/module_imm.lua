@@ -45,11 +45,6 @@
 --- If present, forces using curl bindings to do HTTPS request.
 --- @field enforceCurl? string
 
---- @class imm.Resbundle
---- @field assets table
---- @field https_thread string
---- @field curl_h string
-
 --- @class imm.Base
 --- Where the IMM is located at
 --- @field path string
@@ -63,9 +58,6 @@
 --- Parsed configs.
 --- Config should be in `key=value` pair. Leading `#` will ignore the line.
 --- @field config imm.ParsedConfig
---- Bundles resources.
---- Only available when run bundled
---- @field resbundle? imm.Resbundle
 local c = {}
 
 --- @type imm.Base
