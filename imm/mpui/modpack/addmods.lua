@@ -110,6 +110,7 @@ function IUI:renderModVersions(list, state)
 	})
 end
 
+
 --- @protected
 --- @param list imm.ModList
 --- @param state table
@@ -185,15 +186,23 @@ function IUI:updateList()
 	return self:updateCycle()
 end
 
+--- @protected
+function IUI:renderCycleOpts()
+	--- @type balatro.UI.OptionCycleParam
+	return {
+		no_pips = true
+	}
+end
+
 function IUI:updateCycle()
 	self.cycleOpts.length = #self.list
-	return ui.cycleUpdate(self.cycleOpts)
+	return ui.cycleUpdate(self.cycleOpts, self:renderCycleOpts())
 end
 
 --- @protected
 function IUI:renderCycle()
 	self:updateList()
-	return ui.cycle(self.cycleOpts)
+	return ui.cycle(self.cycleOpts, self:renderCycleOpts())
 end
 
 ---@protected

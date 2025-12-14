@@ -233,9 +233,23 @@ function IUI:updateList()
 	return self:updateCycle()
 end
 
+--- @protected
+function IUI:renderCycleOpts()
+	--- @type balatro.UI.OptionCycleParam
+	return {
+		no_pips = true
+	}
+end
+
 function IUI:updateCycle()
 	self.cycleOpts.length = #self.list
-	return ui.cycleUpdate(self.cycleOpts)
+	return ui.cycleUpdate(self.cycleOpts, self:renderCycleOpts())
+end
+
+--- @protected
+function IUI:renderCycle()
+	self:updateList()
+	return ui.cycle(self.cycleOpts, self:renderCycleOpts())
 end
 
 --- @protected
@@ -243,12 +257,6 @@ function IUI:renderListContainer()
 	local e = ui.container(self.listId, true)
 	e.config.padding = 0.1
 	return e
-end
-
---- @protected
-function IUI:renderCycle()
-	self:updateList()
-	return ui.cycle(self.cycleOpts)
 end
 
 --- @protected
