@@ -40,6 +40,12 @@ Linux with Steam Proton:
 - Caching
 - Manage multiple installation versions
 
+## Sources
+
+- [balatro-mod-index](https://github.com/skyline69/balatro-mod-index), [modified](https://github.com/frostice482/balatro-mod-index-tiny)
+- [Thunderstore](https://thunderstore.io/c/balatro/)
+- [Photon](https://photonmodmanager.onrender.com)
+
 ## Config
 
 See [config.md](doc/config.md).
