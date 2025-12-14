@@ -47,7 +47,12 @@ local function disableAllMods(err)
         end
     end
     if has then
-        table.insert(echunk, shouldDisable and 'imm has disabled detected mods:' or 'Detected mods:')
+        if shouldDisable then
+            table.insert(echunk, 'imm has disabled detected mods:')
+            table.insert(echunk, '(you can change this behavior in config tab (O -> Config -> Early Error))')
+        else
+            table.insert(echunk, 'Detected mods:')
+        end
         table.insert(echunk, table.concat(detecteds, '\n'))
 
         -- make all disabled mods temporary
