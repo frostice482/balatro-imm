@@ -180,7 +180,7 @@ return {
 
     charptr = char_ptr,
     chararr = char_arr,
-    constcharptr = const_char_ptr,
+    const_char_ptr = const_char_ptr,
     size_t = sizet,
     size_t_0 = sizet(0),
     NULL = ffi.cast('void*', 0),
