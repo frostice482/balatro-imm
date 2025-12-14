@@ -40,13 +40,9 @@ function fetch_gh_releases:interpretRes(data)
     return data
 end
 
-function fetch_gh_releases:getReqOpts()
-    --- @type imm.HttpsAgent.Options
-    return {
-        headers = {
-            Authorization = imm.config.githubToken and 'Bearer '..imm.config.githubToken or nil
-        }
-    }
+function fetch_gh_releases:transformOpts(opts)
+    opts.headers = opts.headers or {}
+    opts.headers.Authorization = imm.config.githubToken and 'Bearer '..imm.config.githubToken or nil
 end
 
 --- @class imm.HostInfo

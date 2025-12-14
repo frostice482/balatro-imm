@@ -7,6 +7,10 @@ local logger= require("imm.logger")
 --- @alias imm.Fetch.ResType 'json' | 'string' | 'data'
 --- @alias imm.Fetch.SaveType 'json' | 'string' | 'filedata'
 
+--- @class imm.Fetch.HttpOpts: imm.HttpsAgent.Options
+--- @field refreshCache? boolean
+--- @field useCache? boolean
+
 --- @class imm.Fetch.InitOpts
 --- If true, the data from response will be parsed as JSON data.
 --- @field resType? imm.Fetch.ResType
@@ -18,8 +22,8 @@ local logger= require("imm.logger")
 --- @field cacheTime? number
 
 --- @class imm.Fetch<A, T>: balatro.Object, {
----     fetch: fun(self, arg: A, cb: fun(err?: string, res?: T), refreshCache?: boolean, useCache?: boolean);
----     fetchCo: async fun(self, arg: A, refreshCache?: boolean, useCache?: boolean): string?, T;
+---     fetch: fun(self, arg: A, cb: fun(err?: string, res?: T), opts?: imm.Fetch.HttpOpts);
+---     fetchCo: async fun(self, arg: A, opts?: imm.Fetch.HttpOpts): string?, T;
 --- }
 --- @field resType imm.Fetch.ResType
 --- @field cacheType imm.Fetch.SaveType
@@ -81,9 +85,8 @@ function IFetch:getCacheFileName(arg)
     return type(arg) == 'string' and self.cacheFile:format(util.sanitizename(arg)) or self.cacheFile
 end
 
---- @param arg any
---- @return imm.HttpsAgent.Options?
-function IFetch:getReqOpts(arg) end
+--- @param arg imm.Fetch.HttpOpts
+function IFetch:transformOpts(arg) end
 
 --- @param body string | love.Data
 --- @return string? error
@@ -127,9 +130,8 @@ end
 
 --- @class imm.Fetch.ReqState
 --- @field cachefile string
---- @field useCache? boolean
 --- @field url string
---- @field opts? imm.HttpsAgent.Options
+--- @field opts? imm.Fetch.HttpOpts
 --- @field n number
 
 --- @async
@@ -152,7 +154,7 @@ function IFetch:runreqCo(state)
     end
 
     local err, res = self:handleRes(body or '')
-    if res and state.useCache ~= false and not self.neverCache then
+    if res and state.opts.useCache ~= false and not self.neverCache then
         writeCache(state.cachefile, self:stringifyDataToCache(res))
     end
     return err, res
@@ -176,29 +178,30 @@ end
 local IFetch2 = IFetch
 
 --- @async
-function IFetch2:fetchCo(arg, refreshCache, useCache)
-    local cachefile = self:getCacheFileName(arg)
-    local cache = not refreshCache and self:getCacheFile(cachefile)
-    if cache then return nil, self:parseCache(cache) end
+function IFetch2:fetchCo(arg, opts)
+    opts = opts or {}
 
-    local opts = self:getReqOpts(arg)
+    self:transformOpts(opts)
     if self.resType == 'data' then
         opts = opts or {}
         opts.restype = self.resType == 'data' and 'data' or nil
     end
 
+    local cachefile = self:getCacheFileName(arg)
+    local cache = not opts.refreshCache and self:getCacheFile(cachefile)
+    if cache then return nil, self:parseCache(cache) end
+
     return self:runreqCo({
         cachefile = cachefile,
-        useCache = useCache,
         n = 10,
         url = self:getUrl(arg),
         opts = opts
     })
 end
 
-function IFetch2:fetch(arg, cb, refreshCache, useCache)
+function IFetch2:fetch(arg, cb, opts)
     co.create(function ()
-        cb(self:fetchCo(arg, refreshCache, useCache))
+        cb(self:fetchCo(arg, opts))
     end)
 end
 

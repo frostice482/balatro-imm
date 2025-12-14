@@ -34,7 +34,7 @@ end
 function IBTaskDownCo:download(url, extra)
     extra = extra or {}
     local name = extra.name or 'something'
-    local size = extra.size
+    local size = extra.size and extra.size / 1048576
 
     local done = self.tasks.queues:queueCo()
 
@@ -43,10 +43,20 @@ function IBTaskDownCo:download(url, extra)
 
     local status = self.tasks.status:new()
     local t = string.format('Downloading %s', name)
-    if size then t = string.format('%s (%.1fMB)', t, size / 1048576) end
-    status:update(t)
+    local t2 = t
+    if size then t2 = string.format('%s (%.1fMB)', t, size) end
 
-    local err, res = self.tasks.repo.api.blob:fetchCo(url)
+    status:update(t2)
+
+    local err, res = self.tasks.repo.api.blob:fetchCo(url, {
+        onProgress = function (dltotal, dlnow, ultotal, ulnow)
+            if dltotal == 0 then dltotal = size else dltotal = dltotal / 1048576 end
+            dlnow = dlnow and dlnow / 1048576
+
+            local tp = dltotal and string.format('%.1fMB/%.1fMB, %.2f%%', dlnow, dltotal, dlnow/dltotal*100) or string.format('%.1fMB', dlnow)
+            status:updatef('%s (%s)', t, tp)
+        end
+    })
     if not res then
         self.blacklistUrls[url] = false
         local errfmt = string.format('Failed downloading %s: %s', name, err)

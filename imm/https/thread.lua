@@ -9,7 +9,9 @@ if not forcecurl then hok, https = pcall(require, 'https') end
 
 local process
 if hok then
-    function process(req)
+    function process(msg)
+        --- @type imm.HttpsAgent.Req
+        local req = msg.req
         local res = { pcall(https.request, req.url, req.options) }
         if not res[1] then
             print('imm/https: request failed:', res[2])
@@ -77,7 +79,10 @@ else
 
     local CURLH_HEADER = 1
 
-    local function processLow(req)
+    local function processLow(msg)
+        --- @type imm.HttpsAgent.Req
+        local req = msg.req
+
         local ez = curl.curl_easy_init()
         local outgoingHeader
         ffi.gc(ez, curl.curl_easy_cleanup)
@@ -111,6 +116,16 @@ else
                 ffi.gc(nl, curl.curl_slist_free_all)
             end
 			csetopt(ez, 'HTTPHEADER', outgoingHeader)
+        end
+
+        if req.progress then
+            local dlcb = ffi.cast("curl_progress_callback", function (clientp, dltotal, dlnow, ultotal, ulnow)
+                love.event.push("imm_https_progress", {msg.gid, msg.id, dltotal, dlnow, ultotal, ulnow}) --- @diagnostic disable-line
+                return 0
+            end)
+
+            csetopt(ez, 'NOPROGRESS', 0)
+            csetopt(ez, 'PROGRESSFUNCTION', dlcb)
         end
 
         --- @type string[]
@@ -164,13 +179,13 @@ else
         return { status, body, headers }
     end
 
-    function process(req)
+    function process(msg)
         if cinit() == false then return { -155, "Failed initializing curl", {} } end
         local ok, data = xpcall(processLow, function (err)
             print('imm/curl: error:', err)
             print(debug.traceback())
             return err
-        end, req)
+        end, msg)
         if ok then return data end
         return { -1, data }
     end
@@ -179,6 +194,6 @@ end
 while true do
     local msg = i:demand(30)
     if not msg then break end
-    local res = process(msg.req)
+    local res = process(msg)
     love.event.push('imm_taskres', msg.gid, msg.id, res) --- @diagnostic disable-line
 end

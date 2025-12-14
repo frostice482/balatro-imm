@@ -11,9 +11,9 @@ setmetatable(registry, { __mode = 'v' })
 ---     runTask: fun(self: self, req: Req, res: fun(res: Res) ): number;
 ---     runTaskCo: fun(self: self, req: Req ): Res;
 --- }
+--- @field pendings table<number, { req: any, res: fun(res) }>
 --- @field threadcode love.FileData
 --- @field threads love.Thread[]
---- @field pendings table<number, fun(res: any)>
 local ITasks = {
     allocated = 0,
     pendingCount = 0,
@@ -47,14 +47,14 @@ function ITasks:spawn()
     return thr
 end
 
---- @param id string
+--- @param id number
 --- @param res any
 function ITasks:handleRes(id, res)
     local cb = self.pendings[id]
     if not cb then return end
     self.pendingCount = self.pendingCount - 1
     self.pendings[id] = nil
-    cb(res)
+    cb.res(res)
 end
 
 function ITasks:recountThreads()
@@ -77,7 +77,7 @@ function _ITasks:runTask(req, cb)
     self.pendingCount = self.pendingCount + 1
     self.nextId = self.nextId + 1
     self.input:push({ gid = self.gid, id = self.nextId, req = req })
-    self.pendings[self.nextId] = cb
+    self.pendings[self.nextId] = { req = req, res = cb }
 
     if self.autoRecountThreads then
         self:recountThreads()

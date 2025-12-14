@@ -922,6 +922,11 @@ typedef enum {
     CURLHE_NOT_BUILT_IN   /* if API was disabled in the build */
 } CURLHcode;
 
+struct progress {
+  char *private;
+  size_t size;
+};
+
 CURLHcode curl_easy_header(CURL *easy,
                            const char *name,
                            size_t index,
