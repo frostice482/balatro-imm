@@ -4,12 +4,12 @@ local errhand_orig = love.errorhandler or love.errhand
 local hasHandlerOverridden = false
 
 local function disableAllMods(err)
-    assert(_imm.init())
     if _imm.config.handleEarlyError == 'ignore' then return end
+    assert(_imm.init())
 
     local ctrl = require('imm.ctrl')
     local lovely = require('lovely')
-    local shouldDisable = _imm.config.handleEarlyError ~= 'nodisable'
+    local shouldDisable = _imm.config.handleEarlyError == 'disable'
 
     --- @type imm.ModList?
     local suspect = ctrl.mods[err:match("^%[SMODS ([^ ]+)")]
@@ -49,7 +49,6 @@ local function disableAllMods(err)
     if has then
         if shouldDisable then
             table.insert(echunk, 'imm has disabled detected mods:')
-            table.insert(echunk, '(you can change this behavior in config tab (O -> Config -> Early Error))')
         else
             table.insert(echunk, 'Detected mods:')
         end
@@ -104,7 +103,7 @@ local function errHandler(err)
     if attached then
         attached = false
         local ok, nerr = pcall(disableAllMods, err)
-        err = ok and (nerr or err) or (err..'\n\nimm failed to disable mods: '..nerr)
+        err = ok and (nerr or err) or (err..'\n\nimm failed to initialize early error handler: '..nerr)
     end
     return errhand_orig(err)
 end

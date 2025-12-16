@@ -25,8 +25,8 @@ local IUIConf = {
 function IUIConf:init(ses)
     self.ses = ses
 
-	self.earlyErrorOpts = { 'Disable mods', 'List mods', 'Do nothing' }
-	self.earlyErrorValues = { '', 'nodisable', 'ignore' }
+	self.earlyErrorOpts = { 'List mods', 'Disable mods', 'Do nothing' }
+	self.earlyErrorValues = { '', 'disable', 'ignore' }
 end
 
 --- @param text string
