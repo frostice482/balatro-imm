@@ -142,7 +142,7 @@ function IUI:renderModBundle(entry)
 		ref_value = 'bundle',
 		label = 'Bundle',
 		label_scale = self.ses.fontScale,
-		w = self.ses.fontScale * 3,
+		w = 0,
 
 		callback = function (value)
 			self.mp:save()

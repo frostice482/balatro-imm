@@ -43,13 +43,17 @@ local IUISes = {
     updateId = 0,
     thumbW = 16 * .2,
     thumbH = 9 * .2,
+    textInputWidth = 16 * .6,
     w = 0,
     h = 0,
+
+    sideWidth = 3,
 
     prepared = false,
     hasChanges = false,
 
     noThumbnail = false,
+    filterInstalled = false,
 
     colorCategorySelected = G.C.GREEN,
     colorCategoryUnselected = G.C.BLUE,
@@ -334,8 +338,8 @@ function IUISes:renderInput()
         delay = self.searchTimeout,
         onSet = function (v) self:update() end,
 
-        w = 16 * .6,
-        prompt_text = 'Search (.installed, @author)',
+        w = self.textInputWidth,
+        prompt_text = 'Search (@author)',
         text_scale = self.fontscale,
         extended_corpus = true,
         colour = self.colorHeader,
@@ -344,14 +348,42 @@ function IUISes:renderInput()
 end
 
 --- @protected
+function IUISes:renderToggleFilterInstalled()
+    return create_toggle({
+		ref_table = self,
+		ref_value = 'filterInstalled',
+		label = 'Installed',
+		label_scale = self.fontscale,
+		w = 0,
+		callback = function (value)
+			self:update()
+		end
+    })
+end
+
+--- @protected
 function IUISes:renderHeader()
-    return ui.R{ align = 'cm', self:renderInput()
+    return ui.R{
+        align = 'cm',
+        self:renderInput()
     }
 end
 
 --- @protected
 function IUISes:renderCycleContainer()
-    return ui.R{ align = 'cm', ui.O(self.contCycle) }
+    return ui.R{
+        align = 'cm',
+        ui.C{
+            minw = self.sideWidth,
+            align = 'cl',
+            self:renderToggleFilterInstalled()
+        },
+        ui.O(self.contCycle),
+        ui.C{
+            minw = self.sideWidth,
+            align = 'cr',
+        }
+    }
 end
 
 --- @protected
@@ -504,7 +536,6 @@ end
 
 --- @class imm.Filter
 --- @field author? boolean
---- @field installed? boolean
 --- @field id? boolean
 --- @field search? string
 
@@ -513,7 +544,7 @@ end
 --- @param filter imm.Filter
 function IUISes:matchFilter(mod, filter)
     local id = mod:id()
-    if filter.installed and not (self.ctrl.mods[id] and next(self.ctrl.mods[id].versions)) then return false end
+    if self.filterInstalled and not (self.ctrl.mods[id] and next(self.ctrl.mods[id].versions)) then return false end
     if not (filter.id and id or filter.author and mod:author() or mod:title()):lower():find(filter.search, 1, true) then return false end
 
     local hasCatFilt = false
@@ -535,12 +566,11 @@ end
 --- @protected
 function IUISes:createFilter()
     local search = self.search:lower()
-    local isAuthor, isInstalled, isId
+    local isAuthor, isId
     local hasFilter = true
     while hasFilter do
         local c = search:sub(1, 1)
-        if c == '.' then isInstalled = true
-        elseif c == '@' then isAuthor = true
+        if c == '@' then isAuthor = true
         elseif c == '$' then isId = true
         else hasFilter = false
         end
@@ -554,7 +584,6 @@ function IUISes:createFilter()
     return {
         author = isAuthor,
         id = isId,
-        installed = isInstalled,
         search = search
     }
 end
@@ -576,7 +605,7 @@ function IUISes:updateFilter()
         end
     end
     -- include local mods
-    if filter.installed then
+    if self.filterInstalled then
         for mod, list in pairs(self.ctrl.mods) do
             if not (ids[mod] or list.native or addeds[mod]) then
                 local meta = list:createBmiMeta(self.repo)
