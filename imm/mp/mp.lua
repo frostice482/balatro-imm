@@ -336,7 +336,7 @@ end
 --- @param reinit? boolean
 function IMP:initVersions(reinit)
 	for i,entry in pairs(self.mods) do
-		if not entry.init or true then --- TODO:
+		if not entry.init or reinit then
 			self:initMod(i, entry)
 		end
 	end
