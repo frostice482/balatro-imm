@@ -214,7 +214,7 @@ function get.processFile(ctx, base, depth, file)
     local path = base..'/'..file
     local ifile = file:lower()
     local mod
-    --- @type imm.ModMetaFormat
+    --- @type bmi.Meta.Format
     local fmt
 
     --- get mod meta & format
@@ -246,19 +246,22 @@ function get.processFile(ctx, base, depth, file)
 
     --- add the mod
     if not ctx.list[id] then ctx.list[id] = ModList(id) end
-    ctx.list[id]:createVersion(version, {
+    local mod = ctx.list[id]:createVersion(version, {
         format = fmt,
         info = mod,
+        description = mod.description,
         path = base,
+        pathDepth = depth,
+
         deps = deps,
         conflicts = conflicts,
         provides = provides,
-        pathDepth = depth,
-        description = mod.description,
+
         loaded = not prov.getInfo(base..'/.lovelyignore'),
         locked = not not prov.getInfo(base..'/.immlock'),
         hidden = not not prov.getInfo(base..'/.immhide'),
     })
+    return mod
 end
 
 get.excludedDirs = {
@@ -279,33 +282,69 @@ get.excludedSubdirs = {
 --- @field isNfs boolean
 --- @field depthLimit number
 --- @field list table<string, imm.ModList>
+--- @field isListing? boolean
 
 --- @class imm.GetModsContextOptions
 --- @field isNfs? boolean
 --- @field depthLimit? number
 --- @field list? table<string, imm.ModList>
 --- @field base? string
+--- @field isListing? boolean
+
+local lc = 0
 
 --- @param ctx _imm.GetModsContext
 --- @param base string
 --- @param depth number
-function get.getModsLow(ctx, base, depth)
-    if depth > ctx.depthLimit then return end
+--- @param subbase string
+function get.getModsLow(ctx, base, depth, subbase)
+    if depth > ctx.depthLimit then return false end
 
+    -- false if a mod does not exist in this directory
+    local exists = false
     local prov = ctx.isNfs and NFS or love.filesystem
+
     for i, file in ipairs(prov.getDirectoryItems(base)) do
         local path = base..'/'..file
         local stat = prov.getInfo(path)
         if stat and stat.type == 'file' then
-            local ok, err = pcall(get.processFile, ctx, base, depth, file)
-            if not ok then logger.fmt('error', 'Error processing %s: %s', path, err) end
+            -- skip if done
+            if not exists then
+                local ok, res = pcall(get.processFile, ctx, base, depth, file)
+                if not ok then
+                    logger.fmt('error', 'Error processing %s: %s', path, res)
+                elseif res then
+                    exists = true
+                end
+            end
         else
             local exclusion = depth == 1 and get.excludedDirs or get.excludedSubdirs
             if not exclusion[file:lower()] then
-                get.getModsLow(ctx, path, depth + 1)
+                get.getModsLow(ctx, path, depth + 1, subbase == "" and file or subbase..'/'..file)
             end
         end
     end
+
+    -- lovely mods
+    if not exists and (not ctx.isListing or depth > 1) and (prov.getInfo(base..'/lovely') or prov.getInfo(base..'/lovely.toml')) then
+        local id = string.format('~%s', subbase)
+        lc = lc + 1
+
+        if not ctx.list[id] then ctx.list[id] = ModList(id) end
+        ctx.list[id]:createVersion('0+lovely', {
+            format = 'lovely',
+            info = { name = ''..subbase },
+            path = base,
+            pathDepth = depth,
+            description = 'A lovely mod',
+
+            loaded = not prov.getInfo(base..'/.lovelyignore'),
+            locked = not not prov.getInfo(base..'/.immlock'),
+            hidden = not not prov.getInfo(base..'/.immhide'),
+        })
+    end
+
+    return exists
 end
 
 --- @param opts? imm.GetModsContextOptions
@@ -314,7 +353,7 @@ function get.getMods(opts)
     opts.list = opts.list or {}
     opts.isNfs = opts.isNfs ~= false
     opts.depthLimit = opts.depthLimit or 3
-    get.getModsLow(opts, opts.base or imm.modsDir, 1) --- @diagnostic disable-line
+    get.getModsLow(opts, opts.base or imm.modsDir, 1, '') --- @diagnostic disable-line
 
     return opts.list
 end

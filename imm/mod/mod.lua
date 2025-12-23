@@ -4,7 +4,7 @@ local util = require('imm.lib.util')
 local logger = require('imm.logger')
 local imm = require('imm')
 
---- @alias imm.ModMetaFormat 'thunderstore' | 'smods' | 'smods-header'
+--- @alias imm.ModMetaFormat 'thunderstore' | 'smods' | 'smods-header' | 'lovely'
 
 --- @class imm.Dependency.Rule
 --- @field version Version
@@ -44,6 +44,7 @@ local IMod = {
 --- @param opts? imm.ModOpts
 function IMod:init(list, ver, opts)
     opts = opts or {}
+
     self.list = list
     self.mod = list.mod
     self.version = ver

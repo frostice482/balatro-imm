@@ -14,7 +14,7 @@ local IModCtrl = {}
 --- @protected
 --- @param noInit? boolean
 function IModCtrl:init(noInit)
-    self.mods = noInit and {} or getmods.getMods()
+    self.mods = noInit and {} or getmods.getMods({ isListing = true })
     self.provideds = ProvidedList()
     self.loadlist = LoadList(self)
 
