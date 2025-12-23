@@ -20,6 +20,18 @@ _mod_dir_immpath = "{{lovely_hack:patch_dir}}"
 match_indent = true
 
 [[patches]]
+[patches.regex]
+target = "functions/button_callbacks.lua"
+position = "at"
+pattern = '''e\.children\[1\]\.states\.visible = \w+\n\s*e\.children\[1\]\.config\.object\.states\.visible = \w+'''
+payload = '''
+if e.children[1] then
+$0
+end
+'''
+count = 2
+
+[[patches]]
 [patches.copy]
 target = "main.lua"
 position = "prepend"

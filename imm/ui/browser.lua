@@ -631,7 +631,7 @@ function IUISes:updateFilter()
         end
     end
 
-    if filter.installed then
+    if self.filterInstalled then
         table.sort(self.filteredList, function (a, b)
             local la = self.ctrl.mods[a:id()]
             local va = la and la.active and 1 or 0
