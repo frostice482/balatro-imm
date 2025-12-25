@@ -303,8 +303,17 @@ function get.getModsLow(ctx, base, depth, subbase)
     -- false if a mod does not exist in this directory
     local exists = false
     local prov = ctx.isNfs and NFS or love.filesystem
+    local items = prov.getDirectoryItems(base)
 
-    for i, file in ipairs(prov.getDirectoryItems(base)) do
+    -- thunderstore last
+    for i,v in ipairs(items) do
+        if v == "manifest.json" then
+            SWAP(items, i, #items)
+            break
+        end
+    end
+
+    for i, file in ipairs(items) do
         local path = base..'/'..file
         local stat = prov.getInfo(path)
         if stat and stat.type == 'file' then
