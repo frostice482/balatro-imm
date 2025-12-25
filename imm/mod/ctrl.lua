@@ -293,7 +293,8 @@ function IModCtrl:installFromZip(zipData)
     mnttmp = mnttmp + 1
     local tmpdir = 'tmp-'..mnttmp
     local ok = love.filesystem.mount(zipData, "tmp.zip", tmpdir)
-    if not ok then return { errors = { 'Mount failed - is the file a zip?' } } end
+    --- @type imm.InstallResult
+    if not ok then return { errors = { 'Mount failed - is the file a zip?' }, installed = {}, mods = {} } end
 
     local a = self:installFromDir(tmpdir, false)
     love.filesystem.unmount(zipData) --- @diagnostic disable-line
