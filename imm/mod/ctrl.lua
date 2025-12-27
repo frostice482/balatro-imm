@@ -182,7 +182,7 @@ end
 
 --- @async
 --- @param mod imm.Mod
---- @param sourceNfs boolean
+--- @param sourceNfs? boolean
 --- @return boolean ok, string? err
 function IModCtrl:installCo(mod, sourceNfs)
     if self.mods[mod.mod] and self.mods[mod.mod].native then return mod:errNative() end
@@ -235,9 +235,10 @@ end
 
 --- @async
 --- @param dir string
---- @param sourceNfs boolean
+--- @param sourceNfs? boolean
+--- @param progress? fun(mod: imm.Mod)
 --- @return imm.InstallResult
-function IModCtrl:installFromDirCo(dir, sourceNfs)
+function IModCtrl:installFromDirCo(dir, sourceNfs, progress)
     local modslist = getmods.getMods({ base = dir, isNfs = sourceNfs })
     --- @type imm.Mod[]
     local intalled = {}
@@ -247,6 +248,7 @@ function IModCtrl:installFromDirCo(dir, sourceNfs)
     for id, modvers in pairs(modslist) do
         for ver, mod in pairs(modvers.versions) do
             -- install
+            if progress then progress(mod) end
             local ok, err = self:installCo(mod, sourceNfs)
             if not ok then
                 logger.err(err)
@@ -269,15 +271,16 @@ local mnttmp = 0
 
 --- @async
 --- @param zipData love.Data
+--- @param progress? fun(mod: imm.Mod)
 --- @return imm.InstallResult
-function IModCtrl:installFromZipCo(zipData)
+function IModCtrl:installFromZipCo(zipData, progress)
     mnttmp = mnttmp + 1
     local tmpdir = 'tmp-'..mnttmp
     local ok = love.filesystem.mount(zipData, "tmp.zip", tmpdir)
     --- @type imm.InstallResult
     if not ok then return { errors = { 'Mount failed - is the file a zip?' }, installed = {}, mods = {} } end
 
-    local a = self:installFromDirCo(tmpdir, false)
+    local a = self:installFromDirCo(tmpdir, false, progress)
     love.filesystem.unmount(zipData) --- @diagnostic disable-line
     return a
 end

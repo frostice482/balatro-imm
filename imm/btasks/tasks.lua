@@ -66,7 +66,7 @@ function IBTasks:downloadLovelyCo()
 end
 
 ---@param info imm.InstallResult
-function IBTasks:handleInstallResult(info)
+function IBTasks:handleInstallResult(info, status)
     local strlist = {}
     for i,v in ipairs(info.installed) do table.insert(strlist, v.mod..' '..v.version) end
     local hasInstall = #strlist ~= 0
@@ -82,15 +82,27 @@ end
 
 --- @async
 --- @param data love.Data
-function IBTasks:installModFromZipCo(data)
-    return self:handleInstallResult(self.ctrl:installFromZipCo(data))
+--- @param status? imm.Task.UI.Status
+function IBTasks:installModFromZipCo(data, status)
+    status = status or self.status:new()
+    local res = self.ctrl:installFromZipCo(
+        data,
+        status and function (mod) status:update('Installing ' .. mod.mod) end
+    )
+    return self:handleInstallResult(res)
 end
 
 --- @async
 --- @param dir string
 --- @param sorucenfs boolean
-function IBTasks:installModFromDirCo(dir, sorucenfs)
-    return self:handleInstallResult(self.ctrl:installFromDirCo(dir, sorucenfs))
+--- @param status? imm.Task.UI.Status
+function IBTasks:installModFromDirCo(dir, sorucenfs, status)
+    status = status or self.status:new()
+    local res = self.ctrl:installFromDirCo(
+        dir, sorucenfs,
+        status and function (mod) status:update('Installing ' .. mod.mod) end
+    )
+    return self:handleInstallResult(res)
 end
 
 --- @alias imm.Tasks.C p.Constructor<imm.Tasks, nil> | fun(repo?: imm.Repo, modctrl?: imm.ModController): imm.Tasks

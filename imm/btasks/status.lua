@@ -147,6 +147,13 @@ function ITaskStatusReg:removeDone()
     end
 end
 
+
+--- @param elm imm.Task.UI.Status
+function ITaskStatusReg:removeElm(elm)
+    local i = get_index(self.statuses, elm)
+    if i then return self:remove(i) end
+end
+
 --- @param noRecalc? boolean
 --- @param noRemoveDone? boolean
 function ITaskStatusReg:new(noRecalc, noRemoveDone)
