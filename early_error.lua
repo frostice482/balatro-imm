@@ -35,7 +35,7 @@ local function disableAllMods(err)
     -- disable mods
     local has = false
     for k,mod in pairs(list) do
-        if not mod:isExcluded() then
+        if not mod.list:isExcluded() then
             has = true
             table.insert(detecteds, string.format('- %-30s: %-20s (%s)', mod.mod, mod.version, mod.path:sub(lovely.mod_dir:len()+2)))
             if shouldDisable then
