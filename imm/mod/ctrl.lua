@@ -181,9 +181,8 @@ end
 
 --- @param mod imm.Mod
 --- @param sourceNfs boolean
---- @param excludedDirs? table<string, boolean>
 --- @return boolean ok, string? err
-function IModCtrl:install(mod, sourceNfs, excludedDirs)
+function IModCtrl:install(mod, sourceNfs)
     if self.mods[mod.mod] and self.mods[mod.mod].native then return mod:errNative() end
 
     local id, ver = mod.mod, mod.version
@@ -206,7 +205,7 @@ function IModCtrl:install(mod, sourceNfs, excludedDirs)
     end
 
     -- copies to target
-    local ok, err = pcall(util.cpdir, mod.path, tpath, sourceNfs, true, excludedDirs and function (source) return excludedDirs[source] end)
+    local ok, err = pcall(util.cpdir, mod.path, tpath, sourceNfs, true)
     if not ok then return ok, err end
     logger.fmt('debug', 'Copied %s %s to %s', id, ver, tpath)
 
@@ -238,41 +237,15 @@ function IModCtrl:installFromDir(dir, sourceNfs)
     --- @type string[]
     local errors = {}
 
-    --- @type imm.Mod[]
-    local rawlist = {}
-    local paths = {}
-    local excludedPaths = {}
-
-    for mod, modvers in pairs(modslist) do
-        for ver, info in pairs(modvers.versions) do
-            table.insert(rawlist, info)
-            paths[info.path] = info
-        end
-    end
-    table.sort(rawlist, function (a, b) return a.pathDepth > b.pathDepth end)
-
-    for i, info in ipairs(rawlist) do
-        local curPath = info.path
-
-        -- install
-        local ok, err = self:install(info, sourceNfs, excludedPaths)
-        if not ok then
-            logger.err(err)
-            table.insert(errors, string.format('%s %s: %s', info.mod, info.version, err))
-        else
-            table.insert(intalled, info)
-        end
-
-        -- determine if nested install
-        -- if nested exclude the path
-        for i=info.pathDepth, 2, -1 do
-            local par = curPath
-            curPath = util.dirname(curPath)
-            local parmod = paths[curPath]
-            if parmod then
-                logger.fmt('log', '%s %s is a nested install from %s %s %s', info.mod, info.version, parmod.mod, parmod.version, curPath)
-                excludedPaths[par] = true
-                break
+    for id, modvers in pairs(modslist) do
+        for ver, mod in pairs(modvers.versions) do
+            -- install
+            local ok, err = self:install(mod, sourceNfs)
+            if not ok then
+                logger.err(err)
+                table.insert(errors, string.format('%s %s: %s', mod.mod, mod.version, err))
+            else
+                table.insert(intalled, mod)
             end
         end
     end
