@@ -2,9 +2,9 @@ local constructor = require('imm.lib.constructor')
 local ModList = require('imm.mod.list')
 local LoadList = require('imm.mod.loadlist')
 local ProvidedList = require('imm.mod.providedlist')
-local afsAgent = require('imm.afs.agent')
 local getmods = require('imm.mod.get')
 local util = require('imm.lib.util')
+local co = require('imm.lib.co')
 local logger = require('imm.logger')
 local imm = require('imm')
 
@@ -207,11 +207,7 @@ function IModCtrl:installCo(mod, sourceNfs)
     end
 
     -- copies to target
-    local ok, err = afsAgent.cpCo(mod.path, tpath, {
-        srcNfs = sourceNfs,
-        destNfs = true,
-        fast = not not imm.config.fastCopy
-    })
+    local ok, err = pcall(util.cpdir, mod.path, tpath, sourceNfs, true)
     if not ok then return ok, err end
     logger.fmt('debug', 'Copied %s %s to %s', id, ver, tpath)
 
@@ -245,19 +241,22 @@ function IModCtrl:installFromDirCo(dir, sourceNfs, progress)
     --- @type string[]
     local errors = {}
 
+    local h = {}
     for id, modvers in pairs(modslist) do
         for ver, mod in pairs(modvers.versions) do
             -- install
-            if progress then progress(mod) end
-            local ok, err = self:installCo(mod, sourceNfs)
-            if not ok then
-                logger.err(err)
-                table.insert(errors, string.format('%s %s: %s', mod.mod, mod.version, err))
-            else
-                table.insert(intalled, mod)
-            end
+            table.insert(h, function ()
+                local ok, err = self:installCo(mod, sourceNfs)
+                if not ok then
+                    logger.err(err)
+                    table.insert(errors, string.format('%s %s: %s', mod.mod, mod.version, err))
+                else
+                    table.insert(intalled, mod)
+                end
+            end)
         end
     end
+    co.all(h)
 
     --- @type imm.InstallResult
     return {

@@ -3,8 +3,8 @@ local util = {}
 
 --- @param source string
 --- @param target string
---- @param sourceNfs boolean
---- @param targetNfs boolean
+--- @param sourceNfs? boolean
+--- @param targetNfs? boolean
 --- @param excludes? fun(source: string, target: string): boolean?
 function util.cpdir(source, target, sourceNfs, targetNfs, excludes)
     local sourceProv = sourceNfs and NFS or love.filesystem
