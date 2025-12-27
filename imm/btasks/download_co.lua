@@ -66,7 +66,7 @@ function IBTaskDownCo:download(url, extra)
     else
         status:done('')
         done()
-        self:installModFromZip(res)
+        self:installModFromZipCo(res)
     end
 
     return err
@@ -129,15 +129,15 @@ end
 
 --- @async
 --- @param data love.Data
-function IBTaskDownCo:installModFromZip(data)
-    return self:handleInstallResult(self.tasks:installModFromZip(data))
+function IBTaskDownCo:installModFromZipCo(data)
+    return self:handleInstallResult(self.tasks:installModFromZipCo(data))
 end
 
 ---@async
 ---@param dir string
 ---@param sorucenfs boolean
 function IBTaskDownCo:installModFromDir(dir, sorucenfs)
-    return self:handleInstallResult(self.tasks:installModFromDir(dir, sorucenfs))
+    return self:handleInstallResult(self.tasks:installModFromDirCo(dir, sorucenfs))
 end
 
 --- @alias imm.Task.Download.Co.C p.Constructor<imm.Task.Download.Co, nil> | fun(tasks: imm.Tasks): imm.Task.Download.Co

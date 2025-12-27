@@ -21,8 +21,8 @@ end
 --- @param file love.DroppedFile
 local function dropinstall(browser, file)
     local fd = file:read('data')
-    file:close()
-    local info = browser.tasks:createDownloadCoSes():installModFromZip(fd) --- @diagnostic disable-line
+    local info = browser.tasks:createDownloadCoSes():installModFromZipCo(fd) --- @diagnostic disable-line
+    fd:release()
     handleresult(browser, info)
 end
 

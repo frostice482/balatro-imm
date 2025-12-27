@@ -1,8 +1,9 @@
 local constructor = require('imm.lib.constructor')
-local getmods = require('imm.mod.get')
 local ModList = require('imm.mod.list')
 local LoadList = require('imm.mod.loadlist')
 local ProvidedList = require('imm.mod.providedlist')
+local afsAgent = require('imm.afs.agent')
+local getmods = require('imm.mod.get')
 local util = require('imm.lib.util')
 local logger = require('imm.logger')
 local imm = require('imm')
@@ -179,10 +180,11 @@ function IModCtrl:uninstall(mod, version)
     return self:deleteEntry(info)
 end
 
+--- @async
 --- @param mod imm.Mod
 --- @param sourceNfs boolean
 --- @return boolean ok, string? err
-function IModCtrl:install(mod, sourceNfs)
+function IModCtrl:installCo(mod, sourceNfs)
     if self.mods[mod.mod] and self.mods[mod.mod].native then return mod:errNative() end
 
     local id, ver = mod.mod, mod.version
@@ -205,7 +207,11 @@ function IModCtrl:install(mod, sourceNfs)
     end
 
     -- copies to target
-    local ok, err = pcall(util.cpdir, mod.path, tpath, sourceNfs, true)
+    local ok, err = afsAgent.cpCo(mod.path, tpath, {
+        srcNfs = sourceNfs,
+        destNfs = true,
+        fast = not not imm.config.fastCopy
+    })
     if not ok then return ok, err end
     logger.fmt('debug', 'Copied %s %s to %s', id, ver, tpath)
 
@@ -227,10 +233,11 @@ end
 --- @field installed imm.Mod[]
 --- @field errors string[]
 
+--- @async
 --- @param dir string
 --- @param sourceNfs boolean
 --- @return imm.InstallResult
-function IModCtrl:installFromDir(dir, sourceNfs)
+function IModCtrl:installFromDirCo(dir, sourceNfs)
     local modslist = getmods.getMods({ base = dir, isNfs = sourceNfs })
     --- @type imm.Mod[]
     local intalled = {}
@@ -240,7 +247,7 @@ function IModCtrl:installFromDir(dir, sourceNfs)
     for id, modvers in pairs(modslist) do
         for ver, mod in pairs(modvers.versions) do
             -- install
-            local ok, err = self:install(mod, sourceNfs)
+            local ok, err = self:installCo(mod, sourceNfs)
             if not ok then
                 logger.err(err)
                 table.insert(errors, string.format('%s %s: %s', mod.mod, mod.version, err))
@@ -260,16 +267,17 @@ end
 
 local mnttmp = 0
 
+--- @async
 --- @param zipData love.Data
 --- @return imm.InstallResult
-function IModCtrl:installFromZip(zipData)
+function IModCtrl:installFromZipCo(zipData)
     mnttmp = mnttmp + 1
     local tmpdir = 'tmp-'..mnttmp
     local ok = love.filesystem.mount(zipData, "tmp.zip", tmpdir)
     --- @type imm.InstallResult
     if not ok then return { errors = { 'Mount failed - is the file a zip?' }, installed = {}, mods = {} } end
 
-    local a = self:installFromDir(tmpdir, false)
+    local a = self:installFromDirCo(tmpdir, false)
     love.filesystem.unmount(zipData) --- @diagnostic disable-line
     return a
 end

@@ -80,15 +80,17 @@ function IBTasks:handleInstallResult(info)
     return info
 end
 
----@param data love.Data
-function IBTasks:installModFromZip(data)
-    return self:handleInstallResult(self.ctrl:installFromZip(data))
+--- @async
+--- @param data love.Data
+function IBTasks:installModFromZipCo(data)
+    return self:handleInstallResult(self.ctrl:installFromZipCo(data))
 end
 
----@param dir string
----@param sorucenfs boolean
-function IBTasks:installModFromDir(dir, sorucenfs)
-    return self:handleInstallResult(self.ctrl:installFromDir(dir, sorucenfs))
+--- @async
+--- @param dir string
+--- @param sorucenfs boolean
+function IBTasks:installModFromDirCo(dir, sorucenfs)
+    return self:handleInstallResult(self.ctrl:installFromDirCo(dir, sorucenfs))
 end
 
 --- @alias imm.Tasks.C p.Constructor<imm.Tasks, nil> | fun(repo?: imm.Repo, modctrl?: imm.ModController): imm.Tasks

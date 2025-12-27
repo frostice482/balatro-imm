@@ -1,4 +1,5 @@
 local Tasks = require("imm.lib.threadworker")
+local co = require("imm.lib.co")
 local imm = require("imm")
 local threadcode = assert(love.filesystem.newFileData('imm/afs/thread.lua'))
 
@@ -78,6 +79,14 @@ function agent.cp(src, dest, cb, opts)
         dest = dest,
         opts = opts
     }, cb)
+end
+
+--- @param src string
+--- @param dest string
+--- @param opts? _imm.AfsAgent.CpOpts
+--- @return boolean ok, string? err
+function agent.cpCo(src, dest, opts)
+    return co.wrapCallbackStyle(function(cb) return agent.cp(src, dest, cb, opts) end)
 end
 
 return agent
