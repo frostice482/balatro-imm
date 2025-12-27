@@ -4,7 +4,7 @@ local ui = require("imm.lib.ui")
 local util = require("imm.lib.util")
 local imm = require("imm")
 local defaultTasks = require("imm.btasks.tasks")()
-defaultTasks.queues.available = tonumber(imm.config.mpConcurrentTasks) or 4
+defaultTasks.queues.available = tonumber(imm.config.mpConcurrentTasks) or 2
 
 --- @class imm.UI.MPList.Funcs
 local funcs = {
