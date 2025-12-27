@@ -78,7 +78,7 @@ function agent.cp(src, dest, cb, opts)
         src = src,
         dest = dest,
         opts = opts
-    }, cb)
+    }, function(e) return cb(unpack(e, 1, 2)) end)
 end
 
 --- @param src string

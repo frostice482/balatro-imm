@@ -119,10 +119,11 @@ function commands.cp(req, share)
 			s:release()
 		end
 		finish(share)
+		return
     elseif stat.type == 'directory' then
-        local ok = targetProv.createDirectory(target)
+        local ok, err = targetProv.createDirectory(target)
 
-		if not ok then error(string.format("Failed creating directory %s", lib.fmtcopy(req, true)), 0) end
+		if not ok then error(string.format("Failed creating directory %s: %s", lib.fmtcopy(req, true), err or '-'), 0) end
 
         local items = sourceProv.getDirectoryItems(source)
 		finish(share, #items)
@@ -136,6 +137,7 @@ function commands.cp(req, share)
 				share = req.share
 			})
         end
+		return
     end
 
 	error(string.format("unknown stat type %s for %s", stat.type, lib.fmtcopy(req, true)))
