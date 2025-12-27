@@ -156,7 +156,7 @@ function IUI:renderMpActions(mp, diff)
 			pos = sprites.activate,
 			ref = { ses = self, mp = mp, diff = diff, merge = false }
 		}),
-		self:renderMpButton(diff.empty and {
+		self:renderMpButton(diff.mergeEmpty and {
 			title = {'Nothing to merge'},
 			btn = funcs.active,
 			pos = sprites.mergeNo,
