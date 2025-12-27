@@ -39,7 +39,12 @@ end
 --- @return ...
 function ITasks:handleSpawnAdditionalParams(thread) end
 
-function ITasks:spawn()
+--- @param force? boolean
+function ITasks:spawn(force)
+    if not (force or self.pendingCount > self.allocated and self.allocated < self.maxConcurrency) then
+        return
+    end
+
     self.allocated = self.allocated + 1
     local thr = love.thread.newThread(self.threadcode)
     thr:start(self.input, self:handleSpawnAdditionalParams(thr))
@@ -82,9 +87,8 @@ function _ITasks:runTask(req, cb)
     if self.autoRecountThreads then
         self:recountThreads()
     end
-    if self.pendingCount > self.allocated and self.allocated < self.maxConcurrency then
-        self:spawn()
-    end
+
+    self:spawn()
 
     return self.nextId
 end

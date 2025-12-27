@@ -20,7 +20,7 @@ local threadcode = assert(NFS.newFileData(imm.path..'/imm/https/thread.lua'))
 --- @class imm.HttpsAgent
 local agent = {
     --- @type imm.ThreadWorker<imm.HttpsAgent.Req, imm.HttpsAgent.Res>
-    task = Tasks(threadcode, tonumber(imm.config.httpsThreads) or 6), --- @diagnostic disable-line
+    task = Tasks(threadcode, tonumber(imm.config.httpsThreads) or 6),
     userAgent = 'imm (https://github.com/frostice482/balatro-imm)'
 }
 agent.task.autoRecountThreads = true
