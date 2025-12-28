@@ -48,6 +48,7 @@ function _imm.init()
     if _imm.initialized then return true end
 
     _imm.path = _imm.path or _mod_dir_immpath
+    if not _mod_dir_immpath then return false, 'unknown _mod_dir_immpath' end
     _imm.nfs = NFS or package.preload.nativefs and require('nativefs') or require("imm-nativefs")
     _imm.json = JSON or package.preload.json and require('json') or require("imm-json")
 
@@ -66,4 +67,7 @@ function _imm.init()
     _imm.initialized = true
     return true
 end
-if not __IMM_WRAP then _imm.init() end
+if not __IMM_WRAP then
+    local ok, err = _imm.init()
+    if not ok then print('imm: error: ', err) end
+end

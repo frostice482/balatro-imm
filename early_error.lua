@@ -130,4 +130,6 @@ function create_UIBox_main_menu_buttons(...)
     return h(...)
 end
 
-_imm.init()
+local iok, ierr = _imm.init()
+if not iok then print('imm: error: ', ierr) end
+
