@@ -4,6 +4,7 @@ local tarc = require('imm.tar.c')
 local a = require('imm.lib.assert')
 local co = require('imm.lib.co')
 local util = require('imm.lib.util')
+local imm = require('imm')
 
 --- @class imm.Modpack.Mod.Files
 --- @field includes string[]
@@ -94,7 +95,7 @@ function IMP:json()
 end
 
 function IMP:save()
-	return love.filesystem.write(self:pathInfo(), JSON.encode(self:json()))
+	return love.filesystem.write(self:pathInfo(), imm.json.encode(self:json()))
 end
 
 function IMP:saveDescription()
@@ -107,7 +108,7 @@ function IMP:saveThumb(icon)
 end
 
 function IMP:load()
-	local data = MPS.parseData(JSON.decode(assert(love.filesystem.read(self:pathInfo()))))
+	local data = MPS.parseData(imm.json.decode(assert(love.filesystem.read(self:pathInfo()))))
 
 	self.name = data.name
 	self.author = data.author
@@ -247,7 +248,7 @@ function IMP:export(tar)
 	if not tar then tar = Tar() end
 
 	local info = self:exportJson()
-	assert(tar:openFile('info.json')):setContentString(JSON.encode(info))
+	assert(tar:openFile('info.json')):setContentString(imm.json.encode(info))
 	assert(tar:openFile('description.txt')):setContentString(self.description)
 	local thumb = love.filesystem.newFileData(self:pathIcon())
 	if thumb then assert(tar:openFile('thumb')):setContentString(thumb) end
@@ -257,7 +258,7 @@ function IMP:export(tar)
 		local xe = self.mods[e.id]
 		local tobundle = xe and xe.bundle and self.ctrl:getMod(e.id, xe.version)
 		if tobundle then
-			local bfiles = NFS.read(tobundle.path..'/.immbfiles')
+			local bfiles = imm.nfs.read(tobundle.path..'/.immbfiles')
 			local allowlist = bfiles and MPS.parseFileList(bfiles) or nil
 			if allowlist then
 				table.insert(allowlist.excludes, '^%.git')
@@ -266,9 +267,9 @@ function IMP:export(tar)
 
 			tempid = tempid + 1
 			local temp = '_immmp_tmp'..tempid
-			assert(NFS.mount(tobundle.path, temp), string.format('mount failed: %s -> %s', tobundle.path, temp))
+			assert(imm.nfs.mount(tobundle.path, temp), string.format('mount failed: %s -> %s', tobundle.path, temp))
 			assert(mods:openDir(tostring(i))):addFrom(temp, nil, function (sub, path) return MPS.testFileList(allowlist or blocklist, sub) end)
-			assert(NFS.unmount(tobundle.path), 'unmount failed')
+			assert(imm.nfs.unmount(tobundle.path), 'unmount failed')
 		end
 	end
 

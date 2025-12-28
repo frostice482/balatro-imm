@@ -16,7 +16,7 @@ local excludeProps = {'metafmt'}
 --- @param str love.Data
 function fetch_list:interpretRes(str)
     --- @type bmi.Meta[]
-    local list = JSON.decode(love.data.decompress("string", 'gzip', str))
+    local list = imm.json.decode(love.data.decompress("string", 'gzip', str))
     for i,entry in ipairs(list) do
         for j, omitProp in ipairs(excludeProps) do entry[omitProp] = nil end
     end

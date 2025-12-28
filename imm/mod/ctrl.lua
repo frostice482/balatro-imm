@@ -201,7 +201,7 @@ function IModCtrl:installCo(mod, sourceNfs)
     local c = 0
     local tpath_orig = string.format('%s/%s-%s', imm.modsDir, id, ver)
     local tpath = tpath_orig
-    if NFS.getInfo(tpath) then
+    if imm.nfs.getInfo(tpath) then
         c = c + 1
         tpath = string.format('%s_%d', tpath_orig, c)
     end
@@ -212,7 +212,7 @@ function IModCtrl:installCo(mod, sourceNfs)
     logger.fmt('debug', 'Copied %s %s to %s', id, ver, tpath)
 
     -- ignore
-    local ok, err = NFS.write(tpath .. '/.lovelyignore', '')
+    local ok, err = imm.nfs.write(tpath .. '/.lovelyignore', '')
     if not ok then return false, err end
 
     -- fix linking

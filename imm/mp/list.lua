@@ -105,7 +105,7 @@ function IML:importTar(tar)
 	local infoFile = assert(tar:get('info.json'))
 	infoFile:assertType("file")
 
-	local data = MLS.parseData(JSON.decode(infoFile:getContentString()), tar)
+	local data = MLS.parseData(imm.json.decode(infoFile:getContentString()), tar)
 
 	local desc
 	local descFile = tar:get('description.txt')
@@ -144,15 +144,15 @@ function IML:importTar(tar)
 		local mod = self.ctrl:getMod(e.id, e.version)
 		if not mod and dir then
 			local s = string.format('%s/%s-%s_%s', imm.modsDir, e.id, e.version, mp.id)
-			NFS.createDirectory(s)
-			NFS.write(s .. '/.lovelyignore', '')
+			imm.nfs.createDirectory(s)
+			imm.nfs.write(s .. '/.lovelyignore', '')
 
 			dir:each(function (entry)
 				local sub = s .. '/' .. entry:getPath(dir)
 				if entry.type == "dir" then
-					NFS.createDirectory(sub)
+					imm.nfs.createDirectory(sub)
 				elseif entry.type == "file" then
-					NFS.write(sub, entry:getContentData())
+					imm.nfs.write(sub, entry:getContentData())
 				end
 			end)
 

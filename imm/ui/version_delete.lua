@@ -1,6 +1,7 @@
 local constructor = require('imm.lib.constructor')
 local UIVersion = require('imm.ui.version')
 local ui = require('imm.lib.ui')
+local imm = require('imm')
 
 --- @class imm.UI.VerDel
 local IUIVerDel = {}
@@ -18,7 +19,7 @@ end
 --- @protected
 function IUIVerDel:uiDeleteVersionMessage()
     local mod = self.ses.ctrl:getMod(self.mod, self.ver)
-    local stat = mod and NFS.getInfo(mod.path)
+    local stat = mod and imm.nfs.getInfo(mod.path)
 
     local cols = {}
 

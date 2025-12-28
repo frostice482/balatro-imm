@@ -3,6 +3,7 @@ local util = require("imm.lib.util")
 local co = require("imm.lib.co")
 local https = require("imm.https.agent")
 local logger= require("imm.logger")
+local imm = require('imm')
 
 --- @alias imm.Fetch.ResType 'json' | 'string' | 'data'
 --- @alias imm.Fetch.SaveType 'json' | 'string' | 'filedata'
@@ -14,7 +15,7 @@ local logger= require("imm.logger")
 --- @class imm.Fetch.InitOpts
 --- If true, the data from response will be parsed as JSON data.
 --- @field resType? imm.Fetch.ResType
---- If true, the data will be saved/loaded as JSON.
+--- If true, the data will be saved/loaded as imm.json.
 --- @field cacheType? imm.Fetch.SaveType
 --- Never cache response
 --- @field neverCache? boolean
@@ -53,7 +54,7 @@ end
 --- @return string | love.Data
 function IFetch:stringifyDataToCache(data)
     if self.cacheType == 'json' then
-        return JSON.encode(data)
+        return imm.json.encode(data)
     end
     return data
 end
@@ -62,7 +63,7 @@ end
 --- @return any
 function IFetch:parseCache(data)
     if self.cacheType == 'json' then
-        return JSON.decode(data)
+        return imm.json.decode(data)
     end
     return data
 end
@@ -95,7 +96,7 @@ function IFetch:handleRes(body)
     local ok, res = true, body
 
     if self.resType == 'json' then
-        ok, res = pcall(JSON.decode, body)
+        ok, res = pcall(imm.json.decode, body)
     end
     if ok then
         ok, res = pcall(self.interpretRes, self, res)

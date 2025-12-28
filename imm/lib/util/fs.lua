@@ -1,3 +1,5 @@
+local imm = require('imm')
+
 --- @class imm.Util.Fs
 local util = {}
 
@@ -7,8 +9,8 @@ local util = {}
 --- @param targetNfs? boolean
 --- @param excludes? fun(source: string, target: string): boolean?
 function util.cpdir(source, target, sourceNfs, targetNfs, excludes)
-    local sourceProv = sourceNfs and NFS or love.filesystem
-    local targetProv = targetNfs and NFS or love.filesystem
+    local sourceProv = sourceNfs and imm.nfs or love.filesystem
+    local targetProv = targetNfs and imm.nfs or love.filesystem
 
     if excludes and excludes(source, target) then return end
 
@@ -31,7 +33,7 @@ end
 --- @param path string
 --- @param isNfs boolean
 function util.rmdir(path, isNfs)
-    local prov = isNfs and NFS or love.filesystem
+    local prov = isNfs and imm.nfs or love.filesystem
     local info = prov.getInfo(path)
 
     if info and info.type == 'directory' then

@@ -6,8 +6,8 @@ _imm = {
     configFile = 'config/imm.txt',
     initialized = false,
     config = {},
-    modsDir = lovely.mod_dir,
     path = _mod_dir_immpath,
+    modsDir = lovely.mod_dir,
     lovelyver = lovely.version
 }
 
@@ -47,10 +47,11 @@ end
 function _imm.init()
     if _imm.initialized then return true end
 
-    NFS = NFS or package.preload.nativefs and require('nativefs') or require("imm-nativefs")
-    JSON = JSON or package.preload.json and require('json') or require("imm-json")
+    _imm.path = _imm.path or _mod_dir_immpath
+    _imm.nfs = NFS or package.preload.nativefs and require('nativefs') or require("imm-nativefs")
+    _imm.json = JSON or package.preload.json and require('json') or require("imm-json")
 
-    if not NFS.mount(_mod_dir_immpath..'/imm', 'imm') then return false, 'imm mount failed' end
+    if not _imm.nfs.mount(_imm.path..'/imm', 'imm') then return false, 'imm mount failed' end
 
     _imm.initconfig()
 

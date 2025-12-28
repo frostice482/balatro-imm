@@ -55,12 +55,12 @@ end
 --- @param file string
 --- @param isNfs? boolean
 function get.processJson(file, isNfs)
-    local prov = isNfs and NFS or love.filesystem
+    local prov = isNfs and imm.nfs or love.filesystem
     --- @type string?
     local content = prov.read('string', file) --- @diagnostic disable-line
     if not content then return end
 
-    local ok, res = pcall(JSON.decode, content)
+    local ok, res = pcall(imm.json.decode, content)
     if not ok then return end
 
     return res
@@ -93,7 +93,7 @@ end
 --- @param file string
 --- @param isNfs? boolean
 function get.processHeader(file, isNfs)
-    local prov = isNfs and NFS or love.filesystem
+    local prov = isNfs and imm.nfs or love.filesystem
     --- @type string?
     local content = prov.read('string', file, 512) --- @diagnostic disable-line
     if not content then return end
@@ -210,7 +210,7 @@ end
 --- @param ctx _imm.GetModsContext
 --- @param depth number
 function get.processFile(ctx, base, depth, file)
-    local prov = ctx.isNfs and NFS or love.filesystem
+    local prov = ctx.isNfs and imm.nfs or love.filesystem
     local path = base..'/'..file
     local ifile = file:lower()
     local mod
@@ -302,7 +302,7 @@ function get.getModsLow(ctx, base, depth, subbase)
 
     -- false if a mod does not exist in this directory
     local exists = false
-    local prov = ctx.isNfs and NFS or love.filesystem
+    local prov = ctx.isNfs and imm.nfs or love.filesystem
     local items = prov.getDirectoryItems(base)
 
     -- thunderstore last

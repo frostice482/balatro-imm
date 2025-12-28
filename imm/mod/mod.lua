@@ -106,7 +106,7 @@ function IMod:enable()
 
     if self.list.active then self.list:disable() end
 
-    local ok,err = NFS.remove(self.path .. '/.lovelyignore')
+    local ok,err = imm.nfs.remove(self.path .. '/.lovelyignore')
     if not ok then return ok, err end
 
     logger.fmt('log', 'Enabled %s %s', self.mod, self.version)
@@ -120,7 +120,7 @@ function IMod:disable()
     if self.locked then return self:errLocked() end
     if not self:isActive() then return false, 'not active' end
 
-    local ok, err = NFS.write(self.path .. '/.lovelyignore', '')
+    local ok, err = imm.nfs.write(self.path .. '/.lovelyignore', '')
     if not ok then return false, err end
 
     logger.fmt('log', 'Disabled %s %s', self.mod, self.version)
@@ -132,7 +132,7 @@ end
 function IMod:lock()
     if self.locked then return true end
 
-    local ok, err = NFS.write(self.path .. '/.immlock', '')
+    local ok, err = imm.nfs.write(self.path .. '/.immlock', '')
     if not ok then return false, err end
     self.locked = true
     return true
@@ -142,7 +142,7 @@ end
 function IMod:unlock()
     if not self.locked then return true end
 
-    local ok, err = NFS.remove(self.path .. '/.immlock', '')
+    local ok, err = imm.nfs.remove(self.path .. '/.immlock', '')
     if not ok then return false, err end
     self.locked = false
     return true
@@ -152,7 +152,7 @@ end
 function IMod:hide()
     if self.hidden then return true end
 
-    local ok, err = NFS.write(self.path .. '/.immhide', '')
+    local ok, err = imm.nfs.write(self.path .. '/.immhide', '')
     if not ok then return false, err end
     self.hidden = true
     return true
@@ -162,7 +162,7 @@ end
 function IMod:unhide()
     if not self.hidden then return true end
 
-    local ok, err = NFS.remove(self.path .. '/.immhide', '')
+    local ok, err = imm.nfs.remove(self.path .. '/.immhide', '')
     if not ok then return false, err end
     self.hidden = false
     return true

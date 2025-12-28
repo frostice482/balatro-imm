@@ -54,7 +54,7 @@ function IBTasks:downloadLovelyCo()
 
     local target = love.filesystem.getSourceBaseDirectory()
     for i, sub in ipairs(love.filesystem.getDirectoryItems(tmplovely)) do
-        NFS.write(target..'/'..sub, love.filesystem.read(tmplovely..'/'..sub))
+        imm.nfs.write(target..'/'..sub, love.filesystem.read(tmplovely..'/'..sub))
     end
 
     task:done("Installed lovely")

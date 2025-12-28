@@ -60,14 +60,14 @@ function agent.cp(src, dest, cb, opts)
     if opts.srcNfs then
         local tmpmnt = '__afs_tmp' .. tmp
         tmp = tmp + 1
-        if not NFS.mount(src, tmpmnt) then
+        if not imm.nfs.mount(src, tmpmnt) then
             return cb(false, string.format('Failed mounting %s to %s', src, tmpmnt))
         end
         org = src
         src = tmpmnt
         local f = cb
         function cb(...)
-            assert(NFS.unmount(org))
+            assert(imm.nfs.unmount(org))
             return f(...)
         end
     end

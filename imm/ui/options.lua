@@ -142,7 +142,7 @@ function IUIOpts:renderCheckRateLimitExec()
             return
         end
         --- @type ghapi.Ratelimit
-        local data = JSON.decode(body)
+        local data = imm.json.decode(body)
         local limited = data.rate.remaining == 0
         conf.t = string.format('%s (%d/%d)', limited and "Ratelimited" or "Not ratelimited", data.rate.remaining, data.rate.limit)
         conf.colour = limited and G.C.ORANGE or G.C.GREEN

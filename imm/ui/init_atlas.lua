@@ -1,7 +1,9 @@
+local imm = require('imm')
+
 local function atlas(key, path, px, py)
     local abspath = string.format('%s/assets/%s', _imm.path, path)
     local name = 'imm_'..key
-    local source = assert(NFS.newFileData(abspath))
+    local source = assert(imm.nfs.newFileData(abspath))
     local img = love.graphics.newImage(source, { dpiscale = 1 })
     img:setFilter("nearest", "nearest")
     G.ASSET_ATLAS[name] = {
