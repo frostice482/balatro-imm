@@ -6,10 +6,11 @@ _imm = {
     configFile = 'config/imm.txt',
     initialized = false,
     config = {},
-    path = _mod_dir_immpath,
     modsDir = lovely.mod_dir,
     lovelyver = lovely.version
 }
+
+_imm.path = nil
 
 function _imm.initmodule()
     package.loaded.imm = package.loaded.imm or _imm
@@ -47,8 +48,7 @@ end
 function _imm.init()
     if _imm.initialized then return true end
 
-    _imm.path = _imm.path or _mod_dir_immpath
-    if not _mod_dir_immpath then return false, 'unknown _mod_dir_immpath' end
+    if not _imm.path then return false, 'Cannot determine imm path' end
     _imm.nfs = NFS or package.preload.nativefs and require('nativefs') or require("imm-nativefs")
     _imm.json = JSON or package.preload.json and require('json') or require("imm-json")
 

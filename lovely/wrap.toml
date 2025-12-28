@@ -7,15 +7,15 @@ priority = 2147483647
 #[patches.copy]
 #target = "main.lua"
 #position = "append"
-#payload = '''_mod_dir_immpath = "{{lovely_hack:patch_dir}}"'''
+#payload = '''_imm.path = "{{lovely_hack:patch_dir}}"'''
 
 [[patches]]
 [patches.pattern]
 target = "main.lua"
-position = "before"
-pattern = "--- @class imm.Base"
+position = "at"
+pattern = "_imm.path = nil"
 payload = '''
-_mod_dir_immpath = "{{lovely_hack:patch_dir}}"
+_imm.path = "{{lovely_hack:patch_dir}}"
 '''
 match_indent = true
 
