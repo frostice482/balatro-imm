@@ -13,7 +13,7 @@ priority = 2147483647
 [patches.pattern]
 target = "main.lua"
 position = "before"
-pattern = "function love.run()"
+pattern = "if (love.system.getOS() == 'OS X' ) and (jit.arch == 'arm64' or jit.arch == 'arm') then jit.off() end"
 payload = '''
 _mod_dir_immpath = "{{lovely_hack:patch_dir}}"
 '''
