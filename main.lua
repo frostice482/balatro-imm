@@ -1,8 +1,14 @@
+local lovely = require('lovely')
+
 --- @class imm.Base
 _imm = {
+    configDir = 'config',
     configFile = 'config/imm.txt',
     initialized = false,
     config = {},
+    modsDir = lovely.mod_dir,
+    path = _mod_dir_immpath,
+    lovelyver = lovely.version
 }
 
 function _imm.initmodule()
@@ -33,71 +39,8 @@ function _imm.saveconfig()
     for k,v in pairs(_imm.config) do table.insert(entries, k..' = '..tostring(v)) end
     table.sort(entries, function (a, b) return a < b end)
 
-    love.filesystem.createDirectory(_imm.dirname(_imm.configFile))
+    love.filesystem.createDirectory(_imm.configDir)
     love.filesystem.write(_imm.configFile, table.concat(entries, '\n'))
-end
-
---- @return string dirname, string filename
-function _imm.dirname(str)
-    local prev
-    while true do
-        local a, b = str:find('[/\\]', (prev or 0) + 1)
-        if not b then break end
-        prev = b
-    end
-    if not prev then return '', str end
-    return str:sub(1, prev-1), str:sub(prev+1)
-end
-
---- @return string filename, string extname
-function _imm.filename(str)
-    local prev
-    while true do
-        local a, b = str:find('.', (prev or 0) + 1, true)
-        if not b then break end
-        prev = b
-    end
-    if not prev then return str, '' end
-    return str:sub(1, prev-1), str:sub(prev)
-end
-
-function _imm.determineConfpath()
-    if jit.os == 'Linux' then
-        return os.getenv('XDG_CONFIG_HOME') or os.getenv('HOME')..'/.config'
-    elseif jit.os == 'OSX' then
-        return os.getenv('HOME')..'/Library/Application Support'
-    elseif jit.os == 'Windows' then
-        return os.getenv('appdata')
-    end
-end
-
-function _imm.determineModpath()
-    local confpath = _imm.determineConfpath()
-    if not confpath then return end
-
-    local exe = arg[-2] -- is this consistent??
-    local dirname, filename = _imm.dirname(exe)
-    if jit.os == 'OSX' then
-        dirname, filename = _imm.dirname(_imm.dirname(_imm.dirname(dirname)))
-    end
-    local base, ext = _imm.filename(filename)
-    base = base:gsub("%.", "_")
-
-    return table.concat({ confpath, base, 'Mods' }, '/')
-end
-
-function _imm.applyNonLovelyHook()
-    local a = create_UIBox_generic_options
-    local G2 = _G
-    function G2.create_UIBox_generic_options(opts) --- @diagnostic disable-line
-        local n = a(opts)
-        if opts then
-            if opts.ref_table then
-                n.nodes[1].nodes[1].nodes[2].config.ref_table = opts.ref_table
-            end
-        end
-        return n
-    end
 end
 
 --- @return boolean ok, string? err
@@ -107,12 +50,8 @@ function _imm.init()
     NFS = NFS or package.preload.nativefs and require('nativefs') or require("imm-nativefs")
     JSON = JSON or package.preload.json and require('json') or require("imm-json")
 
-    local lovely = require('lovely')
-    _imm.lovelyver = lovely.version
     if not NFS.mount(_mod_dir_immpath..'/imm', 'imm') then return false, 'imm mount failed' end
 
-    _imm.path = _mod_dir_immpath
-    _imm.modsDir = lovely.mod_dir
     _imm.initconfig()
 
     local loveload = love.load
