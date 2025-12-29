@@ -1,0 +1,40 @@
+[manifest]
+version = "1.0.0"
+priority = 0
+
+# make SMODS use lovefs instead of nfs when saving config
+[[patches]]
+[patches.pattern]
+target = '=[SMODS _ "src/ui.lua"]'
+pattern = '''
+return load(NFS.read(('config/%s.jkr'):format(mod.id)), ('=[SMODS %s "config"]'):format(mod.id))()
+'''
+position = "at"
+payload = '''
+return assert(load(love.filesystem.read(('config/%s.jkr'):format(mod.id)), ('=[SMODS %s "config"]'):format(mod.id)))()
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '=[SMODS _ "src/ui.lua"]'
+pattern = '''
+NFS.write(('config/%s.jkr'):format(mod.id), serialized)
+'''
+position = "at"
+payload = '''
+love.filesystem.write(('config/%s.jkr'):format(mod.id), serialized)
+'''
+match_indent = true
+
+[[patches]]
+[patches.pattern]
+target = '=[SMODS _ "src/ui.lua"]'
+pattern = '''
+NFS.createDirectory('config')
+'''
+position = "at"
+payload = '''
+love.filesystem.createDirectory('config')
+'''
+match_indent = true
