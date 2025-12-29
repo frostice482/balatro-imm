@@ -3,6 +3,7 @@ local UIInfo = require("imm.mpui.modpack.info")
 local UIExport = require("imm.mpui.modpack.export")
 local UIMods = require("imm.mpui.modpack.mods")
 local UIAddMod = require("imm.mpui.modpack.addmods")
+local UIFile = require("imm.mpui.modpack.file")
 local ui = require('imm.lib.ui')
 
 --- @class imm.UI.MP.Funcs
@@ -29,15 +30,20 @@ function IUI:init(ses, mp)
 	self.mp = mp
 	self.states = {}
 
-	self.uiInfo = UIInfo(self)
-	self.uiExport = UIExport(self)
-	self.uiMods = UIMods(self)
-	self.uiAddMod = UIAddMod(self)
+	self.uiObjects = {
+		Info = UIInfo(self),
+		Export = UIExport(self),
+		Mods = UIMods(self),
+		AddMod = UIAddMod(self),
+		File = UIFile(self),
+	}
+
 	self.uis = {
-		self.uiInfo,
-		self.uiMods,
-		self.uiAddMod,
-		self.uiExport,
+		self.uiObjects.Info,
+		self.uiObjects.Mods,
+		self.uiObjects.AddMod,
+		self.uiObjects.File,
+		self.uiObjects.Export,
 	}
 end
 

@@ -227,8 +227,29 @@ function IMP:pathIcon()
 	return self:subpath('thumb')
 end
 
-function IMP:fileURL()
-	return string.format('file:///%s/%s', love.filesystem.getSaveDirectory(), self.path)
+--- @param sub? string
+function IMP:pathFiles(sub)
+	sub = sub or ''
+	return self:subpath('files/'..sub)
+end
+
+function IMP:mkdirFiles()
+	return love.filesystem.createDirectory(self:pathFiles())
+end
+
+function IMP:copySaveAllModConfigs()
+	self:mkdirFiles()
+	util.cpdir('settings.jkr', self:pathFiles('settings.jkr'))
+	util.cpdir('config', self:pathFiles('config'))
+end
+
+function IMP:applyFiles()
+	util.cpdir(self:pathFiles(), '')
+end
+
+--- @param sub? string
+function IMP:fileURL(sub)
+	return string.format('file:///%s/%s', love.filesystem.getSaveDirectory():gsub('\\', '/'), self:subpath(sub))
 end
 
 local tempid = 0
