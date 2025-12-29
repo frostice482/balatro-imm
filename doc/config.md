@@ -13,6 +13,10 @@ Disables imm's early crash handing.
 - `ignore`: Disables imm's early error handling
 - `nodisable`: Only list detected mods
 
+### `disableModColor`
+
+If present, dissable mod colors from badges.
+
 ### `disableFlavor`
 
 If present, disables flavor text.

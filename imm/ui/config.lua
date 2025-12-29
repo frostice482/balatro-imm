@@ -31,14 +31,17 @@ end
 
 --- @param text string
 --- @param prop string
-function IUIConf:renderOptBoolProp(text, prop)
+--- @param cb? fun(v: boolean)
+function IUIConf:renderOptBoolProp(text, prop, cb)
 	return create_toggle({
 		label = text,
 		ref_table = imm.config, ref_value = prop,
 		callback = function (v)
 			imm.config[prop] = v and '' or nil
 			imm.saveconfig()
-		end
+			if cb then cb(v) end
+		end,
+		w = 6
 	})
 end
 
@@ -53,6 +56,9 @@ function IUIConf:renderOptions()
 			ref_table = { imm.config, 'handleEarlyError', self.earlyErrorValues },
 			opt_callback = funcs.setearlyerr
 		}),
+		self:renderOptBoolProp('Disable mod colors', 'disableModColor', function (v)
+			self.ses.allowModBadgeColors = not v
+		end),
 		self:renderOptBoolProp('Debug Logging', 'debug'),
 		self:renderOptBoolProp('Disable safety warning', 'disableSafetyWarning'),
 		self:renderOptBoolProp('Disable flavor text', 'disableFlavor'),

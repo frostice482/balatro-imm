@@ -60,7 +60,7 @@ local IUISes = {
     colorHeader = G.C.RED,
     colorButtons = G.C.ORANGE,
     colorMod = G.C.BOOSTER,
-    allowModBadgeColors = true,
+    allowModBadgeColors = not imm.config.disableModColor,
 }
 
 --- @alias imm.UI.Browser.C imm.UI.Browser.Static | p.Constructor<imm.UI.Browser, nil> | fun(modctrl?: imm.ModController, modrepo?: imm.Repo): imm.UI.Browser

@@ -8,12 +8,15 @@
 ---
 --- Changes won't be applied with the next restart.
 ---
---- If present, logs debug output.
---- @field debug? string
----
 --- Useful for when Balatro crashes at loading and it disables all mods.
 --- This config can be used to re-enable all disabled mods during loading crash.
 --- @field nextEnable? string
+---
+--- If present, dissable mod colors from badges.
+--- @field disableModColor? string
+---
+--- If present, logs debug output.
+--- @field debug? string
 ---
 --- Allows users to specify the GitHub API token
 --- @field githubToken? string
