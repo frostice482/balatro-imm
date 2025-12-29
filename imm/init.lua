@@ -64,10 +64,7 @@ end
 
 G.UIDEF[funcs.restart] = function()
     return ui.confirm(
-        ui.R{
-            align = 'cm',
-            ui.T('Restart balatro now?', { scale = 0.6 })
-        },
+        ui.TRS('Restart balatro now?', 0.6, nil, { align = 'cm' }),
         funcs.restartConf,
         {}
     )

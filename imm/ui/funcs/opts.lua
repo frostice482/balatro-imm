@@ -1,6 +1,7 @@
 local UICT = require("imm.ui.confirm_toggle")
 local UIOpts = require("imm.ui.options")
 local UIConf = require("imm.ui.config")
+local httpsAgent = require('imm.https.agent')
 local util = require("imm.lib.util")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
@@ -85,7 +86,7 @@ G.FUNCS[funcs.checkRateLimit] = function(elm)
     --- @type imm.UI.Options
     local ses = elm.config.ref_table
 
-    ui.overlay(ses:renderCheckRateLimitExec())
+    ui.overlay(ses:renderCheckRateLimit())
 end
 
 --- @param elm balatro.UIElement
@@ -232,4 +233,32 @@ G.FUNCS[funcs.updateLovelyInit] = function(elm)
         elm.disable_button = true
     end
     elm.config.tooltip = { text = texts }
+end
+
+--- @param elm balatro.UIElement
+G.FUNCS[funcs.initRL] = function(elm)
+    elm.config.func = nil
+    local conf = elm.config.ref_table.conf
+    local subconf = elm.config.ref_table.subconf
+
+    local t = os.time()
+    co.create(function ()
+        local code, body, headers = httpsAgent:requestCo('https://api.github.com/rate_limit', {
+            headers = {
+                Authorization = imm.config.githubToken and 'Bearer '..imm.config.githubToken or nil
+            }
+        })
+
+        if code ~= 200 then
+            conf.t = string.format('Error %d', code)
+            return
+        end
+
+        --- @type ghapi.Ratelimit
+        local data = imm.json.decode(body)
+        local limited = data.rate.remaining == 0
+        conf.t = string.format('%s (%d/%d)', limited and "Ratelimited" or "Not ratelimited", data.rate.remaining, data.rate.limit)
+        conf.colour = limited and G.C.ORANGE or G.C.GREEN
+        subconf.t = string.format('Resets in %d minute(s)', (data.rate.reset - t) / 60)
+    end)
 end

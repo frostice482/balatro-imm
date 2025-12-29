@@ -1,5 +1,5 @@
 local constructor = require('imm.lib.constructor')
-local LM = require("imm.lib.love_moveable")
+local TM = require("imm.lib.texture_moveable")
 local ui = require("imm.lib.ui")
 local util = require("imm.lib.util")
 local imm = require("imm")
@@ -185,7 +185,7 @@ end
 --- @param mp imm.Modpack
 function IUI:renderMpRows(mp)
 	local diff = mp:diff()
-	local icon = LM(mp:getIcon(), 0, 0, self.iconSize, self.iconSize)
+	local icon = TM(mp:getIcon(), 0, 0, self.iconSize, self.iconSize)
 
 	--- @type balatro.UIElement.Definition[]
 	return {

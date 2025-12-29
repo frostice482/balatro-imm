@@ -1,7 +1,6 @@
 local Base = require("imm.mpui.modpack.ui")
-local LM = require("imm.lib.love_moveable")
+local TM = require("imm.lib.texture_moveable")
 local ui = require('imm.lib.ui')
-local util = require('imm.lib.util')
 
 --- @class imm.UI.MP.Info.Funcs
 local funcs = {
@@ -65,7 +64,7 @@ end
 
 --- @protected
 function IUI:uiIcon()
-	return LM(self.mp:getIcon(), 0, 0, self.iconWidth, self.iconHeight)
+	return TM(self.mp:getIcon(), 0, 0, self.iconWidth, self.iconHeight)
 end
 
 --- @protected

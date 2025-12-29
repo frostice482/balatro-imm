@@ -339,6 +339,7 @@ function ui.T(text, config)
     config = config or {}
     config.text = text
     config.scale = config.scale or 1
+    --- @type balatro.UIElement.Definition
     return { n = G.UIT.T, config = config }
 end
 
@@ -352,6 +353,7 @@ function ui.TS(text, scale, color, config)
     config.text = text
     config.scale = scale or 1
     config.colour = color
+    --- @type balatro.UIElement.Definition
     return { n = G.UIT.T, config = config }
 end
 
@@ -359,6 +361,7 @@ end
 --- @param conf balatro.UIElement.Config
 function ui.TC(conf)
     conf.scale = conf.scale or 1
+    --- @type balatro.UIElement.Definition
     return { n = G.UIT.T, config = conf }
 end
 
@@ -371,6 +374,7 @@ function ui.TRef(reftable, refvalue, config)
     config.ref_table = reftable
     config.ref_value = refvalue
     config.scale = config.scale or 1
+    --- @type balatro.UIElement.Definition
     return { n = G.UIT.T, config = config }
 end
 
@@ -380,6 +384,7 @@ end
 function ui.O(obj, config)
     config = config or {}
     config.object = obj
+    --- @type balatro.UIElement.Definition
     return { n = G.UIT.O, config = config }
 end
 
@@ -387,13 +392,16 @@ end
 --- @param text string
 --- @param scale? number
 --- @param color? ColorHex
-function ui.TRS(text, scale, color)
-    return ui.R({ui.TS(text, scale, color)})
+--- @param rowopts? balatro.UIElement.Config
+function ui.TRS(text, scale, color, rowopts)
+    --- @type balatro.UIElement.Definition
+    return { n = G.UIT.R, config = rowopts, nodes = {ui.TS(text, scale, color)} }
 end
 
 --- @param uibox balatro.UIBox
 --- @param definition balatro.UIElement.Definition
 function ui.changeRoot(uibox, definition)
+    if uibox.REMOVED then return end
     uibox.UIRoot:remove()
     uibox:set_parent_child(definition)
     uibox:recalculate()

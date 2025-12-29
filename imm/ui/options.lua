@@ -1,6 +1,4 @@
 local constructor = require("imm.lib.constructor")
-local UIBrowser = require("imm.ui.browser")
-local httpsAgent = require('imm.https.agent')
 local ui = require('imm.lib.ui')
 local imm = require("imm")
 
@@ -20,7 +18,8 @@ local funcs = {
     deleteConf     = 'imm_o_delete_conf',
     updateLovely   = 'imm_o_updatelovely',
     updateLovelyInit = 'imm_o_updatelovelyinit',
-    config         = 'imm_o_config'
+    config         = 'imm_o_config',
+    initRL         = 'imm_o_initCheckRatelimit',
 }
 
 --- @class imm.UI.Options
@@ -52,7 +51,6 @@ end
 --- @protected
 --- @return balatro.UIElement.Definition[][]
 function IUIOpts:gridMods()
-    local opts = { __index = { minw = self.buttonWidth, button = funcs.clearCache } }
     return {{
         UIBox_button({ minw = self.buttonWidth, button = funcs.disableAll    , label = {'Disable all'}, ref_table = self.ses }),
         UIBox_button({ minw = self.buttonWidth, button = funcs.updateAll     , label = {'Update all'}, ref_table = self.ses }),
@@ -79,10 +77,7 @@ end
 --- @protected
 --- @param grid balatro.UIElement.Definition[][]
 function IUIOpts:gridRow(grid)
-    return {
-        n = G.UIT.R,
-        nodes = ui.gapGrid(self.optionSpacing, self.optionSpacing, grid, false)
-    }
+    return ui.R(ui.gapGrid(self.optionSpacing, self.optionSpacing, grid, false))
 end
 
 function IUIOpts:render()
@@ -124,35 +119,21 @@ function IUIOpts:renderModsOpts()
     return self.ses:subcontainer({self:gridRow(self:gridMods())})
 end
 
-function IUIOpts:renderCheckRateLimitExec()
-    local textscale = 0.4
-    local conf = { t = 'Checking...', ref_value = 't', scale = textscale }
+function IUIOpts:renderCheckRateLimit()
+    local conf = { t = 'Checking...', ref_value = 't', scale = self.ses.fontscale }
     conf.ref_table = conf
-    local subconf = { t = '', ref_value = 't', scale = textscale * 0.75 }
+    local subconf = { t = '', ref_value = 't', scale = self.ses.fontscale * 0.75 }
     subconf.ref_table = subconf
-
-    local t = os.time()
-    httpsAgent:request('https://api.github.com/rate_limit', {
-        headers = {
-            Authorization = imm.config.githubToken and 'Bearer '..imm.config.githubToken or nil
-        }
-    }, function (code, body, headers)
-        if code ~= 200 then
-            conf.t = string.format('Error %d', code)
-            return
-        end
-        --- @type ghapi.Ratelimit
-        local data = imm.json.decode(body)
-        local limited = data.rate.remaining == 0
-        conf.t = string.format('%s (%d/%d)', limited and "Ratelimited" or "Not ratelimited", data.rate.remaining, data.rate.limit)
-        conf.colour = limited and G.C.ORANGE or G.C.GREEN
-        subconf.t = string.format('Resets in %d minute(s)', (data.rate.reset - t) / 60)
-    end)
 
     return self.ses:subcontainer({
         ui.R{
+            func = funcs.initRL,
+            ref_table = {
+                conf = conf,
+                subconf = subconf
+            },
             align = 'cm',
-            ui.TS('Github API Ratelimit: ', textscale),
+            ui.TS('Github API Ratelimit: ', self.ses.fontscale),
             ui.TC(conf)
         },
         ui.R{

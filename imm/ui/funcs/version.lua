@@ -1,5 +1,4 @@
 local UICT = require('imm.ui.confirm_toggle')
-local UIVerDel = require('imm.ui.version_delete')
 local UIVersion = require("imm.ui.version")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
@@ -26,8 +25,15 @@ end
 G.FUNCS[funcs.delete] = function(elm)
     --- @type imm.UI.Version
     local r = elm.config.ref_table
+    local mod = r:getMod()
 
-    ui.overlay(UIVerDel(r.ses, r.mod, r.ver):render())
+    ui.overlay(
+        ui.confirm(
+            ui.TRS(string.format('Really delete %s %s?', mod.name, mod.version), 0.6, nil, { align = 'cm' }),
+            UIVersion.funcs.deleteConfirm,
+            { ses = r }
+        )
+    )
 end
 
 --- @param elm balatro.UIElement
@@ -106,7 +112,7 @@ end
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.deleteConfirm] = function(elm)
     local r = elm.config.ref_table or {}
-    --- @type imm.UI.VerDel
+    --- @type imm.UI.Version
     local modses = r.ses
 
     local ses = modses.ses

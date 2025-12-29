@@ -44,7 +44,8 @@ local thunderstoreColor = mix_colours(copy_table(G.C.BLUE), {1, 1, 1, 1}, 0.6)
 --- @field tooltips string[]
 --- @field uie? balatro.UIElement
 local IUIVer = {
-    titleWidth = 9
+    titleWidth = 9,
+    marginBottom = 0.1
 }
 
 --- @protected
@@ -64,6 +65,9 @@ function IUIVer:init(ses, mod, ver, opts)
         self:initInfo()
     end
     self:syncInfo()
+
+    self.fontscale = ses.fontscale
+    self.actionsGap = self.fontscale / 5
 end
 
 function IUIVer:getMod()
@@ -102,7 +106,7 @@ function IUIVer:getTitleConfig()
     --- @type balatro.UIElement.Config
     return {
         colour = G.C.UI.TEXT_LIGHT,
-        scale = self.ses.fontscale,
+        scale = self.fontscale,
 
         button = opts.installed and not opts.locked and funcs.toggle or nil,
         ref_table = opts.installed and not opts.locked and {
@@ -111,7 +115,7 @@ function IUIVer:getTitleConfig()
         } or nil,
         tooltip = #self.tooltips ~= 0 and {
             text = self.tooltips,
-            text_scale = self.ses.fontscale * 0.6
+            text_scale = self.fontscale * 0.6
         } or nil,
     }
 end
@@ -119,8 +123,8 @@ end
 --- @protected
 function IUIVer:renderTitle()
     return ui.C{
-        minw = self.ses.fontscale * self.titleWidth,
-        maxw = self.ses.fontscale * self.titleWidth,
+        minw = self.fontscale * self.titleWidth,
+        maxw = self.fontscale * self.titleWidth,
         ui.R{ ui.T(self.ver, self:getTitleConfig()) },
         self.sub and self.sub ~= '' and self.ses:renderTextRow(self.sub, 0.5) or nil
     }
@@ -137,15 +141,20 @@ end
 
 --- @protected
 --- @param opts _imm.UI.Version.AtlasButton
+function IUIVer:atlasSpr(opts)
+    return Sprite(0, 0, self.fontscale * (opts.wm or 1), self.fontscale * (opts.hm or 1), G.ASSET_ATLAS[opts.atlas or 'imm_icons'], opts.pos)
+end
+
+--- @protected
+--- @param opts _imm.UI.Version.AtlasButton
 function IUIVer:atlasBtn(opts)
-    local spr = Sprite(0, 0, self.ses.fontscale * (opts.wm or 1), self.ses.fontscale * (opts.hm or 1), G.ASSET_ATLAS[opts.atlas or 'imm_icons'], opts.pos)
     return ui.C{
-        tooltip = opts.tooltipText and { text = opts.tooltipText, text_scale = self.ses.fontscale * 0.8 } or nil,
+        tooltip = opts.tooltipText and { text = opts.tooltipText, text_scale = self.fontscale * 0.8 } or nil,
         button = opts.btn,
         button_dist = 0.4,
         ref_table = opts.ref or self,
 
-        ui.O(spr)
+        ui.O(self:atlasSpr(opts))
     }
 end
 
@@ -209,11 +218,11 @@ end
 --- @protected
 function IUIVer:renderActionsContainer()
     return ui.C{
-        minw = self.ses.fontscale * self:getActionsWidth(),
+        minw = self.fontscale * self:getActionsWidth(),
         align = 'cr',
         ui.R{
             align = 'c',
-            nodes = ui.gapList('C', self.ses.fontscale / 5, self:renderActions())
+            nodes = ui.gapList('C', self.actionsGap, self:renderActions())
         }
     }
 end
@@ -231,8 +240,13 @@ function IUIVer:syncInfo()
 end
 
 --- @protected
-function IUIVer:renderParts()
-    return {
+function IUIVer:renderContainer()
+    return ui.R{
+        colour = self.opts.color or self.opts.enabled and G.C.GREEN or G.C.BLUE,
+        padding = 0.1,
+        r = true,
+        shadow = true,
+
         self:renderTitle(),
         self:renderActionsContainer()
     }
@@ -244,14 +258,8 @@ function IUIVer:renderLow()
         func = funcs.init,
         ref_table = self,
 
-        ui.R{
-            colour = self.opts.color or self.opts.enabled and G.C.GREEN or G.C.BLUE,
-            padding = 0.1,
-            r = true,
-            shadow = true,
-            nodes = self:renderParts()
-        },
-        ui.gap('R', 0.1)
+        self:renderContainer(),
+        ui.gap('R', self.marginBottom)
     }
 end
 

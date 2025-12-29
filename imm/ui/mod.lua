@@ -1,5 +1,5 @@
 local constructor = require("imm.lib.constructor")
-local LoveMoveable = require("imm.lib.love_moveable")
+local TM = require("imm.lib.texture_moveable")
 local UIVersion = require('imm.ui.version')
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
@@ -18,7 +18,7 @@ local betaColor = G.C.ORANGE
 --- @field ses imm.UI.Browser
 --- @field mod imm.ModMeta
 ---
---- @field contImage imm.LoveMoveable
+--- @field contImage imm.TextureMoveable
 local IUIModSes = {
     thumbScale = 1.25,
     cyclePageSize = 5,
@@ -47,7 +47,7 @@ function IUIModSes:uiVersionMod(mod)
         installed = true,
         enabled = mod:isActive(),
         locked = mod.locked,
-        sub = mod.path:sub(imm.modsDir:len()+2)
+        tooltips = {mod.path:sub(imm.modsDir:len()+2)}
     })
 end
 
@@ -181,8 +181,8 @@ end
 
 --- @protected
 function IUIModSes:getTabs()
-    local mod = self.mod
-    local hasVersion = not not ( self.ses.ctrl.mods[mod:id()] and next(self.ses.ctrl.mods[mod:id()].versions) )
+    local installedMod = self.ses.ctrl.mods[self.mod:id()]
+    local hasVersion = not not ( installedMod and next(installedMod.versions) )
 
     --- @type balatro.UI.Tab.Tab[]
     return {{
@@ -207,9 +207,6 @@ end
 
 --- @protected
 function IUIModSes:renderTabs()
-    local mod = self.mod
-    local hasVersion = not not ( self.ses.ctrl.mods[mod:id()] and next(self.ses.ctrl.mods[mod:id()].versions) )
-
     return create_tabs({
         scale = self.ses.fontscale * 1.5,
         text_scale = self.ses.fontscale,
@@ -271,19 +268,18 @@ end
 
 --- @protected
 function IUIModSes:renderImageContainer()
-    self.contImage = LoveMoveable(nil, 0, 0, self.ses.thumbW * self.thumbScale, self.ses.thumbH * self.thumbScale)
+    self.contImage = TM(nil, 0, 0, self.ses.thumbW * self.thumbScale, self.ses.thumbH * self.thumbScale)
     return ui.R{ align = 'm', ui.O(self.contImage) }
 end
 
 function IUIModSes:render()
-    local uis = {
+    return ui.ROOT{
         self:renderImageContainer(),
         self.ses:renderModText(self.mod:title()),
         self:renderModAuthor(self.mod:author()),
         self:renderRepoButtonContainer(),
         self:renderTabs()
     }
-    return ui.ROOT(uis)
 end
 
 --- @async

@@ -77,8 +77,7 @@ end
 
 --- @protected
 --- @param list imm.ModList
---- @param state table
-function IUI:renderModTitle(list, state)
+function IUI:renderModTitle(list)
 	return ui.C{
 		minw = self.titleWidth,
 		maxw = self.titleWidth,

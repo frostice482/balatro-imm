@@ -76,14 +76,15 @@ end
 --- @protected
 --- @param entry imm.UI.MP.Mods.Entry
 function IUI:renderModTitle(entry)
-	return ui.R{
-		minw = self.idWidth,
-		maxw = self.idWidth,
-		ui.T(entry.id, {
-			scale = self.ses.fontScale * self.titleScale,
-			colour = not self.state.enableds[entry.id] and self.addedColor or nil
-		})
-	}
+	return ui.TRS(
+		entry.id,
+		self.ses.fontScale * self.titleScale,
+		not self.state.enableds[entry.id] and self.addedColor or nil,
+		{
+			minw = self.idWidth,
+			maxw = self.idWidth,
+		}
+	)
 end
 
 --- @protected

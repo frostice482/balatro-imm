@@ -173,11 +173,9 @@ function IUICT:partMissing()
     local list = {}
 
     for i, entry in ipairs(missings) do
-        local str = util.values(entry[2])
-
         local base = self:renderEntry({
             {ui.TS(string.format('? %s', entry[1]), self.fontscale, G.C.YELLOW)},
-            {ui.TS(' '..table.concat(str, ', '), self.fontscaleSub)}
+            {ui.TS(' '..table.concat(entry[2], ', '), self.fontscaleSub)}
         })
         table.insert(list, base)
     end

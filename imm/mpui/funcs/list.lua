@@ -31,10 +31,7 @@ G.FUNCS[UI.funcs.delete] = function (e)
 
 	ui.overlay(
 		ui.confirm(
-			ui.R{
-				align = "cm",
-				ui.T(string.format("Really delete modpack %s?", mp.name), { scale = 0.6 })
-			},
+			ui.TRS(string.format("Really delete modpack %s?", mp.name), 0.6, nil, { align = 'cm' }),
 			UI.funcs.deleteConfirm,
 			e.config.ref_table
 		)

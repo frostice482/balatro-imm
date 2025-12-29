@@ -62,11 +62,10 @@ function IUI:render()
 				ui.R{ui.C(self:renderMissings())}
 			}
 		},
-		ui.R{
-			align = "cm",
+		ui.TRS("Warning!", self.ses.fontScale, G.C.YELLOW, {
 			padding = 0.1,
-			ui.T("Warning!", { scale = self.ses.fontScale, colour = G.C.YELLOW })
-		},
+			align = 'cm',
+		}),
 		ui.R{
 			ui.C(self:renderWarnings())
 		}

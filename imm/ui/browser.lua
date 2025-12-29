@@ -1,10 +1,9 @@
 local constructor = require("imm.lib.constructor")
-local LoveMoveable = require("imm.lib.love_moveable")
+local TM = require("imm.lib.texture_moveable")
 local UIMod = require("imm.ui.mod")
 local ui = require("imm.lib.ui")
 local co = require("imm.lib.co")
-local imm= require("imm")
-local util = require("imm.lib.util")
+local imm = require("imm")
 
 --- @class imm.UI.Browser.Funcs
 local funcs = {
@@ -23,6 +22,7 @@ local funcs = {
 --- @field uibox balatro.UIBox
 --- @field tags table<string, boolean>
 --- @field filteredList imm.ModMeta[]
+--- @field filteredListAdded table<imm.ModMeta, boolean>
 --- @field selectedMod? imm.ModMeta
 ---
 --- @field contMods balatro.UIBox[]
@@ -176,7 +176,7 @@ end
 --- @param scale? number
 --- @param col? ColorHex
 function IUISes:renderText(text, scale, col)
-    return ui.T(text, { scale = (scale or 1) * self.fontscale, colour = col })
+    return ui.TRS(text, (scale or 1) * self.fontscale, col)
 end
 
 --- @param text string
@@ -305,7 +305,7 @@ function IUISes:renderModEntry(mod)
         end
     end
 
-    local thumb = LoveMoveable(nil, 0, 0, self.thumbW, self.thumbH)
+    local thumb = TM(nil, 0, 0, self.thumbW, self.thumbH)
 
     return ui.ROOT{
         ref_table = { thumb = thumb },
@@ -343,7 +343,6 @@ function IUISes:renderInput()
         text_scale = self.fontscale,
         extended_corpus = true,
         colour = self.colorHeader,
-        hooked_colour = darken(self.colorHeader, 0.2)
     })
 end
 
@@ -370,7 +369,7 @@ function IUISes:renderHeader()
 end
 
 --- @protected
-function IUISes:renderCycleContainer()
+function IUISes:renderFooter()
     return ui.R{
         align = 'cm',
         ui.C{
@@ -410,7 +409,7 @@ function IUISes:renderMain()
     return {
         self:renderHeader(),
         self:renderModGrid(),
-        self:renderCycleContainer()
+        self:renderFooter()
     }
 end
 
@@ -491,14 +490,7 @@ function IUISes:_updateModImageCo(mod, n, nocheckUpdate)
     local err, img = mod:getImageCo()
     if not img or not nocheckUpdate and self.updateId ~= aid then return end
 
-    local w, h = img:getDimensions()
-    local aspectRatio = math.max(math.min(w / h, 16/9), 1)
-
-    --- @type imm.LoveMoveable
-    local thumb = root.UIRoot.config.ref_table.thumb
-    thumb.T.w = self.thumbH * aspectRatio
-    thumb.drawable = img
-    root:recalculate()
+    root.UIRoot.config.ref_table.thumb.drawable = img
 end
 
 --- @protected
@@ -542,10 +534,15 @@ end
 --- @protected
 --- @param mod imm.ModMeta
 --- @param filter imm.Filter
-function IUISes:matchFilter(mod, filter)
+--- @param skipId? boolean
+function IUISes:matchFilter(mod, filter, skipId)
+    if not mod then return end
     local id = mod:id()
-    if self.filterInstalled and not (self.ctrl.mods[id] and next(self.ctrl.mods[id].versions)) then return false end
-    if not (filter.id and id or filter.author and mod:author() or mod:title()):lower():find(filter.search, 1, true) then return false end
+    local installed = self.ctrl.mods[id]
+    -- check for installation filter
+    if self.filterInstalled and not (installed and next(installed)) then return false end
+    -- check for id filter
+    if not skipId and not (filter.id and id or filter.author and mod:author() or mod:title()):lower():find(filter.search, 1, true) then return false end
 
     local hasCatFilt = false
     local hasCatMatch = false
@@ -561,6 +558,17 @@ function IUISes:matchFilter(mod, filter)
     if hasCatFilt and not hasCatMatch then return false end
 
     return true
+end
+
+--- @protected
+--- @param mod imm.ModMeta
+--- @param filter imm.Filter
+--- @param skipId? boolean
+function IUISes:matchAndAddFilter(mod, filter, skipId)
+    if self.filteredListAdded[mod] or not self:matchFilter(mod, filter, skipId) then return end
+
+    self.filteredListAdded[mod] = true
+    table.insert(self.filteredList, mod)
 end
 
 --- @protected
@@ -584,35 +592,28 @@ function IUISes:createFilter()
     return {
         author = isAuthor,
         id = isId,
-        search = search
+        search = search,
     }
 end
 
 function IUISes:updateFilter()
     self.filteredList = {}
+    self.filteredListAdded = {}
 
     local ids = {}
-    local addeds = {}
     local filter = self:createFilter()
 
     -- filter mods in list
     for k, meta in ipairs(self.repo.list) do
         local id = meta:id()
         ids[id] = true
-        if not addeds[id] and self:matchFilter(meta, filter) then
-            table.insert(self.filteredList, meta)
-            addeds[id] = true
-        end
+        self:matchAndAddFilter(meta, filter)
     end
     -- include local mods
     if self.filterInstalled then
         for mod, list in pairs(self.ctrl.mods) do
-            if not (ids[mod] or list.native or addeds[mod]) then
-                local meta = list:createBmiMeta(self.repo)
-                if meta and self:matchFilter(meta, filter) then
-                    table.insert(self.filteredList, meta)
-                    addeds[mod] = true
-                end
+            if not (ids[mod] or list.native or self.filteredListAdded[mod]) then
+                self:matchAndAddFilter(list:createBmiMeta(self.repo), filter)
             end
         end
     end
@@ -621,11 +622,7 @@ function IUISes:updateFilter()
         for providedId, list in pairs(self.repo.listProviders) do
             if providedId:lower():find(filter.search, 1, true) then
                 for i, meta in ipairs(list) do
-                    local id = meta:id()
-                    if not addeds[id] and self:matchFilter(meta, filter) then
-                        table.insert(self.filteredList, meta)
-                        addeds[id] = true
-                    end
+                    self:matchAndAddFilter(meta, filter, true)
                 end
             end
         end
