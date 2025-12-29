@@ -5,6 +5,10 @@ G.FUNCS[UI.funcs.confirm] = function (e)
     --- @type imm.UI.MP.CT
     local r = e.config.ref_table
 
+    if r.allowFileOverride then
+        pcall(r.mp.applyFiles, r.mp)
+    end
+
     for id, act in pairs(r.list.actions) do
         if not act.impossible then
             local mod = act.mod
@@ -42,4 +46,10 @@ G.FUNCS[UI.funcs.download] = function (e)
     end
 
     ses:showOverlay()
+end
+
+G.FUNCS[UI.funcs.viewFiles] = function (e)
+    --- @type imm.UI.MP.CT
+	local r = e.config.ref_table
+    love.system.openURL(r.mp:fileURL('files'))
 end

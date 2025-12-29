@@ -1,10 +1,12 @@
 local UICT = require('imm.ui.confirm_toggle')
+local ui = require('imm.lib.ui')
 
 --- @class imm.UI.MP.CT.Funcs
 local funcs = {
 	confirm = 'imm_mpl_a_conf',
 	cancel = 'imm_mpl_a_cancel',
 	download = 'imm_mpl_a_download',
+	viewFiles = 'imm_mpl_a_viewfiles',
 }
 
 --- @class imm.UI.MP.Opts: imm.UI.ConfirmToggle.Opts
@@ -16,7 +18,8 @@ local funcs = {
 local IUI = {
 	buttonBack = funcs.cancel,
 	buttonConfirm = funcs.confirm,
-	buttonDownload = funcs.download
+	buttonDownload = funcs.download,
+	allowFileOverride = true
 }
 
 --- @protected
@@ -25,6 +28,44 @@ function IUI:init(opts)
 	UICT.proto.init(self, opts.list, opts)
 	self.mpses = opts.mpses
 	self.mp = opts.mp
+
+	self.titleText = string.format('Apply %s?', self.mp.name)
+end
+
+--- @protected
+function IUI:renderToggleOverwrite()
+	return create_toggle({
+		ref_table = self,
+		ref_value = 'allowFileOverride',
+		label = 'Apply files',
+		label_scale = self.fontscale,
+		col = true
+	})
+end
+
+--- @protected
+function IUI:renderToggleViewOverwrite()
+	return UIBox_button({
+		label = {'View'},
+		button = funcs.viewFiles,
+		minw = 1,
+		minh = 0.75,
+		scale = self.fontscale,
+		colour = G.C.BLUE,
+		col = true,
+		ref_table = self
+	})
+end
+
+--- @protected
+function IUI:renderPreButton(nodes)
+	if #love.filesystem.getDirectoryItems(self.mp:pathFiles()) ~= 0 then
+		table.insert(nodes, ui.R{
+			align = 'cm',
+			self:renderToggleOverwrite(),
+			self:renderToggleViewOverwrite()
+		})
+	end
 end
 
 --- @protected

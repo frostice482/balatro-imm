@@ -257,6 +257,11 @@ function IUICT:renderGrid(elms)
 end
 
 --- @protected
+--- @param nodes balatro.UIElement.Definition[]
+function IUICT:renderPreButton(nodes)
+end
+
+--- @protected
 function IUICT:renderContent()
     --- @type balatro.UIElement.Definition[]
     local nodes = {}
@@ -281,9 +286,14 @@ function IUICT:renderContent()
         table.insert(nodes, ui.R(self:renderGrid(changes)))
     end
 
+    self:renderPreButton(nodes)
+
     local hasErr = hasMissing or hasImpossibles
     local buttons = self:renderButtons(hasMissing, hasErr)
-    table.insert(nodes, ui.R(ui.gapList('C', 0.1, buttons)))
+    table.insert(nodes, ui.R{
+        align = 'cm',
+        nodes = ui.gapList('C', 0.1, buttons)
+    })
 
     return nodes
 end
