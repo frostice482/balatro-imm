@@ -86,6 +86,20 @@ function IMeta:author()
     self:_assertOne()
     return self.ts and self.ts.owner or self.bmi and self.bmi.owner or '-'
 end
+function IMeta:badgeColor()
+    self:_assertOne()
+    local a = self.bmi and self.bmi.badge_colour
+    if a and a:match('^%x%x%x%x%x%x$') then -- parse everytime & also potentially cause external crash
+        return HEX(a)
+    end
+end
+function IMeta:badgeTextColor()
+    self:_assertOne()
+    local a = self.bmi and self.bmi.badge_text_colour
+    if a and a:match('^%x%x%x%x%x%x$') then -- parse everytime & also potentially cause external crash
+        return HEX(a)
+    end
+end
 
 --- @async
 --- @return string? err, love.Image? data

@@ -59,7 +59,8 @@ local IUISes = {
     colorCategoryUnselected = G.C.BLUE,
     colorHeader = G.C.RED,
     colorButtons = G.C.ORANGE,
-    colorMod = G.C.BOOSTER
+    colorMod = G.C.BOOSTER,
+    allowModBadgeColors = true,
 }
 
 --- @alias imm.UI.Browser.C imm.UI.Browser.Static | p.Constructor<imm.UI.Browser, nil> | fun(modctrl?: imm.ModController, modrepo?: imm.Repo): imm.UI.Browser
@@ -195,11 +196,12 @@ end
 
 --- @param title string
 --- @param maxw? number
-function IUISes:renderModText(title, maxw)
+--- @param colors? ColorHex[]
+function IUISes:renderModText(title, maxw, colors)
     local obj = DynaText({
         string = title,
         scale = self.fontscale,
-        colours = {G.C.UI.TEXT_LIGHT},
+        colours = colors or {G.C.UI.TEXT_LIGHT},
         maxw = maxw,
         bump = true,
     })
@@ -306,6 +308,7 @@ function IUISes:renderModEntry(mod)
     end
 
     local thumb = TM(nil, 0, 0, self.thumbW, self.thumbH)
+    local bc = self.allowModBadgeColors and mod:badgeTextColor() or nil
 
     return ui.ROOT{
         ref_table = { thumb = thumb },
@@ -313,7 +316,7 @@ function IUISes:renderModEntry(mod)
 
         ui.C{
             padding = 0.1,
-            colour = self.colorMod,
+            colour = self.allowModBadgeColors and mod:badgeColor() or self.colorMod,
             hover = true,
             shadow = true,
             r = true,
@@ -325,7 +328,11 @@ function IUISes:renderModEntry(mod)
             },
 
             ui.R{ align = 'cm', minw = self.thumbW, ui.O(thumb) },
-            self:renderModText(mod:title(), self.thumbW),
+            self:renderModText(
+                mod:title(),
+                self.thumbW,
+                bc and {bc} or nil
+            ),
         }
     }
 end

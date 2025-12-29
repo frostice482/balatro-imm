@@ -6,6 +6,8 @@
 --- @field id string
 --- @field provides? string[]
 --- @field description? string
+--- @field badge_colour? string
+--- @field badge_text_colour? string
 -- @field metafmt bmi.Meta.Format
 
 --- @class bmi.Meta: bmi.MetaInject
