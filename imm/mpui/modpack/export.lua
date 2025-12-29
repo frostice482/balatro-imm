@@ -47,11 +47,9 @@ end
 
 --- @protected
 function IUI:renderWarnings()
-	local r = {}
-	for i,v in ipairs(self.warnings) do
-		table.insert(r, ui.TRS(v, self.ses.fontScale * 0.9))
-	end
-	return r
+	return ui.TRARef(self.warnings, nil, {
+		scale = self.ses.fontScale * 0.9
+	})
 end
 
 function IUI:render()

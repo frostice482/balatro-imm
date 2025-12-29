@@ -420,6 +420,32 @@ function ui.grid(grid, firstRow)
     return { n = firstRow and G.UIT.R or G.UIT.C, nodes = gappedInside }
 end
 
+--- @param obj any
+--- @param n? number
+--- @param conf? balatro.UIElement.Config
+--- @param rowconf? balatro.UIElement.Config
+function ui.TRARef(obj, n, conf, rowconf)
+    n = n or #obj
+    conf = conf or {}
+    conf.ref_table = obj
+    conf.colour = conf.colour or G.C.WHITE
+
+    local texts = {}
+    local meta = { __index = conf }
+    for i=1, n do
+        table.insert(texts, {
+            n = G.UIT.R,
+            config = rowconf,
+            nodes = {{
+                n = G.UIT.T,
+                config = setmetatable({ ref_value = i }, meta)
+            }}
+        })
+    end
+
+    return ui.C(texts)
+end
+
 --- @class imm.UI.TextInputDelayOpts: balatro.UI.TextInputParam
 --- @field ref_table? table
 --- @field initVal? string
@@ -451,6 +477,7 @@ function ui.textInputDelaying(opts)
             if opts.onSet then opts.onSet(opts.ref_table.val) end
         end)
     }
+    opts.hooked_colour = opts.hooked_colour or opts.colour and darken(opts.colour, 0.2) --- @diagnostic disable-line
     opts.ref_table = state
     opts.ref_value = 'val'
 
