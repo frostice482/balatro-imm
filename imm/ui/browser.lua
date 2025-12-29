@@ -495,9 +495,9 @@ function IUISes:_updateModImageCo(mod, n, nocheckUpdate)
 
     local aid = self.updateId
     local err, img = mod:getImageCo()
-    if not img or not nocheckUpdate and self.updateId ~= aid then return end
+    if not nocheckUpdate and self.updateId ~= aid then return end
 
-    root.UIRoot.config.ref_table.thumb.drawable = img
+    root.UIRoot.config.ref_table.thumb.drawable = img or G.ASSET_ATLAS.imm_nothumb.image
 end
 
 --- @protected
