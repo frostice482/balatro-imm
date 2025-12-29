@@ -1,0 +1,15 @@
+[manifest]
+version = "1.0.0"
+priority = 0
+
+[[patches]]
+[patches.module]
+source = "imm/include/nativefs.lua"
+before = "main.lua"
+name = "imm-nativefs"
+
+[[patches]]
+[patches.module]
+source = "imm/include/json.lua"
+before = "main.lua"
+name = "imm-json"

@@ -1,6 +1,6 @@
 [manifest]
 version = "1.0.0"
-priority = -10
+priority = -11
 
 # add some extra characters to extended text input
 [[patches]]
@@ -59,15 +59,3 @@ pattern = '''if args.key == '0' then args.key = 'o' end'''
 position = "at"
 payload = ''''''
 match_indent = true
-
-[[patches]]
-[patches.module]
-source = "imm/include/nativefs.lua"
-before = "main.lua"
-name = "imm-nativefs"
-
-[[patches]]
-[patches.module]
-source = "imm/include/json.lua"
-before = "main.lua"
-name = "imm-json"
