@@ -1,5 +1,4 @@
 local Base = require("imm.mpui.modpack.ui")
-local tarc = require('imm.tar.c')
 local ui = require('imm.lib.ui')
 
 --- @class imm.UI.MP.Export.Funcs
