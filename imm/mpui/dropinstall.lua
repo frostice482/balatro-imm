@@ -5,7 +5,6 @@ function love.filedropped(file) --- @diagnostic disable-line
         local ok, res = pcall(mplist.modpacks.import, mplist.modpacks, file:read('data'), true)
 		file:seek(0)
 		if ok then
-			mplist.prioritizeId[res.id] = true
 			mplist:updateList()
 			mplist.tasks.status:update('Added ' .. res.name)
 		else

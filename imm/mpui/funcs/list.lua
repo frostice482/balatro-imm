@@ -102,10 +102,7 @@ end
 G.FUNCS[UI.funcs.addnew] = function (e)
 	--- @type imm.UI.MPList
 	local t = e.config.ref_table
-
-	local n = t.modpacks:new()
-	t.prioritizeId[n.id] = true
-
+	t.modpacks:new()
 	t:updateList()
 end
 

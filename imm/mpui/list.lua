@@ -28,7 +28,6 @@ local funcs = {
 --- @class imm.UI.MPList
 --- @field list imm.Modpack[]
 --- @field cycleOpts imm.UI.CycleOptions
---- @field prioritizeId table<string, boolean>
 --- @field uibox? balatro.UIBox
 --- @field optionsUibox? balatro.UIBox
 local IUI = {
@@ -77,8 +76,6 @@ function IUI:init(opts)
 	opts = opts or {}
 	self.modpacks = opts.modpacks or require"imm.modpacks"
 	self.tasks = opts.tasks or defaultTasks
-
-	self.prioritizeId = {}
 
 	self.list = {}
 	self.cycleOpts = {
@@ -328,17 +325,12 @@ end
 function IUI:getList()
 	--- @type imm.Modpack[]
 	local list = {}
-	--- @type imm.Modpack[]
-	local prioritized = {}
-
 	for i, mp in ipairs(self.modpacks:list()) do
 		if self.search == "" or mp.name:lower():find(self.search:lower(), 1, true) then
-			table.insert(self.prioritizeId[mp.id] and prioritized or list, mp)
+			table.insert(list, mp)
 		end
 	end
-
-	util.insertBatch(prioritized, list)
-	return prioritized
+	return list
 end
 
 function IUI:updateList()
