@@ -271,8 +271,15 @@ end
 --- @protected
 --- @param expected string
 --- @param detail? string
+function IEntry:errorTypeMessage(expected, detail)
+    return string.format("%s: not a %s, got %s%s", self:getPath(), expected, self.type, detail and ' (' .. detail .. ')' or '')
+end
+
+--- @protected
+--- @param expected string
+--- @param detail? string
 function IEntry:errorType(expected, detail)
-    return error(string.format("%s: not a %s, got %s%s", self:getPath(), expected, self.type, detail and ' (' .. detail .. ')' or ''))
+    return error(self:errorTypeMessage(expected, detail))
 end
 
 --- @param type string
@@ -446,17 +453,22 @@ end
 --- @param paths string[]
 --- @param mkdir? boolean
 --- @param mkdirhead? Tar.Header.Opts
+--- @param nothrow? boolean
+--- @overload fun(self, paths: string[], mkdir?: boolean, mkdirhead?: Tar.Header.Opts, nothrow: true): entry: Tar.EntryType?, err: string?
 --- @return Tar.EntryType
-function IDir:_resolve(paths, mkdir, mkdirhead)
+function IDir:_resolve(paths, mkdir, mkdirhead, nothrow)
     --- @type any, any?
     local cur, next = self, nil
 
     for i,path in ipairs(paths) do
-        if not cur then
-            error(string.format("%s/%s: not exist (resolving %s)", self:getPath(), table.concat(paths, '/', 1, i-1), table.concat(paths, '/')))
-        end
         if Link:is(cur) then cur = cur:resolve() end
+        if not cur then
+            local e = string.format("%s/%s: not exist (resolving %s)", self:getPath(), table.concat(paths, '/', 1, i-1), table.concat(paths, '/'))
+            if nothrow then return nil, e end
+            error(e)
+        end
         if not Dir:is(cur) then
+            if nothrow then return nil, cur:errorTypeMessage('dir') end
             cur:errorType('dir')
         end
 
@@ -478,7 +490,11 @@ function IDir:_resolve(paths, mkdir, mkdirhead)
         cur = next
     end
 
-    if not cur then error(string.format("%s/%s: not exist", self:getPath(), table.concat(paths, '/'))) end
+    if not cur then
+        local e = string.format("%s/%s: not exist", self:getPath(), table.concat(paths, '/'))
+        if nothrow then return nil, e end
+        error(e)
+    end
 
     return cur
 end
@@ -563,7 +579,7 @@ end
 
 --- @param path string
 function IDir:get(path)
-    return self:_resolve(util.strsplit(path, "/", true), false)
+    return self:_resolve(util.strsplit(path, "/", true), false, nil, true)
 end
 
 --- Loops over all entries. Function shuold return false to stop loop
