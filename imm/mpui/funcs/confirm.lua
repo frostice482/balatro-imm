@@ -9,16 +9,8 @@ G.FUNCS[UI.funcs.confirm] = function (e)
         pcall(r.mp.applyFiles, r.mp)
     end
 
-    for id, act in pairs(r.list.actions) do
-        if not act.impossible then
-            local mod = act.mod
-            if act.action == 'enable' or act.action == 'switch' then
-                assert(r.ctrl:enableMod(mod))
-            elseif act.action == 'disable' then
-                assert(r.ctrl:disableMod(mod))
-            end
-        end
-    end
+    local errs = r.list:apply()
+    r.ses.tasks.status:update(nil, table.concat(errs))
 
     r.mpses.hasChanges = true
 	r.mpses:showOverlay()

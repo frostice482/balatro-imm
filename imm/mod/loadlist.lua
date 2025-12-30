@@ -425,6 +425,18 @@ function ILoadList:tryDisable(mod)
     return self:_finalize()
 end
 
+--- @return string[] errs
+function ILoadList:apply()
+    local errs = {}
+    for id, act in pairs(self.actions) do
+        local ok, err = self.ctrl:applyAction(act)
+        if not ok then
+            table.insert(errs, string.format('%s %s: %s', act.action, id, err))
+        end
+    end
+    return errs
+end
+
 --- @alias imm.LoadList.C p.Constructor<imm.LoadList, nil> | fun(ctrl: imm.ModController): imm.LoadList
 --- @type imm.LoadList.C
 local LoadList = constructor(ILoadList)
