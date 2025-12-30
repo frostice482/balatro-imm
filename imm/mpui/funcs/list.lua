@@ -95,7 +95,10 @@ end
 
 G.FUNCS[UI.funcs.deleteConfirm] = function (e)
 	local t = e.config.ref_table
-	if t.confirm then t.ses.modpacks:remove(t.mp.id) end
+	if t.confirm then
+		local err = t.ses.modpacks:remove(t.mp.id)
+		if err then t.ses.tasks.status:update(nil, err) end
+	end
 	t.ses:showOverlay()
 end
 

@@ -305,6 +305,8 @@ function IMP:export(tar)
 		end
 	end
 
+	tar:openDir("files"):addFrom(self:pathFiles())
+
 	return tar
 end
 

@@ -119,8 +119,6 @@ function IML:importTar(tar)
 		thumb = thumbFile:getContentData()
 	end
 
-	local modsDir = tar:openDir('mods')
-
 	local mp = self:new()
 	mp.description = desc or ''
 	mp.name = data.name
@@ -128,6 +126,17 @@ function IML:importTar(tar)
 	mp.order = self:highestOrder() + 1
 	if thumb then mp:saveThumb(thumb) end
 
+	local files = tar:openDir('files')
+	files:each(function (entry)
+		local sub = mp:pathFiles(entry:getPath(files))
+		if entry.type == "dir" then
+			love.filesystem.createDirectory(sub)
+		elseif entry.type == "file" then
+			love.filesystem.write(sub, entry:getContentData())
+		end
+	end)
+
+	local modsDir = tar:openDir('mods')
 	for i,e in ipairs(data.mods) do
 		local dir = modsDir:get(tostring(i))
 		if dir then dir:assertType("dir") end
