@@ -66,7 +66,7 @@ function IBTasks:downloadLovelyCo()
 end
 
 ---@param info imm.InstallResult
-function IBTasks:handleInstallResult(info, status)
+function IBTasks:handleInstallResult(info)
     local strlist = {}
     for i,v in ipairs(info.installed) do table.insert(strlist, v.mod..' '..v.version) end
     local hasInstall = #strlist ~= 0
@@ -89,6 +89,7 @@ function IBTasks:installModFromZipCo(data, status)
         data,
         status and function (mod) status:update('Installing ' .. mod.mod) end
     )
+    if status then status:done('') end
     return self:handleInstallResult(res)
 end
 
@@ -102,6 +103,7 @@ function IBTasks:installModFromDirCo(dir, sorucenfs, status)
         dir, sorucenfs,
         status and function (mod) status:update('Installing ' .. mod.mod) end
     )
+    if status then status:done('') end
     return self:handleInstallResult(res)
 end
 

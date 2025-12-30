@@ -10,7 +10,7 @@ G.FUNCS[UI.funcs.confirm] = function (e)
     end
 
     local errs = r.list:apply()
-    r.ses.tasks.status:update(nil, table.concat(errs))
+    r.mpses.tasks.status:update(nil, table.concat(errs))
 
     r.mpses.hasChanges = true
 	r.mpses:showOverlay()

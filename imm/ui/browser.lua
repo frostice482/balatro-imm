@@ -543,7 +543,7 @@ function IUISes:matchFilter(mod, filter, skipId)
     local id = mod:id()
     local installed = self.ctrl.mods[id]
     -- check for installation filter
-    if self.filterInstalled and not (installed and next(installed)) then return false end
+    if self.filterInstalled and not (installed and next(installed.versions)) then return false end
     -- check for id filter
     if not skipId and not (filter.id and id or filter.author and mod:author() or mod:title()):lower():find(filter.search, 1, true) then return false end
 

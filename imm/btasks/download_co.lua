@@ -66,7 +66,6 @@ function IBTaskDownCo:download(url, extra)
     else
         done()
         self:installModFromZipCo(res, status)
-        status:done('')
         self.tasks.status:removeElm(status)
     end
 
