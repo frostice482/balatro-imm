@@ -28,6 +28,7 @@ local imm = require('imm')
 --- @field mods table<string, imm.Modpack.Mod>
 --- @field ctrl imm.ModController
 --- @field colors table<string, string>
+--- @field parsedColors table<string, ColorHex>
 --- @field icon? love.Image
 local IMP = {
 	id = '',
@@ -51,6 +52,9 @@ function IMP:init(opts)
 	opts = opts or {}
 	self.mods = {}
 	self.colors = copy_table(schematic.defaultColors)
+	self.parsedColors = {}
+	for k,v in pairs(self.colors) do self.parsedColors[k] = HEX(v) end
+
 	self.id = opts.id
 	self.path = opts.path
 	self.list = opts.list
@@ -92,9 +96,35 @@ function IMP:load()
 	self.colors = data.colors
 	self.order = data.order
 
+	for k,v in pairs(self.colors) do
+		self:setColor(k, v)
+	end
+
 	if hasmigrate then self:save() end
 
 	self:loadDescription()
+end
+
+--- @param prop string | 'bg' | 'fg' | 'text'
+--- @param val string
+function IMP:setColor(prop, val)
+	local a, b, c = val:match("^(%x%x)(%x%x)(%x%x)$")
+	if not (a and b and c) then return false end
+
+	a = assert(tonumber(a, 16)) / 255
+	b = assert(tonumber(b, 16)) / 255
+	c = assert(tonumber(c, 16)) / 255
+
+	self.colors[prop] = val
+	if self.parsedColors[prop] then
+		self.parsedColors[prop][1] = a
+		self.parsedColors[prop][2] = b
+		self.parsedColors[prop][3] = c
+	else
+		self.parsedColors[prop] = {a, b, c}
+	end
+
+	return true
 end
 
 function IMP:loadDescription()

@@ -18,8 +18,12 @@ local IUI = {
 	tabId = 'addmods',
 	tabLabel = 'Add mods',
 
+	arbid = '',
 	inputIdWidth = 3,
+	arbver = '',
 	inputVersionWidth = 3,
+
+	search = '',
 	searchWidth = 8,
 	searchTimeout = 0.3,
 
@@ -34,11 +38,9 @@ local IUI = {
 }
 
 --- @protected
-function IUI:initState()
-	self.state.search = self.state.search or ''
-	self.state.arbid = self.state.arbid or ''
-	self.state.arbver = self.state.arbver or ''
-
+--- @param ses imm.UI.MP
+function IUI:init(ses)
+	Base.proto.init(self, ses)
 	self.list = {}
 	self.cycleOpts = {
 		func = function (i)
@@ -66,7 +68,7 @@ end
 --- @protected
 function IUI:renderInputSearch()
 	return self.ses:uiTextInput{
-		ref_table = self.state,
+		ref_table = self,
 		ref_value = 'search',
 		onSet = function (v) self:updateList() end,
 
@@ -151,9 +153,9 @@ function IUI:testMod(list)
 		and not self.mp.mods[list.mod]
 		and not list:isExcluded()
 		and (
-			self.state.search == ""
-			or list.mod:lower():find(self.state.search:lower(), 1, true)
-			or latest.name:lower():find(self.state.search:lower(), 1, true)
+			self.search == ""
+			or list.mod:lower():find(self.search:lower(), 1, true)
+			or latest.name:lower():find(self.search:lower(), 1, true)
 		)
 end
 
@@ -251,7 +253,7 @@ end
 --- @protected
 function IUI:renderArbInputID()
 	return self.ses:uiTextInput{
-		ref_table = self.state,
+		ref_table = self,
 		ref_value = 'arbid',
 		prompt_text = 'Mod ID',
 		max_length = 5 * self.inputIdWidth,
@@ -263,7 +265,7 @@ end
 --- @protected
 function IUI:renderArbInputVersion()
 	return self.ses:uiTextInput{
-		ref_table = self.state,
+		ref_table = self,
 		ref_value = 'arbver',
 		prompt_text = 'Mod version',
 		extended_corpus = true,
@@ -392,8 +394,8 @@ end
 G.FUNCS[funcs.addArb] = function (e)
 	--- @type imm.UI.MP.AddMod
 	local ses = e.config.ref_table
-	local id = ses.state.arbid
-	local ver = ses.state.arbver
+	local id = ses.arbid
+	local ver = ses.arbver
 
 	if not id or id == "" or not ver or ver == "" then return end
 

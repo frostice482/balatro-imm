@@ -10,6 +10,14 @@ pattern = '''extended_corpus and "'''
 position = "after"
 payload = "@#/"
 
+# allow colour for create_tabs
+[[patches]]
+[patches.regex]
+target = "functions/UI_definitions.lua"
+pattern = '''button = 'change_tab','''
+position = "after"
+payload = "colour = args.colour,"
+
 # allow text_scale for tooltips
 [[patches]]
 [patches.regex]

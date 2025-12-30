@@ -17,6 +17,10 @@ local funcs = {
 --- @field list imm.UI.MP.Mods.Entry[]
 --- @field cycleOpts imm.UI.CycleOptions
 local IUI = {
+	search = '',
+	searchWidth = 8,
+	searchTimeout = 0.3,
+
 	tabId = 'mods',
 	tabLabel = 'Mods',
 
@@ -31,20 +35,17 @@ local IUI = {
 	urlColor = darken(G.C.WHITE, 0.4),
 	urlScale = 0.8,
 
-	searchWidth = 8,
-	searchTimeout = 0.3,
-
 	addedColor = G.C.GREEN
 }
 
 --- @protected
-function IUI:initState()
-	self.state.search = self.state.search or ''
-	if not self.state.enableds then
-		self.state.enableds = {}
-		for k,v in pairs(self.mp.mods) do
-			self.state.enableds[k] = true
-		end
+--- @param ses imm.UI.MP
+function IUI:init(ses)
+	Base.proto.init(self, ses)
+
+	self.enableds = {}
+	for k,v in pairs(self.mp.mods) do
+		self.enableds[k] = true
 	end
 
 	self.list = {}
@@ -66,7 +67,7 @@ end
 --- @protected
 function IUI:renderInputSearch()
 	return self.ses:uiTextInput{
-		ref_table = self.state,
+		ref_table = self,
 		ref_value = 'search',
 		delay = self.searchTimeout,
 		onSet = function (v) self:updateList() end,
@@ -82,7 +83,7 @@ function IUI:renderModTitle(entry)
 	return ui.TRS(
 		entry.id,
 		self.ses.fontScale * self.titleScale,
-		not self.state.enableds[entry.id] and self.addedColor or nil,
+		not self.enableds[entry.id] and self.addedColor or nil,
 		{
 			minw = self.idWidth,
 			maxw = self.idWidth,
@@ -204,9 +205,9 @@ function IUI:testMod(k)
 	local list = self:getCtrl().mods[k]
 	local latest = list and list:latest()
 	return
-		self.state.search == ""
-		or k:lower():find(self.state.search:lower(),1, true)
-		or latest and latest.name:lower():find(self.state.search:lower(),1, true)
+		self.search == ""
+		or k:lower():find(self.search:lower(),1, true)
+		or latest and latest.name:lower():find(self.search:lower(),1, true)
 end
 
 --- @protected
@@ -217,7 +218,7 @@ function IUI:getList()
 	local prioritized = {}
 	for k,v in pairs(self.mp.mods) do
 		if self:testMod(k) then
-			table.insert(self.state.enableds[k] and list or prioritized, { id = k, entry = v })
+			table.insert(self.enableds[k] and list or prioritized, { id = k, entry = v })
 		end
 	end
 	table.sort(list, function (a, b) return a.id < b.id end)

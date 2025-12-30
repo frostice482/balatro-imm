@@ -15,14 +15,6 @@ local IUI = {
 function IUI:init(ses)
 	self.ses = ses
 	self.mp = ses.mp
-
-	self.ses.states[self.tabId] = self.ses.states[self.tabId] or {}
-	self.state = self.ses.states[self.tabId]
-	self:initState()
-end
-
---- @protected
-function IUI:initState()
 end
 
 --- @protected

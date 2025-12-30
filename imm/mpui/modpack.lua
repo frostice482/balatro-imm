@@ -4,7 +4,9 @@ local UIExport = require("imm.mpui.modpack.export")
 local UIMods = require("imm.mpui.modpack.mods")
 local UIAddMod = require("imm.mpui.modpack.addmods")
 local UIFile = require("imm.mpui.modpack.file")
+local UIAdvanced = require("imm.mpui.modpack.advanced")
 local ui = require('imm.lib.ui')
+local util = require('imm.lib.util')
 
 --- @class imm.UI.MP.Funcs
 local funcs = {
@@ -25,13 +27,14 @@ local IUI = {
 function IUI:init(ses, mp)
 	self.ses = ses
 	self.mp = mp
-	self.states = {}
 
+	self.colorMix = 0.3
 	self.colors = {
-		normal = G.C.BOOSTER,
-		header = G.C.BOOSTER,
+		normal = {1, 1, 1, 1},
+		header = {1, 1, 1, 1},
 		footer = G.C.RED,
 	}
+	self:refreshColor()
 
 	self.uiObjects = {
 		Info = UIInfo(self),
@@ -39,14 +42,21 @@ function IUI:init(ses, mp)
 		Mods = UIMods(self),
 		AddMod = UIAddMod(self),
 		File = UIFile(self),
+		Advanced = UIAdvanced(self),
 	}
 	self.uis = {
 		self.uiObjects.Info,
+		self.uiObjects.Advanced,
 		self.uiObjects.Mods,
 		self.uiObjects.AddMod,
 		self.uiObjects.File,
 		self.uiObjects.Export,
 	}
+end
+
+function IUI:refreshColor()
+	util.assign(self.colors.normal, mix_colours(self.mp.parsedColors.bg, self.mp.parsedColors.fg, 1-self.colorMix))
+	util.assign(self.colors.header, mix_colours(self.mp.parsedColors.fg, self.mp.parsedColors.bg, 1-self.colorMix))
 end
 
 --- @protected
@@ -77,6 +87,7 @@ end
 --- @protected
 function IUI:renderTabs()
 	return create_tabs({
+		colour = self.colors.header,
 		tabs = self:renderTabsList()
 	})
 end

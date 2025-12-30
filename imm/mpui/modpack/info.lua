@@ -1,7 +1,6 @@
 local Base = require("imm.mpui.modpack.ui")
 local TM = require("imm.lib.texture_moveable")
 local ui = require('imm.lib.ui')
-local util = require('imm.lib.util')
 
 --- @class imm.UI.MP.Info.Funcs
 local funcs = {
@@ -10,7 +9,6 @@ local funcs = {
 }
 
 --- @class imm.UI.MP.Info: imm.UI.MP.Base
---- @field uibox? balatro.UIBox
 local IUI = {
 	tabId = 'info',
 	tabLabel = 'Info',
@@ -23,15 +21,6 @@ local IUI = {
 
 	padding = 0.1
 }
-
---- @protected
---- @param ses imm.UI.MP
-function IUI:init(ses)
-	Base.proto.init(self, ses)
-
-	self.prev_name = ses.mp.name
-	self.prev_author = ses.mp.author
-end
 
 --- @protected
 function IUI:renderDesc()

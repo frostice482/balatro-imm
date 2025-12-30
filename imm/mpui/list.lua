@@ -118,7 +118,8 @@ function IUI:renderMpInput(mp)
 		max_length = 5 * self.titleLength,
 		w = self.titleLength,
 		extended_corpus = true,
-		prompt_text = 'Modpack title'
+		prompt_text = 'Modpack title',
+		colour = mp.parsedColors.fg,
 	})
 	x.nodes[1].config.on_demand_tooltip = { text = self:uiMpDesc(mp) }
 	return x
@@ -283,7 +284,7 @@ function IUI:renderMPActionsPopupButton(info)
 	return  ui.R{
 		button = funcs.optuibox,
 		ref_table = info,
-		colour = G.C.BOOSTER,
+		colour = info.mp.parsedColors.fg,
 		outline = 1,
 		outline_colour = G.C.WHITE,
 		r = true,
@@ -314,7 +315,7 @@ function IUI:renderMpContainer(mp)
 	return ui.R{
 		padding = self.containerMargin,
 		ui.R{
-			colour = G.C.BOOSTER,
+			colour = mp.parsedColors.bg,
 			padding = self.containerPadding,
 			r = true,
 			nodes = self:renderMpRows({ mp = mp, diff = mp:diff(), ses = self })
