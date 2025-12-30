@@ -14,6 +14,11 @@ local funcs = {
     back        = 'imm_b_back',
     options     = 'imm_b_opts'
 }
+local sprites = {
+    exit = { x = 1, y = 4 },
+    refresh = { x = 2, y = 4 },
+    opts = { x = 0, y = 4 },
+}
 
 --- @class imm.UI.Container: balatro.UIElement.Config
 --- @field object balatro.UIBox
@@ -39,6 +44,8 @@ local IUISes = {
     fontscale = 0.4,
     spacing = 0.1,
     sideWidth = 3,
+    categoryWidth = 2.1,
+    buttonIconScale = 0.6,
     prepared = false,
     hasChanges = false,
     noThumbnail = false,
@@ -125,15 +132,6 @@ function IUISes:init(tasks)
     self.tags = {}
     self.filteredList = {}
     self.categories = copy_table(BrowserStatic.categories)
-
-    --- @type balatro.UIElement.Config
-    self.sidebarBase = {
-        padding = 0.15,
-        r = true,
-        hover = true,
-        shadow = true,
-        colour = self.colors.buttons
-    }
 
     self.searchOpts = {
         delay = 0.3,
@@ -229,7 +227,7 @@ function IUISes:renderCategory(label, category)
     return ui.R{
         align = 'm',
         colour = self.tags[category] and self.colors.categorySelected or self.colors.categoryUnselected,
-        minw = 2,
+        minw = self.categoryWidth,
         padding = 0.1,
         shadow = true,
         hover = true,
@@ -242,44 +240,33 @@ function IUISes:renderCategory(label, category)
 end
 
 --- @protected
-function IUISes:renderOptExit()
-    return ui.C({
-        tooltip = { text = {'Exit'} },
-        button = 'exit_overlay_menu',
-
-        self:renderText('X')
-    }, self.sidebarBase)
+--- @param pos Position
+function IUISes:renderOptSpr(pos)
+    return Sprite(0, 0, self.buttonIconScale, self.buttonIconScale, G.ASSET_ATLAS.imm_icons, pos)
 end
 
 --- @protected
-function IUISes:renderOptRefresh()
-    return ui.C({
-        tooltip = { text = {'Refresh'} },
-        button = funcs.refresh,
+--- @param text string
+--- @param button string
+--- @param pos Position
+function IUISes:renderOpt(text, button, pos)
+    return ui.C{
+        tooltip = { text = {text} },
+        button = button,
+        button_dist = 0.2,
         ref_table = self,
 
-        self:renderText('R')
-    }, self.sidebarBase)
-end
-
---- @protected
-function IUISes:renderOptMore()
-    return ui.C({
-        tooltip = { text = {'More Options'} },
-        button = funcs.options,
-        ref_table = self,
-
-        self:renderText('O')
-    }, self.sidebarBase)
+        ui.O(self:renderOptSpr(pos))
+    }
 end
 
 --- @protected
 function IUISes:renderOptions()
     --- @type balatro.UIElement.Definition[]
     return {
-        self:renderOptExit(),
-        self:renderOptRefresh(),
-        self:renderOptMore(),
+        self:renderOpt('Exit', 'exit_overlay_menu', sprites.exit),
+        self:renderOpt('Refresh', funcs.refresh, sprites.refresh),
+        self:renderOpt('Options', funcs.options, sprites.opts),
     }
 end
 
@@ -287,6 +274,7 @@ end
 function IUISes:renderOptionsContainer()
     return ui.R{
         align = 'm',
+        minh = 0.6,
         nodes = self:uiGap('C', self:renderOptions())
     }
 end
