@@ -163,8 +163,9 @@ local cycleexecswap = {
 }
 
 --- @param opts imm.UI.CycleOptions
---- @param page number
+--- @param page? number
 function ui.cycleExec(opts, page)
+    page = page or opts.currentPage or 1
     cycleexecswap.cycle_config.extra = opts
     cycleexecswap.to_key = page
     G.FUNCS[funcs.cycle](cycleexecswap)

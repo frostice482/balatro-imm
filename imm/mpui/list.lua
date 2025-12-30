@@ -15,6 +15,10 @@ local funcs = {
 	deleteConfirm = 'imm_mpl_delconf',
 	addnew = 'imm_mpl_addnew',
 	init = 'imm_mpl_init',
+	moveup = 'imm_mpl_moveup',
+	movedown = 'imm_mpl_movedown',
+	optuibox = 'imm_mpl_opt',
+	optsync = 'imm_mpl_optsync'
 }
 
 --- @class imm.UI.MPList.Opts
@@ -26,6 +30,7 @@ local funcs = {
 --- @field cycleOpts imm.UI.CycleOptions
 --- @field prioritizeId table<string, boolean>
 --- @field uibox? balatro.UIBox
+--- @field optionsUibox? balatro.UIBox
 local IUI = {
 	search = '',
 	searchTimeout = 0.3,
@@ -33,6 +38,8 @@ local IUI = {
 
 	listId = 'list',
 	pageSize = 4,
+
+	popupButtonScale = 0.5,
 
 	buttonScale = 0.6,
 	buttonGap = 0.2,
@@ -46,6 +53,10 @@ local IUI = {
 	titleLength = 8,
 	iconSize = 1,
 
+	containerPadding = 0.15,
+	containerMargin = 0.1,
+
+	gpPageCycle = 0,
 	hasChanges = false,
 }
 
@@ -56,6 +67,8 @@ local sprites = {
 	mergeNo = { x = 1, y = 3 },
 	settings = { x = 0, y = 4 },
 	delete = { x = 0, y = 0 },
+	moveup = { x = 2, y = 1 },
+	movedown = { x = 2, y = 0 },
 }
 
 --- @protected
@@ -74,7 +87,14 @@ function IUI:init(opts)
 		end,
 		id = self.listId,
 		length = 0,
-		pagesize = self.pageSize
+		pagesize = self.pageSize,
+		onCycle = function (page)
+			if self.gpPageCycle > 0 then
+				self.gpPageCycle = self.gpPageCycle - 1
+			else
+				self:unsetActiveOptions()
+			end
+		end
 	}
 	self.colors = {
 		header = G.C.BOOSTER,
@@ -125,12 +145,21 @@ end
 --- @class _imm.UI.MPList.Button
 --- @field btn string
 --- @field pos Position
+--- @field mp _imm.UI.MPList.MPInfo
 --- @field title? string[]
 --- @field ref? any
+
+--- @class _imm.UI.MPList.MPInfo: { [string]: any }
+--- @field mp imm.Modpack
+--- @field diff imm.Modpack.Diff
+--- @field ses imm.UI.MPList
 
 --- @protected
 --- @param opts _imm.UI.MPList.Button
 function IUI:renderMpButton(opts)
+	opts.ref = opts.ref or {}
+	setmetatable(opts.ref, { __index = opts.mp })
+
 	local spr = Sprite(0, 0, self.buttonScale, self.buttonScale, G.ASSET_ATLAS.imm_icons, opts.pos)
 	return ui.C{
 		align = 'cm',
@@ -151,12 +180,11 @@ function IUI:uiMpDesc(mp)
 end
 
 --- @protected
---- @param mp imm.Modpack
---- @param diff imm.Modpack.Diff
-function IUI:renderMpActions(mp, diff)
+--- @param info _imm.UI.MPList.MPInfo
+function IUI:renderMpActionsRowsA(info)
 	--- @type balatro.UIElement.Definition[]
 	return {
-		self:renderMpButton(diff.empty and {
+		self:renderMpButton(info.diff.empty and {
 			title = {'Nothing to change'},
 			btn = funcs.active,
 			pos = sprites.activateNo,
@@ -164,9 +192,10 @@ function IUI:renderMpActions(mp, diff)
 			title = {'Apply'},
 			btn = funcs.activate,
 			pos = sprites.activate,
-			ref = { ses = self, mp = mp, diff = diff, merge = false }
+			ref = { merge = false },
+			mp = info
 		}),
-		self:renderMpButton(diff.mergeEmpty and {
+		self:renderMpButton(info.diff.mergeEmpty and {
 			title = {'Nothing to merge'},
 			btn = funcs.active,
 			pos = sprites.mergeNo,
@@ -174,34 +203,111 @@ function IUI:renderMpActions(mp, diff)
 			title = {'Merge'},
 			btn = funcs.activate,
 			pos = sprites.merge,
-			ref = { ses = self, mp = mp, diff = diff, merge = true }
+			ref = { merge = true },
+			mp = info
 		}),
+		self:renderMpButton({
+			title = {'Move UP'},
+			btn = funcs.moveup,
+			pos = sprites.moveup,
+			ref = { i = info.i },
+			mp = info
+		}),
+	}
+end
+
+--- @protected
+--- @param info _imm.UI.MPList.MPInfo
+function IUI:renderMpActionsRowsB(info)
+	--- @type balatro.UIElement.Definition[]
+	return {
 		self:renderMpButton({
 			title = {'Settings'},
 			btn = funcs.settings,
 			pos = sprites.settings,
-			ref = { ses = self, mp = mp }
+			mp = info
 		}),
 		self:renderMpButton({
 			title = {'Delete'},
 			btn = funcs.delete,
 			pos = sprites.delete,
-			ref = { ses = self, mp = mp }
-		})
+			mp = info
+		}),
+		self:renderMpButton({
+			title = {'Move DOWN'},
+			btn = funcs.movedown,
+			pos = sprites.movedown,
+			ref = { i = info.i },
+			mp = info
+		}),
 	}
 end
 
 --- @protected
---- @param mp imm.Modpack
-function IUI:renderMpRows(mp)
-	local diff = mp:diff()
+--- @param info _imm.UI.MPList.MPInfo
+function IUI:renderMPActionsCols(info)
+	--- @type balatro.UIElement.Definition[][]
+	return {
+		self:renderMpActionsRowsA(info),
+		self:renderMpActionsRowsB(info)
+	}
+end
+
+--- @protected
+--- @param info _imm.UI.MPList.MPInfo
+function IUI:renderMPActionsButtons(info)
+	local grid = self:renderMPActionsCols(info)
+	local rows = {}
+	for i,v in ipairs(grid) do
+		rows[i] = ui.R{ align = 'cm', nodes = ui.gapList('C', self.buttonGap, v) }
+	end
+	return ui.gapList('R', self.buttonGap, rows)
+end
+
+--- @param info _imm.UI.MPList.MPInfo
+function IUI:renderMPActionsContainer(info)
+	return ui.ROOT{
+		padding = 0.25,
+		outline = 1,
+		outline_colour = G.C.WHITE,
+		colour = G.C.GREY,
+		r = true,
+		func = funcs.optsync,
+		ref_table = info,
+
+		ui.C(self:renderMPActionsButtons(info))
+	}
+end
+
+--- @protected
+--- @param info _imm.UI.MPList.MPInfo
+function IUI:renderMPActionsPopupButton(info)
+	local spr = Sprite(0, 0, self.popupButtonScale, self.popupButtonScale, G.ASSET_ATLAS.imm_icons, { x = 2, y = 2 })
+	return  ui.R{
+		button = funcs.optuibox,
+		ref_table = info,
+		colour = G.C.BOOSTER,
+		outline = 1,
+		outline_colour = G.C.WHITE,
+		r = true,
+		align = 'cm',
+		button_dist = 0.1,
+
+		ui.O(spr)
+	}
+end
+
+--- @protected
+--- @param info _imm.UI.MPList.MPInfo
+function IUI:renderMpRows(info)
+	local mp = info.mp
 	local icon = TM(mp:getIcon(), 0, 0, self.iconSize, self.iconSize)
 
 	--- @type balatro.UIElement.Definition[]
 	return {
 		ui.C{ui.O(icon)},
 		self:renderMpInput(mp),
-		ui.C{ align = 'cm', ui.R{ align = 'cm', nodes = ui.gapList('C', self.buttonGap, self:renderMpActions(mp, diff)) } }
+		ui.C{align = 'cm', self:renderMPActionsPopupButton(info)}
 	}
 end
 
@@ -209,12 +315,12 @@ end
 --- @param mp imm.Modpack
 function IUI:renderMpContainer(mp)
 	return ui.R{
-		padding = 0.1,
+		padding = self.containerMargin,
 		ui.R{
 			colour = G.C.BOOSTER,
-			padding = 0.2,
+			padding = self.containerPadding,
 			r = true,
-			nodes = self:renderMpRows(mp)
+			nodes = self:renderMpRows({ mp = mp, diff = mp:diff(), ses = self })
 		}
 	}
 end
@@ -325,6 +431,12 @@ end
 
 function IUI:showOverlay()
 	return ui.overlay(self:render())
+end
+
+function IUI:unsetActiveOptions()
+	if not self.optionsUibox then return end
+	self.optionsUibox:remove()
+	self.optionsUibox = nil
 end
 
 --- @alias imm.UI.MPList.C imm.UI.MPList.S | p.Constructor<imm.UI.MPList, nil> | fun(opts?: imm.UI.MPList.Opts): imm.UI.MPList

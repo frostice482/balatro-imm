@@ -85,6 +85,7 @@ end
 --- @field isArray? boolean For tables
 --- @field instance? any For tables
 --- @field instancename? string For tables
+--- @field pattern? string For strings
 --- @field enum? string[] | number[] For strings
 --- @field on? p.Assert.Schema.Func<any>
 
@@ -97,7 +98,16 @@ function a.schema(var, varname, schema, elevel)
     elevel = elevel + 1
 
     local t = a.type(var, varname, schema.type, elevel)
-    if t == 'string' or t == 'number' then
+    if t == 'string' then
+        if schema.enum then
+            a.enum(var, varname, schema.enum, elevel)
+        end
+        if schema.pattern then
+            if not string.find(var, schema.pattern) then
+                error(string.format('Variable %s with value %s does not satisfy pattern %s', varname, var, schema.pattern))
+            end
+        end
+    elseif t == 'number' then
         if schema.enum then
             a.enum(var, varname, schema.enum, elevel)
         end

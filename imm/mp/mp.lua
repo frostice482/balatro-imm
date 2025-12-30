@@ -1,7 +1,8 @@
 local constructor = require('imm.lib.constructor')
 local Tar = require('imm.tar.tar')
+local schematic = require("imm.mp.schematic.mp")
+local importSchematic = require("imm.mp.schematic.import")
 local tarc = require('imm.tar.c')
-local a = require('imm.lib.assert')
 local co = require('imm.lib.co')
 local util = require('imm.lib.util')
 local imm = require('imm')
@@ -18,24 +19,23 @@ local imm = require('imm')
 
 --- @class imm.Modpack.Opts
 --- @field id? string
---- @field name? string
---- @field author? string
---- @field description? string
 --- @field path? string
---- @field mods? imm.Modpack.Mod
 --- @field ctrl? imm.ModController
 --- @field repo? imm.Repo
+--- @field list? imm.MPList
 
 --- @class imm.Modpack
 --- @field mods table<string, imm.Modpack.Mod>
 --- @field ctrl imm.ModController
+--- @field colors table<string, string>
 --- @field icon? love.Image
 local IMP = {
 	id = '',
 	name = 'Untitled Modpack',
 	author = 'Me',
 	description = 'A very cool modpack',
-	path = ''
+	path = '',
+	order = 0
 }
 
 --- @alias imm.Modpack.C imm.Modpack.S | p.Constructor<imm.Modpack, nil> | fun(opts?: imm.Modpack.Opts): imm.Modpack
@@ -45,42 +45,15 @@ local MP = constructor(IMP)
 --- @class imm.Modpack.S
 local MPS = MP
 
-MPS.latest = 1
-
---- @type table<number, fun(data): any, number>
-MPS.migrator = {}
-
---- @type table<number, p.Assert.Schema>
-MPS.schematic = {}
-MPS.schematic[1] = {
-	type = 'table',
-	props = {
-		name = { type = "string" },
-		author = { type = "string" },
-		mods = {
-			type = "table",
-			restProps = {
-				type = "table",
-				props = {
-					version = { type = "string" },
-					url = { type = {"string", "nil"} },
-					init = { type = {"boolean", "nil"} },
-					bundle = { type = {"boolean", "nil"} },
-				}
-			}
-		}
-	}
-}
 --- @protected
 --- @param opts? imm.Modpack.Opts
 function IMP:init(opts)
 	opts = opts or {}
+	self.mods = {}
+	self.colors = copy_table(schematic.defaultColors)
 	self.id = opts.id
-	self.name = opts.name
-	self.author = opts.author
-	self.description = opts.description
 	self.path = opts.path
-	self.mods = opts.mods or {}
+	self.list = opts.list
 	self.ctrl = opts.ctrl or require("imm.ctrl")
 	self.repo = opts.repo or require("imm.repo")
 end
@@ -90,7 +63,9 @@ function IMP:json()
 		name = self.name,
 		author = self.author,
 		mods = self.mods,
-		version = MPS.latest
+		order = self.order,
+		colors = self.colors,
+		version = schematic.latest
 	}
 end
 
@@ -108,11 +83,14 @@ function IMP:saveThumb(icon)
 end
 
 function IMP:load()
-	local data = MPS.parseData(imm.json.decode(assert(love.filesystem.read(self:pathInfo()))))
+	local decoded = imm.json.decode(assert(love.filesystem.read(self:pathInfo())))
+	local data = schematic:parse(decoded, self)
 
 	self.name = data.name
 	self.author = data.author
 	self.mods = data.mods
+	self.colors = data.colors
+	self.order = data.order
 
 	self:loadDescription()
 end
@@ -195,9 +173,10 @@ end
 
 function IMP:exportJson()
 	local o = {
-		version = MPS.latest,
+		version = importSchematic.latest,
 		name = self.name,
 		author = self.author,
+		colors = self.colors,
 		mods = {}
 	}
 	for k,v in pairs(self.mods) do
@@ -406,25 +385,6 @@ function MPS.parseFileList(list)
 		excludes = excl,
 		includes = incl
 	}
-end
-
---- @param data any
---- @return any data
-function MPS.parseData(data)
-	assert(type(data) == "table", "not a table")
-	assert(type(data.version) == "number", "version is not a number")
-	assert(MPS.schematic[data.version], "unknown modpack version " .. data.version)
-	a.schema(data, "data", MPS.schematic[data.version])
-
-	local v = data.version
-	while v ~= MPS.latest do
-		local m = MPS.migrator[v]
-		assert(m, string.format("Unknown migration from %s", v))
-		data, v = m(data)
-		assert(v, string.format("Unknown next migrator from %s", v))
-	end
-
-	return data
 end
 
 --- @param diff imm.Modpack.Diff

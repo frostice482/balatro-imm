@@ -1,9 +1,9 @@
 local constructor = require('imm.lib.constructor')
 local MP = require("imm.mp.mp")
+local importSchematic = require('imm.mp.schematic.import')
 local getmods = require("imm.mod.get")
 local logger = require("imm.logger")
 local util = require("imm.lib.util")
-local a = require('imm.lib.assert')
 local tarx = require('imm.tar.x')
 local imm = require("imm")
 
@@ -44,7 +44,8 @@ function IML:loadAll()
 		local mp, err = MP.load(subpath, {
 			ctrl = self.ctrl,
 			repo = self.repo,
-			id = item
+			id = item,
+			list = self
 		})
 		if mp then
 			self.modpacks[mp.id] = mp
@@ -58,9 +59,16 @@ end
 
 function IML:list()
 	return util.values(self.modpacks, function (va, vb)
-		if va.name ~= vb.name then return va.name < vb.name end
-		return va.path < vb.path
+		return va.order > vb.order
 	end)
+end
+
+function IML:highestOrder()
+	local h = 0
+	for i,v in pairs(self.modpacks) do
+		if v.order > h then h = v.order end
+	end
+	return h
 end
 
 --- @param opts? imm.Modpack.Opts
@@ -72,7 +80,9 @@ function IML:new(opts)
 	opts.id = id
 	opts.path = path
 	opts.ctrl = self.ctrl
+	opts.list = self
 	local mp = MP(opts)
+	mp.order = self:highestOrder() + 1
 
 	assert(love.filesystem.createDirectory(path), "could not create directory " .. path)
 	assert(mp:save())
@@ -88,32 +98,12 @@ function IML:remove(id)
 	self.modpacks[id] = nil
 end
 
---- @param data any
---- @param tar Tar.Root
---- @return any data
-function MLS.parseData(data, tar)
-	assert(type(data) == "table", "not a table")
-	assert(type(data.version) == "number", "version is not a number")
-	assert(MLS.schematic[data.version], "unknown modpack version " .. data.version)
-	a.schema(data, "data", MLS.schematic[data.version])
-
-	local v = data.version
-	while v ~= MLS.latest do
-		local m = MLS.migrator[v]
-		assert(m, string.format("Unknown migration from %s", v))
-		data, v = m(data, tar)
-		assert(v, string.format("Unknown next migrator from %s", v))
-	end
-
-	return data
-end
-
 --- @param tar Tar.Root
 --- @return imm.Modpack mp
 function IML:importTar(tar)
 	local infoFile = tar:openFile('info.json')
-
-	local data = MLS.parseData(imm.json.decode(infoFile:getContentString()), tar)
+	local rawData = imm.json.decode(infoFile:getContentString())
+	local data = importSchematic:parse(rawData, tar)
 
 	local desc
 	local descFile = tar:get('description.txt')
@@ -135,6 +125,7 @@ function IML:importTar(tar)
 	mp.description = desc or ''
 	mp.name = data.name
 	mp.author = data.author
+	mp.order = self:highestOrder() + 1
 	if thumb then mp:saveThumb(thumb) end
 
 	for i,e in ipairs(data.mods) do
@@ -192,32 +183,5 @@ function IML:import(data, release)
 	local tar = tarx.parse(unzipped, true)
 	return self:importTar(tar)
 end
-
-MLS.latest = 1
-
---- @type table<number, p.Assert.Schema>
-MLS.schematic = {}
-MLS.schematic[1] = {
-	type = 'table',
-	props = {
-		name = { type = "string" },
-		author = { type = "string" },
-		mods = {
-			type = "table",
-			isArray = true,
-			restProps = {
-				type = "table",
-				props = {
-					id = { type = "string" },
-					version = { type = "string" },
-					url = { type = {"string", "nil"} },
-				}
-			}
-		}
-	}
-}
-
---- @type table<number, fun(data, tar: Tar.Root): any, number>
-MLS.migrator = {}
 
 return ML
