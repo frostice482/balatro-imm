@@ -1,4 +1,5 @@
 local ffi = require("ffi")
+local a = require("imm.lib.assert")
 local Tar = require("imm.tar.tar")
 
 ffi.cdef[[
@@ -16,13 +17,13 @@ local function assignHeader(target, datastack)
 			if v then break end
 		end
 		if field.type == 3 then
-			--a.type(v, "byte:"..field.field, "number")
+			a.type(v, "byte:"..field.field, "number")
 			target[off] = v
 		elseif field.type == 2 then
-			--a.type(v, "octal:"..field.field, "number")
+			a.type(v, "octal:"..field.field, "number")
 			ffi.copy(target+off, string.format("%o", v):sub(1, field.size-1))
 		else
-			--a.type(v, "string:"..field.field, "string")
+			a.type(v, "string:"..field.field, "string")
 			ffi.copy(target+off, v, math.min(v:len()+1, field.size-1))
 		end
 		off = off + field.size

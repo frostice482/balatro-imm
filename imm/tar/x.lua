@@ -209,7 +209,7 @@ function i.parseLow(ptr, len, strictChecksum)
         local path = header.pathname
         local t = header.type
         if t == 0 or t == Tar.headerTypes.normalFile or t == Tar.headerTypes.hardlink then
-            local c = assert(tar:openFile(path, header))
+            local c = tar:openFile(path, header)
             local ln = path
             if t == Tar.headerTypes.hardlink then ln = header.linkname
             else c:setContentFFI(ptr + header.contentStart, header.size) end

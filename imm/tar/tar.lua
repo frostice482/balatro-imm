@@ -1,6 +1,6 @@
-local constructor = require("imm.lib.constructor")
-local util = require("imm.lib.util")
-local sutil = require("imm.lib.strutil")
+local constructor = require("phantom.lib.constructor")
+local util = require("phantom.lib.util")
+local sutil = require("phantom.lib.strutil")
 local chars = sutil.chars
 
 --#region
@@ -242,7 +242,7 @@ end
 
 --- @param path string
 --- @param entry Tar.Entry
---- @return Tar.Entry entry
+--- @return Tar.EntryType entry
 function IEntry:_parentAddItem(path, entry)
     if not self.parent then error("missing parent") end
     self.parent:addItem(path, entry)
@@ -268,10 +268,17 @@ function IEntry:estimateBlocks()
     return b
 end
 
+--- @protected
+--- @param expected string
+--- @param detail? string
+function IEntry:errorType(expected, detail)
+    return error(string.format("%s: not a %s, got %s%s", self:getPath(), expected, self.type, detail and ' (' .. detail .. ')' or ''))
+end
+
 --- @param type string
 function IEntry:assertType(type)
     if self.type ~= type then
-        return error(string.format("%s: not a %s, got %s", self:getPath(), type, self.type))
+        return self:errorType(type)
     end
 end
 
@@ -416,42 +423,42 @@ end
 --- @protected
 --- @param name string
 --- @param item Tar.Entry
---- @return boolean success
---- @return string? error
 function IDir:_addItem(name, item)
     if name == "" or name == "." or name == ".." then
-        return false, string.format("illegal item name %s", name)
+        return error(string.format("illegal item name %s", name))
     end
     if self.items[name] then
-        return false, string.format("%s/%s already exists", self:getPath(), name)
+        return error(string.format("%s/%s already exists", self:getPath(), name))
     end
     if item.parent then
-        return false, string.format("item is linked on %s", item:getPath())
+        return error(string.format("item is linked on %s", item:getPath()))
     end
     if item.root ~= self.root then
-        return false, string.format("root not equal (current: %p, item: %p)", self.root, item.root)
+        return error(string.format("root not equal (current: %p, item: %p)", self.root, item.root))
     end
 
     self.items[name] = item
     self.itemNames[item] = name
     item.parent = self
-    return true
 end
 
 --- @protected
 --- @param paths string[]
 --- @param mkdir? boolean
 --- @param mkdirhead? Tar.Header.Opts
---- @return Tar.EntryType?
---- @return string? err
+--- @return Tar.EntryType
 function IDir:_resolve(paths, mkdir, mkdirhead)
     --- @type any, any?
     local cur, next = self, nil
 
     for i,path in ipairs(paths) do
-        if not cur then return nil, string.format("%s/%s: not exist (resolving %s)", self:getPath(), table.concat(paths, '/', 1, i-1), table.concat(paths, '/')) end
+        if not cur then
+            error(string.format("%s/%s: not exist (resolving %s)", self:getPath(), table.concat(paths, '/', 1, i-1), table.concat(paths, '/')))
+        end
         if Link:is(cur) then cur = cur:resolve() end
-        if not Dir:is(cur) then return nil, string.format("%s/%s: not a dir, got %s", self:getPath(), table.concat(paths, '/', 1, i), cur.type) end
+        if not Dir:is(cur) then
+            cur:errorType('dir')
+        end
 
         if path == "" then
             next = i == 1 and next.root or next
@@ -465,21 +472,20 @@ function IDir:_resolve(paths, mkdir, mkdirhead)
 
         if not next and mkdir  then
             next = Dir(self.root, mkdirhead)
-            local ok, e = cur:_addItem(path, next)
-            if not ok then return end
+            cur:_addItem(path, next)
         end
 
         cur = next
     end
 
-    if not cur then return nil, string.format("%s/%s: not exist", self:getPath(), table.concat(paths, '/')) end
+    if not cur then error(string.format("%s/%s: not exist", self:getPath(), table.concat(paths, '/'))) end
 
     return cur
 end
 
 --- @param path string
---- @return Tar.Dir? dir
---- @return string filenameOrError
+--- @return Tar.Dir dir
+--- @return string filename
 function IDir:resolveDir(path)
     local paths = util.strsplit(path,  "/", true)
     local item = paths[#paths]
@@ -490,76 +496,69 @@ function IDir:resolveDir(path)
     end
 
     local dir = self:_resolve(paths, true)
-    if not dir then return nil, string.format('%s/%s/%s -> %s: doesn\'t exist', self:getPath(), table.concat(paths, '/'), item) end
-    if not Dir:is(dir) then return nil, string.format('%s/%s/%s -> %s: not a dir, got %s', self:getPath(), table.concat(paths, '/'), item, dir.type)  end
+    if not Dir:is(dir) then
+        dir:errorType('dir')
+    end
 
     return dir, item --- @diagnostic disable-line
 end
 
 --- @param path string
 --- @param entry Tar.Entry
---- @return Tar.File? entry
---- @return string? err
---- @return Tar.Dir? dir
+--- @return Tar.Dir dir
 function IDir:addItem(path, entry)
-    local dir, fname_e = self:resolveDir(path)
-    if not dir then return nil, fname_e end
-    local ok, e = dir:_addItem(fname_e, entry)
-    if e then return nil, e end
-    return entry, nil, dir --- @diagnostic disable-line
+    local dir, fname = self:resolveDir(path)
+    dir:_addItem(fname, entry)
+    return dir
 end
 
 --- @param target string
 --- @param linkName string
 --- @param header? Tar.Header.Opts
---- @return Tar.File? entry
---- @return string? err
---- @return Tar.Dir? dir
+--- @return Tar.Symlink entry
+--- @return Tar.Dir dir
 function IDir:symlink(target, linkName, header)
-    return self:addItem(linkName, Link(self.root, target, header))
+    local ln = Link(self.root, target, header)
+    return ln, self:addItem(linkName, ln)
 end
 
 --- @param path string
 --- @param header? Tar.Header.Opts
---- @return Tar.EntryType? entry
+--- @return Tar.EntryType entry
 function IDir:openDir(path, header)
     return self:_resolve(util.strsplit(path, "/", true), true, header)
 end
 
 --- @param path string
 --- @param header? Tar.Header.Opts
---- @return Tar.File? entry
---- @return string? err
---- @return Tar.Dir? dir
+--- @return Tar.File entry
+--- @return Tar.Dir dir
 function IDir:openFile(path, header)
-    local dir, fname_e = self:resolveDir(path)
-    if not dir then return nil, fname_e end
+    local dir, fname = self:resolveDir(path)
 
-    local item = dir.items[fname_e]
+    local item = dir.items[fname]
     if not item then
         item = File(self.root, header)
-        dir:_addItem(fname_e, item)
+        dir:_addItem(fname, item)
     else
-        if not File:is(item) then return nil, string.format('%s/%s: not a file, got %s', self:getPath(), path, item.type) end
+        if not File:is(item) then
+            item:errorType('file')
+        end
     end
 
-    return item, nil, dir --- @diagnostic disable-line
+    return item, dir --- @diagnostic disable-line
 end
 
 --- @param path string
---- @return boolean success
---- @return string? err
 function IDir:rm(path)
-    local dir, fname_e = self:resolveDir(path)
-    if not dir then return false, fname_e end
+    local dir, fname = self:resolveDir(path)
 
-    local c = dir.items[fname_e]
-    if not c then return false, string.format('%s/%s: doesn\'t exist', self:getPath(), path) end
+    local c = dir.items[fname]
+    if not c then return error(string.format('%s/%s: not exist', self:getPath(), path)) end
 
-    dir.items[fname_e] = nil
+    dir.items[fname] = nil
     dir.itemNames[c] = nil
     c.parent = nil
-    return true
 end
 
 --- @param path string
@@ -610,13 +609,12 @@ function IDir:addFrom(base, noRec, filter, basesub)
 
         if not filter or filter(subsub, subpath) then
             if stat.type == 'file' then
-                local subitem = self:openFile(sub, { size = stat.size, mtime = stat.modtime })
-                if subitem then
-                    subitem:setContentString(love.filesystem.newFileData(subpath))
-                end
+                self:openFile(sub, { size = stat.size, mtime = stat.modtime }):setContentString(love.filesystem.newFileData(subpath))
             elseif stat.type == 'directory' and not noRec then
-                local subitem, err = self:_resolve({sub}, true)
-                if subitem and Dir:is(subitem) then subitem:addFrom(subpath, false, filter, subsub) end
+                local subitem = self:_resolve({sub}, true)
+                if Dir:is(subitem) then
+                    subitem:addFrom(subpath, false, filter, subsub)
+                end
             end
         end
     end
@@ -655,9 +653,7 @@ function IRoot:estimateBlocks()
 end
 
 --- @type Tar.Root.C
-local Tar = Dir:extendTo(IRoot, "Tar")
-local mt = getmetatable(Tar)
-mt.__index = TarS
+local Tar = Dir:extendTo(IRoot, "Tar", TarS)
 
 TarS.Entry = Entry
 TarS.File = File

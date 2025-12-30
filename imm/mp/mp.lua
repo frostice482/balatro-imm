@@ -269,12 +269,12 @@ function IMP:export(tar)
 	if not tar then tar = Tar() end
 
 	local info = self:exportJson()
-	assert(tar:openFile('info.json')):setContentString(imm.json.encode(info))
-	assert(tar:openFile('description.txt')):setContentString(self.description)
+	tar:openFile('info.json'):setContentString(imm.json.encode(info))
+	tar:openFile('description.txt'):setContentString(self.description)
 	local thumb = love.filesystem.newFileData(self:pathIcon())
-	if thumb then assert(tar:openFile('thumb')):setContentString(thumb) end
+	if thumb then tar:openFile('thumb'):setContentString(thumb) end
 
-	local mods = assert(tar:openDir("mods"))
+	local mods = tar:openDir("mods")
 	for i, e in ipairs(info.mods) do
 		local xe = self.mods[e.id]
 		local tobundle = xe and xe.bundle and self.ctrl:getMod(e.id, xe.version)
@@ -289,7 +289,7 @@ function IMP:export(tar)
 			tempid = tempid + 1
 			local temp = '_immmp_tmp'..tempid
 			assert(imm.nfs.mount(tobundle.path, temp), string.format('mount failed: %s -> %s', tobundle.path, temp))
-			assert(mods:openDir(tostring(i))):addFrom(temp, nil, function (sub, path) return MPS.testFileList(allowlist or blocklist, sub) end)
+			mods:openDir(tostring(i)):addFrom(temp, nil, function (sub, path) return MPS.testFileList(allowlist or blocklist, sub) end)
 			assert(imm.nfs.unmount(tobundle.path), 'unmount failed')
 		end
 	end

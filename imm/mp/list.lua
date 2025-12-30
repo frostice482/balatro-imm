@@ -111,8 +111,7 @@ end
 --- @param tar Tar.Root
 --- @return imm.Modpack mp
 function IML:importTar(tar)
-	local infoFile = assert(tar:get('info.json'))
-	infoFile:assertType("file")
+	local infoFile = tar:openFile('info.json')
 
 	local data = MLS.parseData(imm.json.decode(infoFile:getContentString()), tar)
 
@@ -130,8 +129,7 @@ function IML:importTar(tar)
 		thumb = thumbFile:getContentData()
 	end
 
-	local modsDir = assert(tar:get('mods'))
-	modsDir:assertType("dir")
+	local modsDir = tar:openDir('mods')
 
 	local mp = self:new()
 	mp.description = desc or ''
