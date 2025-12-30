@@ -30,6 +30,16 @@ Linux with Steam Proton:
 
     Then, from the Steam folder, navigate to `steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods`
 
+## Troubleshooting
+
+### `-155`
+
+If you got this error, this is because:
+- there's no `https.dll`, that is usually bundled together on Steam/Windows
+- imm cannot load library `curl.so` and `curl.so.4`
+
+The solution may vary. You can try downloading one of `https.dll` from [balamod/lua-https](https://github.com/balamod/lua-https/releases/tag/v1.0.1), or find the suitable `curl.so` for your hardware, then include it in the Balatro's source.
+
 ## Features
 
 - **Modpacks**
