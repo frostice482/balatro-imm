@@ -38,7 +38,8 @@ function IUI:renderToggleOverwrite()
 		ref_value = 'allowFileOverride',
 		label = 'Apply files',
 		label_scale = self.fontscale,
-		col = true
+		col = true,
+		w = 0
 	})
 end
 
@@ -62,6 +63,7 @@ function IUI:renderPreButton(nodes)
 		table.insert(nodes, ui.R{
 			align = 'cm',
 			self:renderToggleOverwrite(),
+			ui.gap('C', 0.1),
 			self:renderToggleViewOverwrite()
 		})
 	end
