@@ -48,7 +48,7 @@ function IBTaskDownCo:download(url, extra)
 
     status:update(t2)
 
-    local err, res = self.tasks.repo.api.blob:fetchCo(url, {
+    local res, err = self.tasks.repo.api.blob:fetchCo(url, {
         onProgress = function (dltotal, dlnow, ultotal, ulnow)
             if dltotal == 0 then dltotal = size else dltotal = dltotal / 1048576 end
             dlnow = dlnow and dlnow / 1048576

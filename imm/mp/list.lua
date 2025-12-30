@@ -1,6 +1,7 @@
 local constructor = require('imm.lib.constructor')
 local MP = require("imm.mp.mp")
 local getmods = require("imm.mod.get")
+local logger = require("imm.logger")
 local util = require("imm.lib.util")
 local a = require('imm.lib.assert')
 local tarx = require('imm.tar.x')
@@ -34,17 +35,25 @@ function IML:init(opts)
 	self.repo = opts.repo or require"imm.repo"
 end
 
+--- @return string[] errs
 function IML:loadAll()
+	local errs = {}
 	local items = love.filesystem.getDirectoryItems(self.basedir)
 	for i,item in ipairs(items) do
 		local subpath = self.basedir .. '/' .. item
-		local mp = MP.load(subpath, {
+		local mp, err = MP.load(subpath, {
 			ctrl = self.ctrl,
 			repo = self.repo,
 			id = item
 		})
-		if mp then self.modpacks[mp.id] = mp end
+		if mp then
+			self.modpacks[mp.id] = mp
+		else
+			logger.fmt('error', 'modpack %s: %s', subpath, err)
+			table.insert(errs, err)
+		end
 	end
+	return errs
 end
 
 function IML:list()

@@ -457,8 +457,7 @@ end
 
 --- @param path string
 --- @param opts? imm.Modpack.Opts
---- @return imm.Modpack? mp
---- @return string? err
+--- @return imm.Modpack? mp, string? err
 function MPS.load(path, opts)
 	opts = opts or {}
 	opts.path = path

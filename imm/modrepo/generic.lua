@@ -42,7 +42,7 @@ function IGRepo:getList(cb)
     self.listBusy = true
     self.listCb = { cb }
 
-    local function handle (err, res)
+    local function handle (res, err)
         if res then
             self.listDone = true
             for i, entry in pairs(res) do self:updateList(entry) end
@@ -62,22 +62,24 @@ end
 --- @async
 --- @param url string
 --- @param cacheKey? string
---- @return string? err, love.Image? data
+--- @return love.Image? data, string? err
 function IGRepo:getImageCo(url, cacheKey)
     cacheKey = cacheKey or url
-    if self.imageCache[cacheKey] ~= nil then return nil, self.imageCache[cacheKey] or nil end
-    local err, res = self.thumbApi:fetchCo(url)
+    if self.imageCache[cacheKey] ~= nil then return self.imageCache[cacheKey] or nil end
+    local res, err = self.thumbApi:fetchCo(url)
 
     --- @type boolean, any?
     local ok, img = false, err
-    if res then ok, img = pcall(love.graphics.newImage, res) end
+    if res then
+        ok, img = pcall(love.graphics.newImage, res)
+    end
     if not ok then
         self.imageCache[cacheKey] = false
-        return img, nil
+        return nil, img
     end
 
     self.imageCache[cacheKey] = img
-    return nil, img
+    return img, nil
 end
 
 return GRepo

@@ -102,7 +102,7 @@ function IMeta:badgeTextColor()
 end
 
 --- @async
---- @return string? err, love.Image? data
+--- @return love.Image? data, string? err
 function IMeta:getImageCo()
     if self.tsLatest and self.tsLatest.icon then
         return self.repo.ts:getImageCo(self.tsLatest.icon)

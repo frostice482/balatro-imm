@@ -149,7 +149,7 @@ function IBMIRepo:getReleases(repoUrl, cb, cacheKey)
         return
     end
 
-    local function handle(err, res)
+    local function handle(res, err)
         if res then releasesCache[cacheKey] = res end
         for i, cb in ipairs(releasesCb[repoUrl]) do
             cb(err, res)

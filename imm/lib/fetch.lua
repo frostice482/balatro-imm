@@ -23,8 +23,8 @@ local imm = require('imm')
 --- @field cacheTime? number
 
 --- @class imm.Fetch<A, T>: balatro.Object, {
----     fetch: fun(self, arg: A, cb: fun(err?: string, res?: T), opts?: imm.Fetch.HttpOpts);
----     fetchCo: async fun(self, arg: A, opts?: imm.Fetch.HttpOpts): string?, T;
+---     fetch: fun(self, arg: A, cb: fun(res?: T, err?: string), opts?: imm.Fetch.HttpOpts);
+---     fetchCo: async fun(self, arg: A, opts?: imm.Fetch.HttpOpts): res: T, err: string?;
 --- }
 --- @field resType imm.Fetch.ResType
 --- @field cacheType imm.Fetch.SaveType
@@ -90,8 +90,7 @@ end
 function IFetch:transformOpts(arg) end
 
 --- @param body string | love.Data
---- @return string? error
---- @return any? res
+--- @return any? res, string? err
 function IFetch:handleRes(body)
     local ok, res = true, body
 
@@ -102,8 +101,8 @@ function IFetch:handleRes(body)
         ok, res = pcall(self.interpretRes, self, res)
     end
 
-    if ok then return nil, res
-    else return res, nil
+    if ok then return res, nil
+    else return nil, res
     end
 end
 
@@ -137,9 +136,9 @@ end
 
 --- @async
 --- @param state imm.Fetch.ReqState
---- @return string? err, any? res
+--- @return any? res, string? err
 function IFetch:runreqCo(state)
-    if state.n < 1 then return 'Too many redirections' end
+    if state.n < 1 then return nil, 'Too many redirections' end
     local code, body, headers = https:requestCo(state.url, state.opts)
 
     local redirect = false
@@ -151,14 +150,14 @@ function IFetch:runreqCo(state)
         return self:runreqCo(state)
     end
     if code ~= 200 then
-        return string.format('HTTP Error %d (%s)', code, state.url)
+        return nil, string.format('HTTP Error %d (%s)', code, state.url)
     end
 
-    local err, res = self:handleRes(body or '')
+    local res, err = self:handleRes(body or '')
     if res and state.opts.useCache ~= false and not self.neverCache then
         writeCache(state.cachefile, self:stringifyDataToCache(res))
     end
-    return err, res
+    return res, err
 end
 
 --- @param file string
@@ -190,7 +189,7 @@ function IFetch2:fetchCo(arg, opts)
 
     local cachefile = self:getCacheFileName(arg)
     local cache = not opts.refreshCache and self:getCacheFile(cachefile)
-    if cache then return nil, self:parseCache(cache) end
+    if cache then return self:parseCache(cache), nil end
 
     return self:runreqCo({
         cachefile = cachefile,

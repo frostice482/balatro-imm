@@ -169,6 +169,19 @@ function IModCtrl:deleteEntry(info, noUninstall)
     return true
 end
 
+--- @param action imm.LoadList.ModAction
+--- @return boolean ok, string? err
+function IModCtrl:applyAction(action)
+    if action.impossible then return true end
+    local mod = action.mod
+    if action.action == 'enable' or action.action == 'switch' then
+        return self:enableMod(mod)
+    elseif action.action == 'disable' then
+        return self:disableMod(mod)
+    end
+    return false, 'Unknown action ' .. action.action
+end
+
 --- @param mod string
 --- @param version string
 --- @return boolean ok, string? err

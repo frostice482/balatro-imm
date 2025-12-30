@@ -284,7 +284,7 @@ end
 
 --- @async
 function IUIModSes:updateImageCo()
-    local err, img = self.mod:getImageCo()
+    local img, err = self.mod:getImageCo()
     if not img then return end
 
     local w, h = img:getDimensions()

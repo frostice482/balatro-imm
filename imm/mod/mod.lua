@@ -104,7 +104,10 @@ function IMod:enable()
     if self.list.native then return self:errNative() end
     if self.locked then return self:errLocked() end
 
-    if self.list.active then self.list:disable() end
+    if self.list.active then
+        local ok, err = self.list:disable()
+        if not ok then return ok, err end
+    end
 
     local ok,err = imm.nfs.remove(self.path .. '/.lovelyignore')
     if not ok then return ok, err end
