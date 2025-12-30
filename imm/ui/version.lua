@@ -21,7 +21,7 @@ local sprites = {
     locked = { x = 1, y = 1 },
 }
 
-local thunderstoreColor = mix_colours(copy_table(G.C.BLUE), {1, 1, 1, 1}, 0.6)
+local thunderstoreColor = mix_colours(copy_table(G.C.BLUE), {1, 1, 1, 1}, 0.9)
 
 --- @class imm.UI.Version.Opts
 --- @field sub? string

@@ -34,19 +34,19 @@ end
 --- @protected
 function IUI:renderButtons()
 	return {
-		UIBox_button({
+		self.ses:uiButton({
 			label = {'Open Folder'},
 			button = funcs.open,
 			ref_table = self,
 			col = true
 		}),
-		UIBox_button({
+		self.ses:uiButton({
 			label = {'Copy configs'},
 			button = funcs.copySettings,
 			ref_table = self,
 			col = true
 		}),
-		UIBox_button({
+		self.ses:uiButton({
 			label = {'Apply config'},
 			button = funcs.apply,
 			ref_table = self,

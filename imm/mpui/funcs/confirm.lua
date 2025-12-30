@@ -24,7 +24,7 @@ G.FUNCS[UI.funcs.confirm] = function (e)
 	r.mpses:showOverlay()
 end
 
-G.FUNCS[UI.funcs.cancel] = function (e)
+G.FUNCS[UI.funcs.back] = function (e)
 	e.config.ref_table:showOverlay()
 end
 

@@ -20,7 +20,7 @@ G.FUNCS[funcs.setCategory] = function(elm)
     local ses, cat = r.ses, r.cat
 
     ses.tags[cat] = not ses.tags[cat]
-    elm.config.colour = ses.tags[cat] and ses.colorCategorySelected or ses.colorCategoryUnselected
+    elm.config.colour = ses.tags[cat] and ses.colors.categorySelected or ses.colors.categoryUnselected
     ses:update()
 end
 

@@ -16,10 +16,7 @@ local funcs = {
 --- @field currentTabComponent? imm.UI.MP.Base
 local IUI = {
 	currentTab = 'info',
-
 	fontScale = 0.4,
-	inputColors = G.C.BOOSTER,
-	inputColorsLight = lighten(G.C.BOOSTER, 0.2),
 }
 
 --- @protected
@@ -30,6 +27,12 @@ function IUI:init(ses, mp)
 	self.mp = mp
 	self.states = {}
 
+	self.colors = {
+		normal = G.C.BOOSTER,
+		header = G.C.BOOSTER,
+		footer = G.C.RED,
+	}
+
 	self.uiObjects = {
 		Info = UIInfo(self),
 		Export = UIExport(self),
@@ -37,7 +40,6 @@ function IUI:init(ses, mp)
 		AddMod = UIAddMod(self),
 		File = UIFile(self),
 	}
-
 	self.uis = {
 		self.uiObjects.Info,
 		self.uiObjects.Mods,
@@ -94,12 +96,30 @@ function IUI:showOverlay()
 	ui.overlay(self:render())
 end
 
---- @param param imm.UI.TextInputDelayOpts
-function IUI:uiModifyTextInput(param)
+--- @param param imm.UI.TextInputOpts
+function IUI:uiTextInput(param)
 	param.extended_corpus = true
-	param.colour = self.inputColors
-	param.hooked_colour = self.inputColorsLight
-	return param
+	param.colour = param.colour or self.colors.header
+	return ui.textInput(param)
+end
+
+function IUI:uiCycleOpts()
+	--- @type balatro.UI.OptionCycleParam
+	return {
+		no_pips = true,
+		colour = self.colors.footer
+	}
+end
+
+--- @class _imm.UI.Mp.ButtonParam: balatro.UI.ButtonParam
+--- @field hs? number
+
+--- @param param _imm.UI.Mp.ButtonParam
+function IUI:uiButton(param)
+	param.scale = param.scale or self.fontScale
+	param.minh = param.minh or self.fontScale * (param.hs or 2)
+	param.colour = param.colour or self.colors.normal
+	return UIBox_button(param)
 end
 
 --- @alias imm.UI.MP.C imm.UI.MP.S | p.Constructor<imm.UI.MP, nil> | fun(ses: imm.UI.MPList, mp: imm.Modpack): imm.UI.MP

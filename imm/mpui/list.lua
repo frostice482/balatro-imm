@@ -27,20 +27,26 @@ local funcs = {
 --- @field prioritizeId table<string, boolean>
 --- @field uibox? balatro.UIBox
 local IUI = {
-	hasChanges = false,
 	search = '',
-	listId = 'list',
-	titleLength = 8,
-	buttonScale = 0.6,
-	buttonGap = 0.2,
-	descWidth = 6,
-	descLines = 5,
-	mpUpdateDelay = 1,
-	optWidth = 3.25,
-	iconSize = 1,
-	pageSize = 4,
 	searchTimeout = 0.3,
 	searchWidth = 8,
+
+	listId = 'list',
+	pageSize = 4,
+
+	buttonScale = 0.6,
+	buttonGap = 0.2,
+
+	descWidth = 7,
+	descLines = 15,
+
+	mpUpdateDelay = 1,
+	optWidth = 3.25,
+
+	titleLength = 8,
+	iconSize = 1,
+
+	hasChanges = false,
 }
 
 local sprites = {
@@ -70,6 +76,11 @@ function IUI:init(opts)
 		length = 0,
 		pagesize = self.pageSize
 	}
+	self.colors = {
+		header = G.C.BOOSTER,
+		cycle = G.C.BOOSTER,
+		newButton = G.C.BLUE,
+	}
 
 	self.tasks.status:update(
 		"Drag and drop a modpack here to install it.",
@@ -81,7 +92,7 @@ end
 --- @protected
 --- @param mp imm.Modpack
 function IUI:renderMpInput(mp)
-	local x = ui.textInputDelaying({
+	local x = ui.textInput({
 		ref_table = mp,
 		ref_value = 'name',
 		delay = self.mpUpdateDelay,
@@ -92,13 +103,13 @@ function IUI:renderMpInput(mp)
 		extended_corpus = true,
 		prompt_text = 'Modpack title'
 	})
-	x.nodes[1].config.tooltip = { text = self:uiMpDesc(mp) }
+	x.nodes[1].config.on_demand_tooltip = { text = self:uiMpDesc(mp) }
 	return x
 end
 
 --- @protected
 function IUI:renderSearch()
-	return ui.textInputDelaying({
+	return ui.textInput({
 		ref_table = self,
 		ref_value = 'search',
 		delay = self.searchTimeout,
@@ -107,8 +118,7 @@ function IUI:renderSearch()
 		w = self.searchWidth,
 		max_length = 5 * self.searchWidth,
 		prompt_text = 'Search',
-		colour = G.C.BOOSTER,
-		hooked_colour = lighten(G.C.BOOSTER, 0.2)
+		colour = self.colors.header,
 	})
 end
 
@@ -230,15 +240,23 @@ function IUI:updateList()
 	return self:updateCycle()
 end
 
+--- @protected
+function IUI:renderCycleOpts()
+	--- @type balatro.UI.OptionCycleParam
+	return {
+		colour = self.colors.cycle
+	}
+end
+
 function IUI:updateCycle()
 	self.cycleOpts.length = #self.list
-	return ui.cycleUpdate(self.cycleOpts)
+	return ui.cycleUpdate(self.cycleOpts, self:renderCycleOpts())
 end
 
 --- @protected
 function IUI:renderCycle()
 	self:updateList()
-	return ui.cycle(self.cycleOpts)
+	return ui.cycle(self.cycleOpts, self:renderCycleOpts())
 end
 
 --- @protected
@@ -249,7 +267,7 @@ function IUI:renderAddNew()
 		ref_table = self,
 		scale = 0.5,
 		minw = 0.8,
-		colour = G.C.BLUE,
+		colour = self.colors.newButton,
 	})
 end
 

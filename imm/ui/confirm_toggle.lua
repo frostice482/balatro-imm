@@ -9,6 +9,7 @@ local funcs = {
     confirm    = 'imm_ct_confirm',
     confirmOne = 'imm_ct_confirm_one',
     download   = 'imm_ct_download',
+    back       = browser_funcs.back,
 }
 
 local actionsRank = {
@@ -29,35 +30,34 @@ local actionsRank = {
 --- @field ses? imm.UI.Browser
 local IUICT = {
     allowDownloadMissing = true,
-    buttonDownload = funcs.download,
-    buttonConfirm = funcs.confirm,
-    buttonConfirmOne = funcs.confirmOne,
-    buttonBack = browser_funcs.back,
 }
 
 --- @protected
 --- @param list imm.LoadList
 --- @param opts? imm.UI.ConfirmToggle.Opts
 function IUICT:init(list, opts)
+    self.buttons = setmetatable({}, { __index = funcs })
+
     opts = opts or {}
     self.ses = opts.ses
     self.ctrl = opts.ctrl or self.ses and self.ses.ctrl or require"imm.ctrl"
     self.list = list
     self.mod = opts.mod
     self.isDisable = opts.isDisable
+    local fs = opts.ses and opts.ses.fontscale or 0.4
 
     self.whoColor = G.C.WHITE
     self.versionColor = G.C.BLUE
 
-    self.fontscale = (opts.ses and opts.ses.fontscale or 0.4) * 0.9
+    self.fontscale = fs * 0.9
     self.fontscaleTitle = self.fontscale
     self.fontscaleVersion = self.fontscale * 0.70
     self.fontscaleSub = self.fontscale * 0.75
 
     self.uiButtonConf = {
-        minh = 0.6,
-        minw = 4,
-        scale = self.ses and self.ses.fontscale or 0.4,
+        minh = fs * 1.5,
+        minw = fs * 10,
+        scale = fs,
         col = true,
         ref_table = self
     }
@@ -187,7 +187,7 @@ end
 function IUICT:renderButtonDownload()
     --- @type balatro.UI.ButtonParam
     return {
-        button = self.buttonDownload,
+        button = self.buttons.download,
         label = {'Download missings'},
         colour = G.C.BLUE
     }
@@ -197,7 +197,7 @@ end
 function IUICT:renderButtonConfirm(hasErr)
     --- @type balatro.UI.ButtonParam
     return {
-        button = self.buttonConfirm,
+        button = self.buttons.confirm,
         label = {hasErr and 'Confirm anyway' or 'Confirm'},
         colour = hasErr and G.C.ORANGE or G.C.BLUE
     }
@@ -207,7 +207,7 @@ end
 function IUICT:renderButtonConfirmOne()
     --- @type balatro.UI.ButtonParam
     return {
-        button = self.buttonConfirmOne,
+        button = self.buttons.confirmOne,
         label = {'JUST '..self.mod.name},
         colour = G.C.ORANGE
     }
@@ -217,7 +217,7 @@ end
 function IUICT:renderButtonCancel()
     --- @type balatro.UI.ButtonParam
     return {
-        button = self.buttonBack,
+        button = self.buttons.back,
         label = {'Cancel'},
         colour = G.C.GREY,
         ref_table = self.ses

@@ -21,16 +21,19 @@ local IUI = {
 	tabLabel = 'Mods',
 
 	listId = 'modlist',
+	pageSize = 5,
+
+	titleScale = 1.25,
 	idWidth = 3,
 	versionWidth = 4,
+
 	urlWidth = 10,
 	urlColor = darken(G.C.WHITE, 0.4),
-	pageSize = 5,
-	titleScale = 1.25,
 	urlScale = 0.8,
-	searchWidth = 8,
 
+	searchWidth = 8,
 	searchTimeout = 0.3,
+
 	addedColor = G.C.GREEN
 }
 
@@ -62,7 +65,7 @@ end
 
 --- @protected
 function IUI:renderInputSearch()
-	return ui.textInputDelaying(self.ses:uiModifyTextInput{
+	return self.ses:uiTextInput{
 		ref_table = self.state,
 		ref_value = 'search',
 		delay = self.searchTimeout,
@@ -70,7 +73,7 @@ function IUI:renderInputSearch()
 
 		w = self.searchWidth,
 		prompt_text = 'Search'
-	})
+	}
 end
 
 --- @protected
@@ -108,7 +111,7 @@ function IUI:renderModVersions(entry)
 		current_option = i,
 		w = self.versionWidth,
 		text_scale = self.ses.fontScale,
-		colour = self.ses.inputColors,
+		colour = G.C.GREY,
 		opt_callback = funcs.versionswitch,
 		ref_table = {
 			ses = self.ses,
@@ -153,23 +156,17 @@ end
 
 --- @protected
 --- @param entry imm.UI.MP.Mods.Entry
---- @param label string[]
+--- @param label string
 --- @param button string
---- @param minw? number
-function IUI:renderButton(entry, label, button, minw)
-	return UIBox_button({
-		label = label,
-		button = button,
-		scale = self.ses.fontScale,
-		minw = minw,
-		minh = self.ses.fontScale * 2,
-		colour = self.ses.inputColors,
-		col = true,
-		ref_table = {
-			e = entry,
-			ses = self
-		}
-	})
+--- @param opts? _imm.UI.Mp.ButtonParam
+function IUI:renderButton(entry, label, button, opts)
+	opts = opts or {}
+	opts.label = {label}
+	opts.button = button
+	opts.ref_table = opts.ref_table or { e = entry, ses = self }
+	opts.col = true
+	opts.hs = opts.hs or 2
+	return self.ses:uiButton(opts)
 end
 
 --- @protected
@@ -178,8 +175,8 @@ function IUI:renderOptions(entry)
 	--- @type balatro.UIElement.Definition[]
 	return {
 		ui.C{ align = 'cm', self:renderModBundle(entry)},
-		self:renderButton(entry, {'Paste URL'}, funcs.paste),
-		self:renderButton(entry, {'X'}, funcs.remove, self.ses.fontScale * 2),
+		self:renderButton(entry, 'Paste URL', funcs.paste),
+		self:renderButton(entry, 'X', funcs.remove, { minw = self.ses.fontScale * 2 }),
 	}
 end
 
@@ -234,23 +231,15 @@ function IUI:updateList()
 	return self:updateCycle()
 end
 
---- @protected
-function IUI:renderCycleOpts()
-	--- @type balatro.UI.OptionCycleParam
-	return {
-		no_pips = true
-	}
-end
-
 function IUI:updateCycle()
 	self.cycleOpts.length = #self.list
-	return ui.cycleUpdate(self.cycleOpts, self:renderCycleOpts())
+	return ui.cycleUpdate(self.cycleOpts, self.ses:uiCycleOpts())
 end
 
 --- @protected
 function IUI:renderCycle()
 	self:updateList()
-	return ui.cycle(self.cycleOpts, self:renderCycleOpts())
+	return ui.cycle(self.cycleOpts, self.ses:uiCycleOpts())
 end
 
 --- @protected

@@ -10,6 +10,7 @@ local funcs = {
 local IUI = {
 	tabId = 'export',
 	tabLabel = 'Export',
+
 	buttonPadding = 0.8
 }
 
@@ -26,11 +27,11 @@ end
 
 --- @protected
 function IUI:renderButton()
-	return UIBox_button({
+	return self.ses:uiButton{
 		label = {'Export'},
 		button = funcs.export,
 		ref_table = self
-	})
+	}
 end
 
 --- @protected

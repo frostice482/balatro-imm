@@ -268,7 +268,7 @@ end
 
 --- @protected
 function IUIModSes:renderImageContainer()
-    self.contImage = TM(nil, 0, 0, self.ses.thumbW * self.thumbScale, self.ses.thumbH * self.thumbScale)
+    self.contImage = TM(nil, 0, 0, self.ses.thumbSize.w * self.thumbScale, self.ses.thumbSize.h * self.thumbScale)
     return ui.R{ align = 'm', ui.O(self.contImage) }
 end
 
@@ -290,7 +290,7 @@ function IUIModSes:updateImageCo()
     local w, h = img:getDimensions()
     local aspectRatio = math.max(math.min(w / h, 16/9), 1)
 
-    self.contImage.T.w = self.ses.thumbH * self.thumbScale * aspectRatio
+    self.contImage.T.w = self.ses.thumbSize.h * self.thumbScale * aspectRatio
     self.contImage.drawable = img
 end
 

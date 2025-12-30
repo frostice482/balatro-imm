@@ -18,19 +18,19 @@ local IUI = {
 	tabId = 'addmods',
 	tabLabel = 'Add mods',
 
-	inputIdWidth = 5,
-	inputVersionWidth = 5,
+	inputIdWidth = 3,
+	inputVersionWidth = 3,
 	searchWidth = 8,
+	searchTimeout = 0.3,
 
 	listId = 'list',
 	listHeight = 6,
+	pageSize = 5,
 
 	titleWidth = 3,
-	versionWidth = 4,
-	pageSize = 5,
 	titleScale = 1.25,
+	versionWidth = 4,
 	spacing = 0.1,
-	searchTimeout = 0.3,
 }
 
 --- @protected
@@ -65,14 +65,14 @@ end
 
 --- @protected
 function IUI:renderInputSearch()
-	return ui.textInputDelaying(self.ses:uiModifyTextInput{
+	return self.ses:uiTextInput{
 		ref_table = self.state,
 		ref_value = 'search',
 		onSet = function (v) self:updateList() end,
 
 		w = self.searchWidth,
 		prompt_text = 'Search'
-	})
+	}
 end
 
 --- @protected
@@ -105,7 +105,7 @@ function IUI:renderModVersions(list, state)
 		text_scale = self.ses.fontScale,
 		opt_callback = funcs.setVersion,
 		ref_table = state,
-		colour = self.ses.inputColors
+		colour = G.C.GREY
 	})
 end
 
@@ -114,7 +114,7 @@ end
 --- @param list imm.ModList
 --- @param state table
 function IUI:renderModButton(list, state)
-	return UIBox_button({
+	return self.ses:uiButton{
 		label = {'+'},
 		minh = self.ses.fontScale * 2,
 		minw = self.ses.fontScale * 2,
@@ -122,8 +122,7 @@ function IUI:renderModButton(list, state)
 		col = true,
 		button = funcs.add,
 		ref_table = state,
-		colour = self.ses.inputColors
-	})
+	}
 end
 
 --- @protected
@@ -185,23 +184,15 @@ function IUI:updateList()
 	return self:updateCycle()
 end
 
---- @protected
-function IUI:renderCycleOpts()
-	--- @type balatro.UI.OptionCycleParam
-	return {
-		no_pips = true
-	}
-end
-
 function IUI:updateCycle()
 	self.cycleOpts.length = #self.list
-	return ui.cycleUpdate(self.cycleOpts, self:renderCycleOpts())
+	return ui.cycleUpdate(self.cycleOpts, self.ses:uiCycleOpts())
 end
 
 --- @protected
 function IUI:renderCycle()
 	self:updateList()
-	return ui.cycle(self.cycleOpts, self:renderCycleOpts())
+	return ui.cycle(self.cycleOpts, self.ses:uiCycleOpts())
 end
 
 ---@protected
@@ -223,15 +214,14 @@ function IUI:renderAddMods()
 end
 
 --- @protected
---- @param label string[]
+--- @param label string
 --- @param button string
 function IUI:renderQAButton(label, button, ref)
-	local e = UIBox_button({
-		label = label,
+	local e = self.ses:uiButton({
+		label = {label},
 		button = button,
 		ref_table = ref,
 		scale = self.ses.fontScale * self.titleScale,
-		colour = self.ses.inputColors,
 	})
 	e.config.padding = self.spacing
 	return e
@@ -241,8 +231,8 @@ end
 function IUI:renderQAs()
 	--- @return balatro.UIElement.Definition
 	return {
-		self:renderQAButton({'Add enabled mods'}, funcs.addEnabled, self),
-		self:renderQAButton({'Add from crash modlist'}, funcs.addCrashlist, self)
+		self:renderQAButton('Add enabled mods', funcs.addEnabled, self),
+		self:renderQAButton('Add from crash modlist', funcs.addCrashlist, self)
 	}
 end
 
@@ -260,25 +250,27 @@ end
 
 --- @protected
 function IUI:renderArbInputID()
-	return create_text_input(self.ses:uiModifyTextInput{
+	return self.ses:uiTextInput{
 		ref_table = self.state,
 		ref_value = 'arbid',
 		prompt_text = 'Mod ID',
 		max_length = 5 * self.inputIdWidth,
-		w = self.inputIdWidth
-	})
+		w = self.inputIdWidth,
+		colour = self.ses.colors.normal
+	}
 end
 
 --- @protected
 function IUI:renderArbInputVersion()
-	return create_text_input(self.ses:uiModifyTextInput{
+	return self.ses:uiTextInput{
 		ref_table = self.state,
 		ref_value = 'arbver',
 		prompt_text = 'Mod version',
 		extended_corpus = true,
 		max_length = 5 * self.inputVersionWidth,
-		w = self.inputVersionWidth
-	})
+		w = self.inputVersionWidth,
+		colour = self.ses.colors.normal
+	}
 end
 
 --- @protected
@@ -288,7 +280,7 @@ function IUI:renderArb()
 		self:renderTitle("Add arbitrary:"),
 		ui.R{ padding = self.spacing, self:renderArbInputID() },
 		ui.R{ padding = self.spacing, self:renderArbInputVersion() },
-		self:renderQAButton({'Add'}, funcs.addArb, self)
+		self:renderQAButton('Add', funcs.addArb, self)
 	}
 end
 

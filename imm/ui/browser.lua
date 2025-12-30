@@ -19,6 +19,9 @@ local funcs = {
 --- @field object balatro.UIBox
 
 --- @class imm.UI.Browser
+--- @field thumbSize WidthHeight
+--- @field listSize WidthHeight
+---
 --- @field uibox balatro.UIBox
 --- @field tags table<string, boolean>
 --- @field filteredList imm.ModMeta[]
@@ -28,39 +31,19 @@ local funcs = {
 --- @field contMods balatro.UIBox[]
 --- @field contCycle balatro.UIBox
 --- @field contSelect balatro.UIBox
----
---- @field sidebarBase balatro.UIElement.Config
 local IUISes = {
     search = '',
-    searchTimeout = 0.3,
-
+    updateId = 0,
     maxPage = 1,
     listPage = 1,
-    listW = 3,
-    listH = 3,
     fontscale = 0.4,
     spacing = 0.1,
-    updateId = 0,
-    thumbW = 16 * .2,
-    thumbH = 9 * .2,
-    textInputWidth = 16 * .6,
-    w = 0,
-    h = 0,
-
     sideWidth = 3,
-
     prepared = false,
     hasChanges = false,
-
     noThumbnail = false,
     filterInstalled = false,
-
-    colorCategorySelected = G.C.GREEN,
-    colorCategoryUnselected = G.C.BLUE,
-    colorHeader = G.C.RED,
-    colorButtons = G.C.ORANGE,
-    colorMod = G.C.BOOSTER,
-    allowModBadgeColors = not imm.config.disableModColor,
+    allowModBadgeColors = false,
 }
 
 --- @alias imm.UI.Browser.C imm.UI.Browser.Static | p.Constructor<imm.UI.Browser, nil> | fun(modctrl?: imm.ModController, modrepo?: imm.Repo): imm.UI.Browser
@@ -127,12 +110,36 @@ function IUISes:init(tasks)
     self.repo = self.tasks.repo
     self.ctrl = self.tasks.ctrl
 
+    self.colors = {
+        categorySelected = G.C.GREEN,
+        categoryUnselected = G.C.BLUE,
+        buttons = G.C.ORANGE,
+        mod = G.C.BOOSTER,
+        header = G.C.RED,
+        footer = G.C.RED
+    }
+    self.listSize = { w = 3, h = 3 }
+    self.thumbSize = { w = 16 * .2, h = 9 * .2, }
+    self.allowModBadgeColors = not imm.config.disableModColor
+
     self.tags = {}
     self.filteredList = {}
     self.categories = copy_table(BrowserStatic.categories)
-    self.sidebarBase = { padding = 0.15, r = true, hover = true, shadow = true, colour = self.colorButtons }
 
-    self:generateFlavor()
+    --- @type balatro.UIElement.Config
+    self.sidebarBase = {
+        padding = 0.15,
+        r = true,
+        hover = true,
+        shadow = true,
+        colour = self.colors.buttons
+    }
+
+    self.searchOpts = {
+        delay = 0.3,
+        w = 16 * 0.6,
+        maxLength = 32
+    }
 end
 
 -- NOTE: this function can be moved to tasks but kinda irrelevant idk
@@ -165,9 +172,9 @@ function IUISes:updateContainers()
     self.contCycle = ui.boxContainer()
     self.contSelect = ui.boxContainer()
     self.contMods = {}
-    for i_col=1, self.listH, 1 do
-        for i_row=1, self.listW, 1 do
-            local i = (i_col - 1) * self.listW + i_row
+    for i_col=1, self.listSize.h, 1 do
+        for i_row=1, self.listSize.w, 1 do
+            local i = (i_col - 1) * self.listSize.w + i_row
             self.contMods[i] = ui.boxContainer()
         end
     end
@@ -221,7 +228,7 @@ function IUISes:renderCategory(label, category)
     category = category or label
     return ui.R{
         align = 'm',
-        colour = self.tags[category] and self.colorCategorySelected or self.colorCategoryUnselected,
+        colour = self.tags[category] and self.colors.categorySelected or self.colors.categoryUnselected,
         minw = 2,
         padding = 0.1,
         shadow = true,
@@ -307,7 +314,7 @@ function IUISes:renderModEntry(mod)
         end
     end
 
-    local thumb = TM(nil, 0, 0, self.thumbW, self.thumbH)
+    local thumb = TM(nil, 0, 0, self.thumbSize.w, self.thumbSize.h)
     local bc = self.allowModBadgeColors and mod:badgeTextColor() or nil
 
     return ui.ROOT{
@@ -316,7 +323,7 @@ function IUISes:renderModEntry(mod)
 
         ui.C{
             padding = 0.1,
-            colour = self.allowModBadgeColors and mod:badgeColor() or self.colorMod,
+            colour = self.allowModBadgeColors and mod:badgeColor() or self.colors.mod,
             hover = true,
             shadow = true,
             r = true,
@@ -327,10 +334,10 @@ function IUISes:renderModEntry(mod)
                 text_scale = self.fontscale
             },
 
-            ui.R{ align = 'cm', minw = self.thumbW, ui.O(thumb) },
+            ui.R{ align = 'cm', minw = self.thumbSize.w, ui.O(thumb) },
             self:renderModText(
                 mod:title(),
-                self.thumbW,
+                self.thumbSize.w,
                 bc and {bc} or nil
             ),
         }
@@ -339,17 +346,19 @@ end
 
 --- @protected
 function IUISes:renderInput()
-    return ui.textInputDelaying({
+    return ui.textInput({
         ref_table = self,
         ref_value = 'search',
-        delay = self.searchTimeout,
         onSet = function (v) self:update() end,
 
-        w = self.textInputWidth,
         prompt_text = 'Search (@author)',
         text_scale = self.fontscale,
         extended_corpus = true,
-        colour = self.colorHeader,
+
+        delay = self.searchOpts.delay,
+        w = self.searchOpts.w,
+        colour = self.colors.header,
+        max_length = self.searchOpts.maxLength,
     })
 end
 
@@ -363,7 +372,8 @@ function IUISes:renderToggleFilterInstalled()
 		w = 0,
 		callback = function (value)
 			self:update()
-		end
+		end,
+        active_colour = self.colors.footer
     })
 end
 
@@ -396,10 +406,10 @@ end
 function IUISes:renderModGrid()
     local col = {}
 
-    for i_col=1, self.listH, 1 do
+    for i_col=1, self.listSize.h, 1 do
         local row = {}
-        for i_row=1, self.listW, 1 do
-            local i = (i_col - 1) * self.listW + i_row
+        for i_row=1, self.listSize.w, 1 do
+            local i = (i_col - 1) * self.listSize.w + i_row
             local t = ui.O(self.contMods[i])
             table.insert(row, t)
         end
@@ -437,10 +447,10 @@ function IUISes:renderCycle()
         current_option = self.listPage,
         ref_table = self,
         ref_value = 'listPage',
-        _ses = self,
         opt_callback = funcs.cyclePage,
         no_pips = true,
-        colour = self.colorHeader
+        colour = self.colors.footer,
+        _ses = self
     })
 end
 
@@ -456,8 +466,6 @@ end
 --- @protected
 function IUISes:renderBrowse()
     return ui.C{
-        minw = self.w,
-        minh = self.h,
         align = 'cr',
         nodes = self:uiGap('R', self:renderBrowseColumns())
     }
@@ -526,8 +534,8 @@ end
 
 function IUISes:updateMods()
     self.updateId = self.updateId + 1
-    local off = (self.listPage - 1) * self.listW * self.listH
-    for i=1, self.listH * self.listW, 1 do
+    local off = (self.listPage - 1) * self.listSize.w * self.listSize.h
+    for i=1, self.listSize.h * self.listSize.w, 1 do
         self:updateMod(self.filteredList[i+off], i)
     end
     self.uibox:recalculate()
@@ -651,7 +659,7 @@ end
 function IUISes:update()
     self:updateFilter()
 
-    self.maxPage = math.max(math.ceil(#self.filteredList/(self.listW*self.listH)), 1)
+    self.maxPage = math.max(math.ceil(#self.filteredList/(self.listSize.w*self.listSize.h)), 1)
     self.listPage = math.min(self.listPage, self.maxPage)
     ui.changeRoot(self.contCycle, ui.ROOT{self:renderCycle()})
 

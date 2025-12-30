@@ -63,7 +63,7 @@ end
 
 --- @param elm balatro.UIElement
 G.FUNCS[funcs.inputUpdate] = function (elm)
-    --- @type imm.UI.TextInputDelayState
+    --- @type imm.UI.TextInputState
     local r = elm.config.ref_table or {}
     if r.val == r.prev then return end
 
@@ -454,24 +454,24 @@ function ui.TRARef(obj, n, conf, rowconf)
     return ui.C(texts)
 end
 
---- @class imm.UI.TextInputDelayOpts: balatro.UI.TextInputParam
+--- @class imm.UI.TextInputOpts: balatro.UI.TextInputParam
 --- @field ref_table? table
 --- @field initVal? string
 --- @field delay? number
 --- @field onChange? fun(v: string)
 --- @field onSet? fun(v: string)
 
---- @class imm.UI.TextInputDelayState
+--- @class imm.UI.TextInputState
 --- @field target_table? table
 --- @field target_value? any
 --- @field val string
 --- @field prev string
---- @field opts imm.UI.TextInputDelayOpts
+--- @field opts imm.UI.TextInputOpts
 --- @field sleeper fun(s: number)
 
---- @param opts imm.UI.TextInputDelayOpts
-function ui.textInputDelaying(opts)
-    --- @type imm.UI.TextInputDelayState
+--- @param opts imm.UI.TextInputOpts
+function ui.textInput(opts)
+    --- @type imm.UI.TextInputState
     local state
     local iv = opts.initVal or opts.ref_table and opts.ref_table[opts.ref_value] or ''
     state = {

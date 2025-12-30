@@ -4,10 +4,11 @@ local ui = require('imm.lib.ui')
 --- @class imm.UI.MP.CT.Funcs
 local funcs = {
 	confirm = 'imm_mpl_a_conf',
-	cancel = 'imm_mpl_a_cancel',
+	back = 'imm_mpl_a_cancel',
 	download = 'imm_mpl_a_download',
 	viewFiles = 'imm_mpl_a_viewfiles',
 }
+setmetatable(funcs, { __index = UICT.funcs })
 
 --- @class imm.UI.MP.Opts: imm.UI.ConfirmToggle.Opts
 --- @field list imm.LoadList
@@ -16,9 +17,6 @@ local funcs = {
 
 --- @class imm.UI.MP.CT: imm.UI.ConfirmToggle
 local IUI = {
-	buttonBack = funcs.cancel,
-	buttonConfirm = funcs.confirm,
-	buttonDownload = funcs.download,
 	allowFileOverride = true
 }
 
@@ -26,6 +24,7 @@ local IUI = {
 --- @param opts imm.UI.MP.Opts
 function IUI:init(opts)
 	UICT.proto.init(self, opts.list, opts)
+	setmetatable(self.buttons, { __index = funcs })
 	self.mpses = opts.mpses
 	self.mp = opts.mp
 
