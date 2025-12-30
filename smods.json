@@ -1,0 +1,11 @@
+{
+	"id": "balatro_imm",
+	"name": "imm",
+	"author": ["frostice482"],
+	"description": "Ingame mod manager",
+	"prefix": "imm",
+	"main_file": "imm/smods.lua",
+	"priority": 0,
+	"version": "2.5.0",
+	"dependencies": []
+}
