@@ -1,8 +1,5 @@
 local ui = require("imm.lib.ui")
 local co = require('imm.lib.co')
-local lovelyUrl = require("imm.lovely_downloads")
-local lok = pcall(require, 'lovely')
-local imm = require('imm')
 
 local fontscale = 0.4
 local fontscalesub = fontscale * 0.9
@@ -44,9 +41,6 @@ end
 
 --- @param b imm.UI.Browser
 local function handleAfter(b)
-    if not lok and lovelyUrl then
-        co.create(installLovelyCo, b)
-    end
     co.create(installSmodsCo, b)
 end
 
@@ -71,14 +65,6 @@ local function uiWelcome()
     }
     if true then
         table.insert(l, ui.TRS('- Steamoddded', fontscalesub, G.C.GREEN))
-    end
-    if not lok then
-        if lovelyUrl then
-            table.insert(l, ui.TRS('- Lovely', fontscalesub, G.C.GREEN))
-        else
-            table.insert(l, ui.TRS('Lovely installation is not supported for this device', fontscalesub, G.C.ORANGE))
-        end
-        --table.insert(l, ui.TRS(imm.modsDir, 0.2))
     end
     return ui.gapList('R', 0.1, l)
 end
