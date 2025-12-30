@@ -22,15 +22,17 @@ function IS:parse(data, ...)
 	assert(self.schematic[data.version], "unknown modpack version " .. data.version)
 	a.schema(data, "data", self.schematic[data.version])
 
+	local hasmigrate = false
 	local v = data.version
 	while v ~= self.latest do
+		hasmigrate = true
 		local m = self.migrator[v]
 		assert(m, string.format("Unknown migration from %s", v))
 		data, v = m(data, ...)
 		assert(v, string.format("Unknown next migrator from %s", v))
 	end
 
-	return data
+	return data, hasmigrate
 end
 --- @alias imm..C p.Constructor<imm.Schematic, nil> | fun(): imm.Schematic
 --- @type imm..C

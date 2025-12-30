@@ -84,13 +84,15 @@ end
 
 function IMP:load()
 	local decoded = imm.json.decode(assert(love.filesystem.read(self:pathInfo())))
-	local data = schematic:parse(decoded, self)
+	local data, hasmigrate = schematic:parse(decoded, self)
 
 	self.name = data.name
 	self.author = data.author
 	self.mods = data.mods
 	self.colors = data.colors
 	self.order = data.order
+
+	if hasmigrate then self:save() end
 
 	self:loadDescription()
 end
