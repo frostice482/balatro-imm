@@ -176,7 +176,7 @@ function IUI:getList()
 		elseif b.active then
 			return false
 		end
-		return a.mod < b.mod
+		return a.mod:lower() < b.mod:lower()
 	end)
 	return list
 end

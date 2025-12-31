@@ -42,6 +42,10 @@ function ILoadList:init(ctrl)
     self.ctrl = ctrl
 end
 
+function ILoadList:list()
+    return util.values(self.loadedMods, function (va, vb) return va.mod:lower() < vb.mod:lower() end)
+end
+
 --- @param other imm.LoadList
 function ILoadList:simpleCopyFrom(other)
     for id, mod in pairs(other.loadedMods) do self:enable(mod) end

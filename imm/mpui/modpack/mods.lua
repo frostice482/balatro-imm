@@ -221,8 +221,8 @@ function IUI:getList()
 			table.insert(self.enableds[k] and list or prioritized, { id = k, entry = v })
 		end
 	end
-	table.sort(list, function (a, b) return a.id < b.id end)
-	table.sort(prioritized, function (a, b) return a.id < b.id end)
+	table.sort(list, function (a, b) return a.id:lower() < b.id:lower() end)
+	table.sort(prioritized, function (a, b) return a.id:lower() < b.id:lower() end)
 	util.insertBatch(prioritized, list)
 	return prioritized
 end

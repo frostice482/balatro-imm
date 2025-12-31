@@ -298,7 +298,7 @@ function IModCtrl:installFromZipCo(zipData, progress)
 end
 
 function IModCtrl:list()
-    return util.values(self.mods, function (va, vb) return va.mod < vb.mod end)
+    return util.values(self.mods, function (va, vb) return va.mod:lower() < vb.mod:lower() end)
 end
 
 function IModCtrl:listAll()
