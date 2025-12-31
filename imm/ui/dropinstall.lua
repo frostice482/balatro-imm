@@ -21,10 +21,7 @@ end
 --- @param file love.DroppedFile
 local function dropinstall(browser, file)
     local fd = file:read('data')
-    local status = browser.tasks.status:new()
-    local info = browser.tasks:createDownloadCoSes():installModFromZipCo(fd, status) --- @diagnostic disable-line
-    status:done('')
-    browser.tasks.status:removeElm(status)
+    local info = browser.tasks:createDownloadCoSes():installModFromZipCo(fd) --- @diagnostic disable-line
     fd:release()
     handleresult(browser, info)
 end
@@ -42,15 +39,9 @@ local function dirinstall(browser, dir)
         return
     end
 
-    local status = browser.tasks.status:new()
-    local info = browser.tasks:createDownloadCoSes():installModFromDir(tmpdir, false, status)
-    status:done('')
-    browser.tasks.status:removeElm(status)
-
+    local info = browser.tasks:createDownloadCoSes():installModFromDir(tmpdir, false)
     ok = love.filesystem.unmount(dir)
-    if not ok then
-        print('Failed unmounting temp folder ' .. tmpdir)
-    end
+    if not ok then print('Failed unmounting temp folder ' .. tmpdir) end
     handleresult(browser, info)
 end
 

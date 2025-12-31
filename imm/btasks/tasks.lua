@@ -82,29 +82,15 @@ end
 
 --- @async
 --- @param data love.Data
---- @param status? imm.Task.UI.Status
-function IBTasks:installModFromZipCo(data, status)
-    status = status or self.status:new()
-    local res = self.ctrl:installFromZipCo(
-        data,
-        status and function (mod) status:update('Installing ' .. mod.mod) end
-    )
-    if status then status:done('') end
-    return self:handleInstallResult(res)
+function IBTasks:installModFromZipCo(data)
+    return self:handleInstallResult(self.ctrl:installFromZipCo(data))
 end
 
 --- @async
 --- @param dir string
 --- @param sorucenfs boolean
---- @param status? imm.Task.UI.Status
-function IBTasks:installModFromDirCo(dir, sorucenfs, status)
-    status = status or self.status:new()
-    local res = self.ctrl:installFromDirCo(
-        dir, sorucenfs,
-        status and function (mod) status:update('Installing ' .. mod.mod) end
-    )
-    if status then status:done('') end
-    return self:handleInstallResult(res)
+function IBTasks:installModFromDirCo(dir, sorucenfs)
+    return self:handleInstallResult(self.ctrl:installFromDirCo(dir, sorucenfs))
 end
 
 --- @alias imm.Tasks.C p.Constructor<imm.Tasks, nil> | fun(repo?: imm.Repo, modctrl?: imm.ModController): imm.Tasks

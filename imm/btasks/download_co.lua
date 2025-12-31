@@ -65,7 +65,8 @@ function IBTaskDownCo:download(url, extra)
         done()
     else
         done()
-        self:installModFromZipCo(res, status)
+        status:done('')
+        self:installModFromZipCo(res)
         self.tasks.status:removeElm(status)
     end
 
@@ -129,17 +130,15 @@ end
 
 --- @async
 --- @param data love.Data
---- @param status? imm.Task.UI.Status
-function IBTaskDownCo:installModFromZipCo(data, status)
-    return self:handleInstallResult(self.tasks:installModFromZipCo(data, status))
+function IBTaskDownCo:installModFromZipCo(data)
+    return self:handleInstallResult(self.tasks:installModFromZipCo(data))
 end
 
 ---@async
 ---@param dir string
 ---@param sorucenfs boolean
----@param status? imm.Task.UI.Status
-function IBTaskDownCo:installModFromDir(dir, sorucenfs, status)
-    return self:handleInstallResult(self.tasks:installModFromDirCo(dir, sorucenfs, status))
+function IBTaskDownCo:installModFromDir(dir, sorucenfs)
+    return self:handleInstallResult(self.tasks:installModFromDirCo(dir, sorucenfs))
 end
 
 --- @alias imm.Task.Download.Co.C p.Constructor<imm.Task.Download.Co, nil> | fun(tasks: imm.Tasks): imm.Task.Download.Co
