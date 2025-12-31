@@ -26,8 +26,7 @@ local function disableAllMods(err)
     if not next(list) then return end
 
     -- detect multiple smods installation
-    local smods = list.Steamodded
-    if smods and #smods.list:list() ~= 1 then
+    if list.Steamodded and #list.Steamodded.list:list() ~= 1 then
         table.insert(echunk, 'Multiple Steamodded version detected - Remove the older ones!\n')
     end
 
@@ -62,7 +61,7 @@ local function disableAllMods(err)
             _imm.saveconfig()
         end
 
-        local tfmt = string.format("- %%-%ds: %%-%%ds (%%s)", idlen, verlen)
+        local tfmt = string.format("- %%-%ds : %%-%%ds (%%s)", idlen, verlen)
         for i, mod in ipairs(mods) do
             table.insert(echunk, tfmt:format(mod.mod, mod.version, mod.path:sub(lovely.mod_dir:len()+2)))
         end
