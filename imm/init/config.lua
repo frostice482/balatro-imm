@@ -41,5 +41,5 @@ if not imm.config.init then
 end
 
 if updateConfig then
-    _imm.saveconfig()
+    imm.saveconfig()
 end

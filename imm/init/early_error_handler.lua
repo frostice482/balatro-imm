@@ -1,16 +1,12 @@
---- @diagnostic disable
-
-local errhand_orig = love.errorhandler or love.errhand
-local hasHandlerOverridden = false
-
-local function disableAllMods(err)
-    if _imm.config.handleEarlyError == 'ignore' then return end
-    assert(_imm.init())
+return function(err, handled)
+    local imm = require("imm")
+    if imm.config.handleEarlyError == 'ignore' then return end
+    assert(imm.init())
 
     local ctrl = require('imm.ctrl')
     local lovely = require('lovely')
     local utilt = require("imm.lib.util.table")
-    local shouldDisable = _imm.config.handleEarlyError == 'disable'
+    local shouldDisable = imm.config.handleEarlyError == 'disable'
 
     --- @type imm.ModList?
     local suspect = ctrl.mods[err:match("^%[SMODS ([^ ]+)")]
@@ -32,6 +28,7 @@ local function disableAllMods(err)
 
     local mods = utilt.values(list, function (va, vb) return va.mod:lower() < vb.mod:lower() end)
     local idlen, verlen = 0, 0
+    local has = false
 
     for i, mod in ipairs(mods) do
         if not mod.list:isExcluded() then
@@ -56,14 +53,16 @@ local function disableAllMods(err)
             -- disable detected mods
             table.insert(echunk, '(these are disabled and will be reenabled on next startup)')
 
-            table.insert(disableds, _imm.config.nextEnable)
-            _imm.config.nextEnable = table.concat(disableds, '==')
-            _imm.saveconfig()
+            table.insert(disableds, imm.config.nextEnable)
+            imm.config.nextEnable = table.concat(disableds, '==')
+            imm.saveconfig()
         end
 
-        local tfmt = string.format("- %%-%ds : %%-%%ds (%%s)", idlen, verlen)
+        local tfmt = string.format("- %%-%ds : %%-%ds (%%s)", idlen, verlen)
         for i, mod in ipairs(mods) do
-            table.insert(echunk, tfmt:format(mod.mod, mod.version, mod.path:sub(lovely.mod_dir:len()+2)))
+            if not mod.list:isExcluded() then
+                table.insert(echunk, tfmt:format(mod.mod, mod.version, mod.path:sub(lovely.mod_dir:len()+2)))
+            end
         end
 
         if suspect then table.insert(echunk, 'Suspected mod: '..suspect.mod) end
@@ -82,7 +81,7 @@ local function disableAllMods(err)
         })
     end
 
-    if not hasHandlerOverridden then
+    if not handled then
         -- version information
         utilt.insertBatch(echunk, {
             '',
@@ -99,41 +98,3 @@ local function disableAllMods(err)
 
     return err
 end
-
-local attached = true
-
-local function errHandler(err)
-    err = type(err) == 'string' and err or tostring(err)
-    if attached then
-        attached = false
-        local ok, nerr = pcall(disableAllMods, err)
-        err = ok and (nerr or err) or (err..'\n\nimm failed to initialize early error handler: '..nerr)
-    end
-    return errhand_orig(err)
-end
-
-love.errorhandler = errHandler
-
-assert(func, err)
-local ok, err = pcall(func)
-
-if love.errorhandler ~= errHandler then
-    errhand_orig = love.errorhandler or love.errhand
-    love.errorhandler = errHandler
-    hasHandlerOverridden = true
-end
-
-assert(ok, err)
-
-local h = create_UIBox_main_menu_buttons
-function create_UIBox_main_menu_buttons(...)
-    if attached then
-        attached = false
-        print('Pre error detection detached')
-    end
-    return h(...)
-end
-
-local iok, ierr = _imm.init()
-if not iok then print('imm: error: ', ierr) end
-

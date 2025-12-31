@@ -2,6 +2,19 @@
 version = "1.0.0"
 priority = -11
 
+# fix checkbox ui crash
+[[patches]]
+[patches.regex]
+target = "functions/button_callbacks.lua"
+position = "at"
+pattern = '''e\.children\[1\]\.states\.visible = \w+\n\s*e\.children\[1\]\.config\.object\.states\.visible = \w+'''
+payload = '''
+if e.children[1] then
+$0
+end
+'''
+count = 2
+
 # add some extra characters to extended text input
 [[patches]]
 [patches.regex]

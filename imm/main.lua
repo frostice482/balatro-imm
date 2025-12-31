@@ -1,7 +1,7 @@
 local util = require("imm.lib.util")
 local ui = require("imm.lib.ui")
 
-require("imm.init_config")
+require("imm.init.config")
 
 package.preload['imm.tasks'] = function () return require("imm.btasks.tasks")() end
 package.preload['imm.repo'] = function () return require("imm.modrepo.repo")() end

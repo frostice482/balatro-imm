@@ -1,5 +1,6 @@
 local ui = require("imm.lib.ui")
 local co = require('imm.lib.co')
+local imm = require("imm")
 
 local fontscale = 0.4
 local fontscalesub = fontscale * 0.9
@@ -45,8 +46,8 @@ local function handleAfter(b)
 end
 
 G.FUNCS[confBut] = function (elm)
-    _imm.config.init = '1'
-    _imm.saveconfig()
+    imm.config.init = '1'
+    imm.saveconfig()
 
     local b = G.FUNCS.imm_browse()
     if not elm.config.ref_table.confirm then return end

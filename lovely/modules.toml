@@ -6,10 +6,22 @@ priority = 0
 [patches.module]
 source = "imm/include/nativefs.lua"
 before = "main.lua"
-name = "imm-nativefs"
+name = "imm.nativefs"
 
 [[patches]]
 [patches.module]
 source = "imm/include/json.lua"
 before = "main.lua"
-name = "imm-json"
+name = "imm.json"
+
+[[patches]]
+[patches.module]
+source = "imm/module.lua"
+before = "main.lua"
+name = "imm"
+
+[[patches]]
+[patches.module]
+source = "imm/init/early_error_handler.lua"
+before = "main.lua"
+name = "imm.init.early_error_handler"
