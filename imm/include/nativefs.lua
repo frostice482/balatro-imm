@@ -95,6 +95,8 @@ function File:getSize()
 	return size
 end
 
+local hasFFI = love.data.newByteData(1):getFFIPointer() ~= nil
+
 function File:read(containerOrBytes, bytes)
 	if self._mode ~= 'r' then return nil, 0 end
 
@@ -111,19 +113,20 @@ function File:read(containerOrBytes, bytes)
 		return data, 0
 	end
 
-	local data = love.data.newByteData(bytes)
-	local r = tonumber(C.fread(data:getFFIPointer(), 1, bytes, self._handle))
-
-	if container == 'data' then
-		-- FileData from ByteData requires LÖVE 11.4+
-		local ok, fd = pcall(love.filesystem.newFileData, data, self._name)
-		if ok then return fd, r end
+	local ret, read
+	if hasFFI then
+		local data = love.data.newByteData(bytes)
+		read = tonumber(C.fread(data:getFFIPointer(), 1, bytes, self._handle))
+		ret = container == 'data' and love.filesystem.newFileData(data, self._name) or data:getString()
+		data:release()
+	else
+		local data = ffi.new("char[?]", bytes)
+		read = tonumber(C.fread(data, 1, bytes, self._handle))
+		local str = ffi.string(data, bytes)
+		ret = container == 'data' and love.filesystem.newFileData(str, self._name) or str
 	end
 
-	local str = data:getString()
-	data:release()
-	data = container == 'data' and love.filesystem.newFileData(str, self._name) or str
-	return data, r
+	return ret, read
 end
 
 local function lines(file, autoclose)
@@ -176,7 +179,7 @@ function File:write(data, size)
 		toWrite = data
 	else
 		writeSize = (size == nil or size == 'all') and data:getSize() or size
-		toWrite = data:getFFIPointer()
+		toWrite = data:getFFIPointer() or data:getString()
 	end
 
 	if tonumber(C.fwrite(toWrite, 1, writeSize, self._handle)) ~= writeSize then
@@ -218,8 +221,26 @@ File.__index = File
 
 -----------------------------------------------------------------------------
 
+ffi.cdef[[
+int PHYSFS_mount(const char* dir, const char* mountPoint, int appendToPath);
+int PHYSFS_unmount(const char* dir);
+const char* PHYSFS_getMountPoint(const char* dir);
+
+typedef struct FILE FILE;
+
+FILE* fopen(const char* path, const char* mode);
+size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream);
+size_t fwrite(const void* ptr, size_t size, size_t nmemb, FILE* stream);
+int fclose(FILE* stream);
+int fflush(FILE* stream);
+size_t fseek(FILE* stream, size_t offset, int whence);
+size_t ftell(FILE* stream);
+int setvbuf(FILE* stream, char* buffer, int mode, size_t size);
+int feof(FILE* stream);
+]]
+
 local nativefs = {}
-local loveC = ffi.os == 'Windows' and ffi.load('love') or C
+local loveC = pcall(function() return ffi.C.PHYSFS_mount end) and ffi.C or ffi.load"love"
 
 function nativefs.newFile(name)
 	if type(name) ~= 'string' then
@@ -410,37 +431,18 @@ end
 MODEMAP = { r = 'rb', w = 'wb', a = 'ab' }
 local MAX_PATH = 4096
 
-ffi.cdef([[
-	int PHYSFS_mount(const char* dir, const char* mountPoint, int appendToPath);
-	int PHYSFS_unmount(const char* dir);
-	const char* PHYSFS_getMountPoint(const char* dir);
-
-	typedef struct FILE FILE;
-
-	FILE* fopen(const char* path, const char* mode);
-	size_t fread(void* ptr, size_t size, size_t nmemb, FILE* stream);
-	size_t fwrite(const void* ptr, size_t size, size_t nmemb, FILE* stream);
-	int fclose(FILE* stream);
-	int fflush(FILE* stream);
-	size_t fseek(FILE* stream, size_t offset, int whence);
-	size_t ftell(FILE* stream);
-	int setvbuf(FILE* stream, char* buffer, int mode, size_t size);
-	int feof(FILE* stream);
-]])
-
 if ffi.os == 'Windows' then
-	ffi.cdef([[
-		int MultiByteToWideChar(unsigned int cp, uint32_t flags, const char* mb, int cmb, const wchar_t* wc, int cwc);
-		int WideCharToMultiByte(unsigned int cp, uint32_t flags, const wchar_t* wc, int cwc, const char* mb,
-		                        int cmb, const char* def, int* used);
-		int GetLogicalDrives(void);
-		int CreateDirectoryW(const wchar_t* path, void*);
-		int _wchdir(const wchar_t* path);
-		wchar_t* _wgetcwd(wchar_t* buffer, int maxlen);
-		FILE* _wfopen(const wchar_t* path, const wchar_t* mode);
-		int _wunlink(const wchar_t* path);
-		int _wrmdir(const wchar_t* path);
-	]])
+	ffi.cdef[[
+	int MultiByteToWideChar(unsigned int cp, uint32_t flags, const char* mb, int cmb, const wchar_t* wc, int cwc);
+	int WideCharToMultiByte(unsigned int cp, uint32_t flags, const wchar_t* wc, int cwc, const char* mb, int cmb, const char* def, int* used);
+	int GetLogicalDrives(void);
+	int CreateDirectoryW(const wchar_t* path, void*);
+	int _wchdir(const wchar_t* path);
+	wchar_t* _wgetcwd(wchar_t* buffer, int maxlen);
+	FILE* _wfopen(const wchar_t* path, const wchar_t* mode);
+	int _wunlink(const wchar_t* path);
+	int _wrmdir(const wchar_t* path);
+	]]
 
 	BUFFERMODE = { full = 0, line = 64, none = 4 }
 
@@ -469,13 +471,13 @@ if ffi.os == 'Windows' then
 else
 	BUFFERMODE = { full = 0, line = 1, none = 2 }
 
-	ffi.cdef([[
-		char* getcwd(char *buffer, int maxlen);
-		int chdir(const char* path);
-		int unlink(const char* path);
-		int mkdir(const char* path, int mode);
-		int rmdir(const char* path);
-	]])
+	ffi.cdef[[
+	char* getcwd(char *buffer, int maxlen);
+	int chdir(const char* path);
+	int unlink(const char* path);
+	int mkdir(const char* path, int mode);
+	int rmdir(const char* path);
+	]]
 
 	local nameBuffer = ByteArray(MAX_PATH)
 
