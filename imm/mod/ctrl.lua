@@ -3,6 +3,7 @@ local ModList = require('imm.mod.list')
 local LoadList = require('imm.mod.loadlist')
 local ProvidedList = require('imm.mod.providedlist')
 local getmods = require('imm.mod.get')
+local afs = require('imm.afs.agent')
 local util = require('imm.lib.util')
 local co = require('imm.lib.co')
 local logger = require('imm.logger')
@@ -220,7 +221,7 @@ function IModCtrl:installCo(mod, sourceNfs)
     end
 
     -- copies to target
-    local ok, err = pcall(util.cpdir, mod.path, tpath, sourceNfs, true)
+    local ok, err = afs.cpCo(mod.path, tpath, { srcNfs = sourceNfs, destNfs = true, fast = true })
     if not ok then return ok, err end
     logger.fmt('debug', 'Copied %s %s to %s', id, ver, tpath)
 
