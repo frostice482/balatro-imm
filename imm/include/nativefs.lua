@@ -95,8 +95,6 @@ function File:getSize()
 	return size
 end
 
-local hasFFI = love.data.newByteData(1):getFFIPointer() ~= nil
-
 function File:read(containerOrBytes, bytes)
 	if self._mode ~= 'r' then return nil, 0 end
 
@@ -113,18 +111,10 @@ function File:read(containerOrBytes, bytes)
 		return data, 0
 	end
 
-	local ret, read
-	if hasFFI then
-		local data = love.data.newByteData(bytes)
-		read = tonumber(C.fread(data:getFFIPointer(), 1, bytes, self._handle))
-		ret = container == 'data' and love.filesystem.newFileData(data, self._name) or data:getString()
-		data:release()
-	else
-		local data = ffi.new("char[?]", bytes)
-		read = tonumber(C.fread(data, 1, bytes, self._handle))
-		local str = ffi.string(data, bytes)
-		ret = container == 'data' and love.filesystem.newFileData(str, self._name) or str
-	end
+	local data = love.data.newByteData(bytes)
+	local read = tonumber(C.fread(data:getFFIPointer() or data:getPointer(), 1, bytes, self._handle))
+	local ret = container == 'data' and love.filesystem.newFileData(data, self._name) or data:getString()
+	data:release()
 
 	return ret, read
 end
@@ -179,7 +169,7 @@ function File:write(data, size)
 		toWrite = data
 	else
 		writeSize = (size == nil or size == 'all') and data:getSize() or size
-		toWrite = data:getFFIPointer() or data:getString()
+		toWrite = data:getFFIPointer() or data:getPointer()
 	end
 
 	if tonumber(C.fwrite(toWrite, 1, writeSize, self._handle)) ~= writeSize then
