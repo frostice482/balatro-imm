@@ -1,17 +1,17 @@
---- @type love.Channel, _imm.AfsWorker.SharedThread
-local i, sd = ...
+--- @type love.Channel, love.Channel
+local i, si = ...
 
 require('love.timer')
 require('love.event')
 require('love.filesystem')
 local ffi = require("ffi")
 
-ffi.cdef(sd.header:getString())
+ffi.cdef((assert(love.filesystem.read("imm/afs/afs.h"))))
 
 local sdata_sz = assert(ffi.sizeof('struct SharedData'))
 local sdata_p = ffi.typeof('struct SharedData *')
 local C = pcall(function() return ffi.C.PHYSFS_openRead end) and ffi.C or ffi.load("love")
-local nfs = assert(loadstring(sd.nfscode:getString(), '@imm/virt/afs/nativefs.lua'))()
+local nfs = assert(loadstring(assert(love.filesystem.read("imm/include/nativefs.lua"))))()
 
 local function sdata_cast(data)
 	--- @type _imm.AfsWorker.SharedData
@@ -28,12 +28,19 @@ local function abort(share, ...)
 	love.event.push('imm_taskres', share.gid, share.id, { ... }) --- @diagnostic disable-line
 end
 
+--- @param ch love.Channel
 --- @param share _imm.AfsWorker.SharedData
-local function finish(share, add)
+local function _finish(ch, share, add)
 	share.remaining = share.remaining - 1 + (add or 0)
 	if share.remaining == 0 then
 		abort(share, true)
 	end
+end
+
+--- @param ch love.Channel
+--- @param share _imm.AfsWorker.SharedData
+local function finish(ch, share, add)
+	return ch:performAtomic(_finish, share, add)
 end
 
 local lib = {}
@@ -118,7 +125,7 @@ function commands.cp(req, share)
 			if not d then error(string.format("Failed copying %s: %s", lib.fmtcopy(req), err), 0) end
 			s:release()
 		end
-		finish(share)
+		finish(req.ch, share)
 		return
     elseif stat.type == 'directory' then
         local ok, err = targetProv.createDirectory(target)
@@ -126,17 +133,18 @@ function commands.cp(req, share)
 		if not ok then error(string.format("Failed creating directory %s: %s", lib.fmtcopy(req, true), err or '-'), 0) end
 
         local items = sourceProv.getDirectoryItems(source)
-		finish(share, #items)
         for i, item in ipairs(items) do
-			sd.input:push({
+			si:push({
 				command = 'cp',
 				org = req.org and req.org..'/'..item,
 				src = source..'/'..item,
 				dest = target..'/'..item,
 				opts = req.opts,
-				share = req.share
+				share = req.share,
+				ch = req.ch
 			})
         end
+		finish(req.ch, share, #items)
 		return
     end
 
@@ -145,12 +153,14 @@ end
 
 local function handleInput(msg)
 	local d = love.data.newByteData(sdata_sz)
+	msg.req.share = d
+	msg.req.ch = love.thread.newChannel()
+
 	local sdata = sdata_cast(d)
 	sdata.id = msg.id
 	sdata.gid = msg.gid
 	sdata.remaining = 1
-	msg.req.share = d
-	sd.input:push(msg.req)
+	si:push(msg.req)
 end
 
 local function handleSharedInput(msg)
@@ -171,8 +181,8 @@ end
 local idlecount = 0
 while true do
 	local msg, msg2
-	if sd.input:getCount() ~= 0 then
-		msg2 = sd.input:demand()
+	if si:getCount() ~= 0 then
+		msg2 = si:demand()
 		if msg2 then handleSharedInput(msg2) end
 	end
 	if i:getCount() ~= 0 then

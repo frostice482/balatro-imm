@@ -368,13 +368,19 @@ function nativefs.remove(name)
 	return true
 end
 
-local function withTempMount(dir, fn, ...)
+local lock = love.thread.getChannel('imm-nativefs')
+
+local function _withTempMount(_, dir, fn, ...)
 	local mountPoint = _ptr(loveC.PHYSFS_getMountPoint(dir))
 	if mountPoint then return fn(ffi.string(mountPoint), ...) end
 	if not nativefs.mount(dir, '__nativefs__temp__') then return false, "Could not mount " .. dir end
 	local a, b = fn('__nativefs__temp__', ...)
 	nativefs.unmount(dir)
 	return a, b
+end
+
+local function withTempMount(dir, fn, ...)
+	return lock:performAtomic(_withTempMount, dir, fn, ...)
 end
 
 function nativefs.getDirectoryItems(dir)

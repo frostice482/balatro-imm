@@ -41,7 +41,7 @@ function imm.init()
     if imm.initialized then return true end
 
     if not imm.path then return false, 'Cannot determine imm path' end
-    imm.nfs = NFS or package.preload.nativefs and require('nativefs') or require("imm.nativefs")
+    imm.nfs = require("imm.nativefs")
     imm.json = JSON or package.preload.json and require('json') or require("imm.json")
 
     if not imm.nfs.mount(imm.path..'/imm', 'imm') then return false, 'imm mount failed' end

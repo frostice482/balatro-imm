@@ -3,11 +3,6 @@ local co = require("imm.lib.co")
 local imm = require("imm")
 local threadcode = assert(love.filesystem.newFileData('imm/afs/thread.lua'))
 
---- @class _imm.AfsWorker.SharedThread
---- @field input love.Channel
---- @field header love.FileData
---- @field nfscode love.FileData
-
 --- @class _imm.AfsWorker.SharedData: ffi.cdata*
 --- @field id number;
 --- @field gid number;
@@ -35,12 +30,7 @@ function agent.spawn()
 end
 
 --- @protected
---- @type _imm.AfsWorker.SharedThread
-agent.shareinput = {
-    input = love.thread.newChannel(),
-    header = assert(love.filesystem.newFileData('imm/afs/afs.h')),
-    nfscode = assert(love.filesystem.newFileData('imm/include/nativefs.lua')),
-}
+agent.shareinput = love.thread.newChannel()
 
 function agent.task:handleSpawnAdditionalParams(thread)
     return agent.shareinput
