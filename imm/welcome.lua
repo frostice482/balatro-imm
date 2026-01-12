@@ -74,7 +74,7 @@ local function uiWelcomeWrap()
     return ui.confirm(ui.R(uiWelcome()), confBut)
 end
 
-local G2 = G
+local G2 = Game
 local init = false
 local _main_menu = G2.main_menu
 function G2:main_menu(...)
