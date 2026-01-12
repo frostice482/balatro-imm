@@ -1,6 +1,5 @@
 local Tasks = require("imm.lib.threadworker")
 local imm = require("imm")
-local curlh = assert(love.filesystem.newFileData('imm/https/curl.h'))
 local threadcode = assert(love.filesystem.newFileData('imm/https/thread.lua'))
 
 --- @class imm.HttpsAgent.Options: luahttps.Options
@@ -26,7 +25,7 @@ local agent = {
 agent.task.autoRecountThreads = true
 
 function agent.task:handleSpawnAdditionalParams(thread)
-    return curlh, imm.config.enforceCurl
+    return imm.config.enforceCurl
 end
 
 --- @protected
