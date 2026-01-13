@@ -134,6 +134,14 @@ end
 --- @field opts? imm.Fetch.HttpOpts
 --- @field n number
 
+local redirections = {
+    [301] = 0,
+    [302] = 0,
+    [303] = 0,
+    [307] = 1,
+    [308] = 1,
+}
+
 --- @async
 --- @param state imm.Fetch.ReqState
 --- @return any? res, string? err
@@ -142,10 +150,15 @@ function IFetch:runreqCo(state)
     local code, body, headers = https:requestCo(state.url, state.opts)
 
     local redirect = false
-    if code == 302 or code == 301 then
+    if headers and redirections[code] then
+        if redirections[code] == 0 and state.opts and state.opts.method ~= 'GET' then
+            state.opts.method = 'GET'
+            state.opts.data = nil
+        end
         state.url = headers.location
         redirect = true
     end
+
     if redirect then
         return self:runreqCo(state)
     end
