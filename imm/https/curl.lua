@@ -58,9 +58,10 @@ if not cbok then
 	temph = ffi.cast("FILE*", temp)
 end
 
-local cok, curl
+local cok, curl, hok
 local tries = {
 	"curl",
+	"XCurl",
 	"curl.so.4",
 }
 
@@ -68,7 +69,10 @@ local function cinit()
 	if curl then return end
 	for i,module in ipairs(tries) do
 		cok, curl = pcall(ffi.load, module)
-		if cok then return end
+		if cok then
+			hok = pcall(function() return curl.curl_easy_nextheader end)
+			return
+		end
 		print(string.format("imm/curl failed to load %s: %s", module, curl))
 	end
 	curl = nil
@@ -155,13 +159,16 @@ local function processLow(msg)
 	cassert(curl.curl_easy_getinfo, ez, curl.CURLINFO_RESPONSE_CODE, statusptr)
 	local status = tonumber(statusptr[0])
 
-	local headers = {}
-	local incomingHeader
-	while true do
-		local h = curl.curl_easy_nextheader(ez, 1, 0, incomingHeader)
-		if h == nil then break end
-		headers[ffi.string(h.name)] = ffi.string(h.value)
-		incomingHeader = h
+	local headers
+	if hok then
+		headers = {}
+		local incomingHeader
+		while true do
+			local h = curl.curl_easy_nextheader(ez, 1, 0, incomingHeader)
+			if h == nil then break end
+			headers[ffi.string(h.name)] = ffi.string(h.value)
+			incomingHeader = h
+		end
 	end
 
 	curl.curl_easy_cleanup(ffi.gc(ez, nil))
@@ -195,7 +202,9 @@ local function processLow(msg)
 				body = love.data.newByteData(totalsize)
 				local buf = ffi.cast('char*', body:getFFIPointer())
 				local read = ffi.C.fread(buf, 1, totalsize, temp)
-				if read ~= totalsize then return error("inequal read") end
+				if read ~= totalsize then
+					return error(string.format("inequal read: %s != %s", tonumber(read), totalsize))
+				end
 			else
 				body = emptydata
 			end
