@@ -8,11 +8,11 @@ if not forcecurl then
     ok, o = pcall(require, 'imm.https.https')
 end
 if not ok then
-    print('imm: https error: ', o)
+    print('imm/https: error: ', o)
     ok, o = pcall(require, 'imm.https.curl')
 end
 if not ok then
-    print('imm: curl error: ', o)
+    print('imm/curl: error: ', o)
 end
 
 while true do

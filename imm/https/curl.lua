@@ -26,6 +26,10 @@ struct IMM_cbinfo {
 };
 ]]
 
+--- @type string[]
+local chunks = {}
+local totalsize = 0
+
 ffi.cdef((assert(love.filesystem.read("imm/https/curl.h"))))
 
 local progcbok, progcbfn = pcall(ffi.cast, "curl_progress_callback", function (clientp, dltotal, dlnow, ultotal, ulnow)
@@ -34,16 +38,25 @@ local progcbok, progcbfn = pcall(ffi.cast, "curl_progress_callback", function (c
 	return 0
 end)
 
---- @type string[]
-local chunks = {}
-local totalsize = 0
-
-local cbfn = ffi.cast("curl_write_callback", function(ptr, size, nmemb, userdata)
+local cbok, cbfn = pcall(ffi.cast, "curl_write_callback", function(ptr, size, nmemb, userdata)
 	local chunksize = size * nmemb
 	totalsize = totalsize + tonumber(chunksize)
 	table.insert(chunks, ffi.string(ptr, chunksize))
 	return chunksize
 end)
+
+local temp, temph
+if not cbok then
+	ffi.cdef[[
+		typedef struct FILE FILE;
+		size_t fwrite(const void* buffer, size_t size, size_t count, FILE* stream);
+		size_t fread(void* buffer, size_t size, size_t count, FILE* stream);
+	]]
+	local x = os.tmpname()
+	print('imm/curl: Using temporary file', x)
+	temp = assert(io.open(x, "w+"), 'Cannot open temporary file ' .. x)
+	temph = ffi.cast("FILE*", temp)
+end
 
 local cok, curl
 local tries = {
@@ -76,11 +89,13 @@ local function cassert(func, ez, ...)
 	end
 end
 
-local CURLH_HEADER = 1
-
 local function processLow(msg)
 	chunks = {}
 	totalsize = 0
+
+	if not cbok then
+		assert(temp:seek("set", 0))
+	end
 
 	--- @type imm.HttpsAgent.Req
 	local req = msg.req
@@ -127,7 +142,12 @@ local function processLow(msg)
 		csetopt(ez, 'PROGRESSDATA', progressdata, true)
 	end
 
-	csetopt(ez, 'WRITEFUNCTION', cbfn)
+	if cbok then
+		csetopt(ez, 'WRITEFUNCTION', cbfn)
+	else
+		csetopt(ez, 'WRITEDATA', temph)
+		csetopt(ez, 'WRITEFUNCTION', ffi.C.fwrite)
+	end
 
 	cassert(curl.curl_easy_perform, ez)
 
@@ -138,7 +158,7 @@ local function processLow(msg)
 	local headers = {}
 	local incomingHeader
 	while true do
-		local h = curl.curl_easy_nextheader(ez, CURLH_HEADER, 0, incomingHeader)
+		local h = curl.curl_easy_nextheader(ez, 1, 0, incomingHeader)
 		if h == nil then break end
 		headers[ffi.string(h.name)] = ffi.string(h.value)
 		incomingHeader = h
@@ -150,20 +170,38 @@ local function processLow(msg)
 	end
 
 	local body
-	if opts.restype == 'data' then
-		if totalsize > 0 then
-			body = love.data.newByteData(totalsize)
-			local off = ffi.cast('char*', body:getFFIPointer())
-			for i, chunk in ipairs(chunks) do
-				local len = chunk:len()
-				ffi.copy(off, chunk, len)
-				off = off + len
+	if cbok then
+		if opts.restype == 'data' then
+			if totalsize > 0 then
+				body = love.data.newByteData(totalsize)
+				local off = ffi.cast('char*', body:getFFIPointer())
+				for i, chunk in ipairs(chunks) do
+					local len = chunk:len()
+					ffi.copy(off, chunk, len)
+					off = off + len
+				end
+			else
+				body = emptydata
 			end
 		else
-			body = emptydata
+			body = table.concat(chunks)
 		end
 	else
-		body = table.concat(chunks)
+		temp:flush()
+		local totalsize = assert(temp:seek())
+		assert(temp:seek("set", 0))
+		if opts.restype == 'data' then
+			if totalsize > 0 then
+				body = love.data.newByteData(totalsize)
+				local buf = ffi.cast('char*', body:getFFIPointer())
+				local read = ffi.C.fread(buf, 1, totalsize, temp)
+				if read ~= totalsize then return error("inequal read") end
+			else
+				body = emptydata
+			end
+		else
+			body = temp:read(totalsize)
+		end
 	end
 
 	return { status, body, headers }
@@ -175,8 +213,7 @@ function o.process(msg)
 	if cinit() == false then return { -155, "Failed initializing curl", {} } end
 
 	local ok, data = xpcall(processLow, function (err)
-		print('imm/curl: error:', err)
-		print(debug.traceback())
+		print(string.format('imm/curl: error: %s %s: %s', msg.req.method or 'GET', msg.req.url, err))
 		return err
 	end, msg)
 	if ok then return data end
@@ -184,8 +221,9 @@ function o.process(msg)
 end
 
 function o.destroy()
-	cbfn:free()
+	if cbok then cbfn:free() end
 	if progcbok then progcbfn:free() end
+	if temp then temp:close() end
 end
 
 return o
