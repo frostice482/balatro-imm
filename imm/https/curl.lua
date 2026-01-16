@@ -220,16 +220,11 @@ local o = {}
 
 function o.process(msg)
 	if cinit() == false then return { -155, "Failed initializing curl", {} } end
-
-	local ok, data = xpcall(processLow, function (err)
-		print(string.format('imm/curl: error: %s %s: %s', msg.req.method or 'GET', msg.req.url, err))
-		return err
-	end, msg)
-	if ok then return data end
-	return { -1, data }
+	return processLow(msg)
 end
 
 function o.destroy()
+	collectgarbage("collect")
 	if cbok then cbfn:free() end
 	if progcbok then progcbfn:free() end
 	if temp then temp:close() end
