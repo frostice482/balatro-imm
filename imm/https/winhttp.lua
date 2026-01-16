@@ -253,6 +253,7 @@ function o.process(msg)
 	local allocsz = 131072
 	local alloc = ffi.new('char[?]', allocsz)
 	local sizep = ffi.new('unsigned long[1]')
+	local estmlen = headersParsed['Content-Length'] and tonumber(headersParsed['Content-Length']) or 0
 
 	repeat
 		if not C.WinHttpQueryDataAvailable(hReq, sizep) then
@@ -267,6 +268,10 @@ function o.process(msg)
 
 		table.insert(chunks, ffi.string(buf, size)) --- @diagnostic disable-line
 		totalsize = totalsize + tonumber(size)
+
+		if req.progress then
+			love.event.push("imm_https_progress", { msg.gid, msg.id, estmlen, totalsize, 0, 0 }) --- @diagnostic disable-line
+		end
 	until sizep[0] <= 0
 
 	end
