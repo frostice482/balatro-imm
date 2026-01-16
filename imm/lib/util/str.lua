@@ -26,6 +26,39 @@ function util.strsplit(string, pattern, plain, max)
     return list
 end
 
+--- Splits string with specified pattern
+--- @param string string String
+--- @param pattern string Split pattern
+--- @param plain? boolean
+--- @param max? number
+--- @return fun(): number?, string?
+function util.splitentries(string, pattern, plain, max)
+    max = max or 0x7fffffff
+    local n = 0
+    local off = 1
+
+    return function()
+        n = n + 1
+        if n > max then return end
+        if n == max or off > #string then
+            local on = n
+            n = max
+            return on, string:sub(off)
+        end
+
+        local oldoff = off
+        local a, b = string:find(pattern, off, plain)
+        if not a or not b then
+            local on = n
+            n, off = max, #string+1
+            return on, string:sub(oldoff)
+        end
+
+        off = b+1
+        return n, string:sub(oldoff, a-1)
+    end
+end
+
 --- @param arg string
 function util.sanitizename(arg)
     return arg:gsub('[<>:"/\\|?*]', function(f) return string.format('_%x', f:byte(1)) end)

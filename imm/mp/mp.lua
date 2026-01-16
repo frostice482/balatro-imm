@@ -403,10 +403,9 @@ end
 
 --- @param list string
 function MPS.parseFileList(list)
-	local lines = util.strsplit(list, '\r?\n')
 	local incl = {}
 	local excl = {}
-	for i,v in ipairs(lines) do
+	for i,v in util.splitentries(list, '\r?\n') do
 		if v:sub(1, 1) == "!" then
 			table.insert(excl, v:sub(2))
 		else

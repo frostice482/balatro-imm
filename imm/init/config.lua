@@ -7,8 +7,7 @@ if imm.config.nextEnable then
     local ctrl = require('imm.ctrl')
     local logger = require('imm.logger')
 
-    local mods = util.strsplit(imm.config.nextEnable, '%s*==%s*')
-    for i,entry in ipairs(mods) do
+    for i,entry in util.splitentries(imm.config.nextEnable, '%s*==%s*') do
         local mod, ver = entry:match('^([^=]+)=(.*)')
         if mod and ver then
             local ok, err = ctrl:enable(mod, ver)

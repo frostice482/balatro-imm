@@ -379,8 +379,7 @@ G.FUNCS[funcs.addCrashlist] = function (e)
 	--- @type imm.UI.MP.AddMod
 	local ses = e.config.ref_table
 
-	local lines = util.strsplit(love.system.getClipboardText(), '\r?\n')
-	for i, line in ipairs(lines) do
+	for i, line in util.splitentries(love.system.getClipboardText(), '\r?\n') do
 		local id, ver = line:match("ID: ([%w_]+),[^\r\n]+Version: ([%w_.+~-]+)")
 		if id and ver then
 			ses.mp:addMod(id, ver)

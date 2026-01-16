@@ -22,7 +22,7 @@ function imm.initconfig()
     if not configStr then return end
 
     local util = require('imm.lib.util')
-    for i, entry in ipairs(util.strsplit(configStr, '\r?\n')) do
+    for i, entry in util.splitentries(configStr, '\r?\n') do
         imm.parseconfig(entry)
     end
 end

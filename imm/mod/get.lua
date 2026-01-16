@@ -71,19 +71,21 @@ function get.parseHeader(content)
     local values = {
         version = "0"
     }
-    local lines = util.strsplit(content, '\r?\n', false)
-    for i, line in ipairs(lines), lines, 1 do
-        local s, e, attr = line:find('^--- *([%w_]+): *')
-        if not s then
-            if line ~= "" then break end
-        elseif get.headerFields[attr] then
-            local info = get.headerFields[attr]
-            local val = line:sub(e+1)
 
-            if info.array then
-                values[info.field] = util.strsplit(util.trim(val:sub(2, -2)), '%s*,%s*')
-            else
-                values[info.field] = val
+    for i, line in util.strsplit(content, '\r?\n', false) do
+        if i ~= 1 then
+            local s, e, attr = line:find('^--- *([%w_]+): *')
+            if not s then
+                if line ~= "" then break end
+            elseif get.headerFields[attr] then
+                local info = get.headerFields[attr]
+                local val = line:sub(e+1)
+
+                if info.array then
+                    values[info.field] = util.strsplit(util.trim(val:sub(2, -2)), '%s*,%s*')
+                else
+                    values[info.field] = val
+                end
             end
         end
     end
@@ -143,8 +145,7 @@ end
 function get.parseSmodsDep(entryStr)
     --- @type imm.Dependency.Mod[]
     local entries = {}
-    local entriesStr = util.strsplit(entryStr, '|', true)
-    for i, entry in ipairs(entriesStr) do
+    for i, entry in util.splitentries(entryStr, '|', true) do
         local d = get.parseSmodsDepMod(entry)
         if d then table.insert(entries, d) end
     end

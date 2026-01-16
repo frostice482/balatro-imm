@@ -680,11 +680,10 @@ TarS.Link = Link
 
 --- @param path string
 function TarS.normalizePath(path)
-    local list = util.strsplit(path, '/', true)
     local out = {}
     local c = 0
 
-    for i,v in ipairs(list) do
+    for i,v in util.splitentries(path, '/', true) do
         if v == '' or v == "." then
         elseif v == ".." then
             if c > 0 then
