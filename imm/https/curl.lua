@@ -54,7 +54,7 @@ if not cbok then
 	]]
 	local x = os.tmpname()
 	print('imm/curl: Using temporary file', x)
-	temp = assert(io.open(x, "w+"), 'Cannot open temporary file ' .. x)
+	temp = assert(io.open(x, "wb+"), 'Cannot open temporary file ' .. x)
 	temph = ffi.cast("FILE*", temp)
 end
 
