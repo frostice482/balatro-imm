@@ -22,6 +22,7 @@ local betaColor = G.C.ORANGE
 local IUIModSes = {
     thumbScale = 1.25,
     cyclePageSize = 5,
+    nonCycleMaxSize = 7,
     idListCnt = 'imm-other-cycle'
 }
 
@@ -65,6 +66,23 @@ function IUIModSes:uiVersionAsset(asset, ver)
 end
 
 --- @protected
+--- @param versions imm.UI.Version[]
+function IUIModSes:renderCycleAuto(versions)
+    if #versions > self.nonCycleMaxSize then
+        return {
+            self:renderCycle(versions),
+            ui.container(self.idListCnt, true)
+        }
+    end
+
+    local nodes = {}
+    for i,v in ipairs(versions) do nodes[i] = v:render() end
+    return {
+        ui.container(self.idListCnt, true, nodes)
+    }
+end
+
+--- @protected
 function IUIModSes:renderTabInstalled()
     local l = self.ses.ctrl.mods[self.mod:id()]
     if not l or not next(l.versions) then return self.ses:renderText('No installed\nversions', 1.25, G.C.ORANGE) end
@@ -72,14 +90,10 @@ function IUIModSes:renderTabInstalled()
     --- @type imm.UI.Version[]
     local versions = {}
     for _, mod in ipairs(l:list()) do
-        local ver = self:uiVersionMod(mod)
-        table.insert(versions, ver)
+        table.insert(versions, self:uiVersionMod(mod))
     end
 
-    return ui.C{
-        self:renderCycle(versions),
-        ui.container(self.idListCnt, true)
-    }
+    return ui.C(self:renderCycleAuto(versions))
 end
 
 --- @protected
@@ -158,9 +172,11 @@ end
 --- @param list imm.UI.Version[]
 function IUIModSes:uiAddCycle(elm, list)
     local uibox = elm.UIBox
-    uibox:add_child(self:renderCycle(list), elm)
-    uibox:add_child(ui.container(self.idListCnt, true), elm)
+    for i, node in ipairs(self:renderCycleAuto(list)) do
+        uibox:add_child(node, elm)
+    end
     uibox:recalculate()
+    self.ses.contSelect:recalculate()
     self.ses.uibox:recalculate()
 end
 
