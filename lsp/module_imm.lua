@@ -56,20 +56,6 @@
 --- @field init? string
 ---
 
---- @class imm.Base
---- Where the IMM is located at
---- @field path string
---- Lovely version
---- @field lovelyver? string
---- Where the mods directory is located at.
---- Similar to lovely's mod_dir
---- @field modsDir string
---- Where the config file should be saved / read at.
---- @field configFile string
---- Parsed configs.
---- Config should be in `key=value` pair. Leading `#` will ignore the line.
---- @field config imm.ParsedConfig
-local c = {}
-
 --- @type imm.Base
+local c
 return c

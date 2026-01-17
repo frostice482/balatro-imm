@@ -25,3 +25,15 @@ name = "imm"
 source = "imm/init/early_error_handler.lua"
 before = "main.lua"
 name = "imm.init.early_error_handler"
+
+[[patches]]
+[patches.module]
+source = "imm/init/early_error.lua"
+before = "main.lua"
+name = "imm.init.early_error"
+
+[[patches]]
+[patches.module]
+source = "imm/lib/util/str.lua"
+before = "main.lua"
+name = "imm.lib.util.str"

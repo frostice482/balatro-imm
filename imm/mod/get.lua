@@ -309,7 +309,8 @@ function get.getModsLow(ctx, base, depth, subbase)
     -- thunderstore last
     for i,v in ipairs(items) do
         if v == "manifest.json" then
-            SWAP(items, i, #items)
+            local b = #items
+            items[i], items[b] = items[b], items[i]
             break
         end
     end

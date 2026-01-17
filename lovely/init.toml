@@ -29,4 +29,4 @@ sources = ["imm/init/patch_prepend.txt"]
 [patches.copy]
 target = "main.lua"
 position = "append"
-sources = ["imm/init/patch_append.txt", "imm/init/main.lua", "imm/init/early_error.lua"]
+sources = ["imm/init/patch_append.txt", "imm/init/main.lua"]

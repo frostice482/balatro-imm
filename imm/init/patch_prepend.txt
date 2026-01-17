@@ -1,2 +1,3 @@
-local __IMM_WRAP = true
-local func, err = load([=====[
+local imm = require("imm")
+imm.initstatus.wrap = true
+imm.initstatus.f, imm.initstatus.ferr = load([=====[

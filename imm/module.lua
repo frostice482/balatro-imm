@@ -1,10 +1,23 @@
 local lovely = require('lovely')
 
+--- @class imm.InitStatus
+--- @field f? fun()
+--- @field ferr? string
+local initstatus = {
+    imm =  false,
+    config = false,
+    f = nil,
+    ferr = nil,
+    wrap = false
+}
+
 --- @class imm.Base
+--- @field configFile string
+--- @field path string
 local imm = {
+    initstatus = initstatus,
     configDir = 'config',
     configFile = 'config/imm.txt',
-    initialized = false,
     config = {},
     modsDir = lovely.mod_dir,
     lovelyver = lovely.version
@@ -18,11 +31,14 @@ function imm.parseconfig(entry)
 end
 
 function imm.initconfig()
+    if imm.initstatus.config then return end
+
     local configStr = love.filesystem.read(imm.configFile)
     if not configStr then return end
 
-    local util = require('imm.lib.util')
-    for i, entry in util.splitentries(configStr, '\r?\n') do
+    imm.initstatus.config = true
+    local sutil = require('imm.lib.util.str')
+    for i, entry in sutil.splitentries(configStr, '\r?\n') do
         imm.parseconfig(entry)
     end
 end
@@ -38,7 +54,7 @@ end
 
 --- @return boolean ok, string? err
 function imm.init()
-    if imm.initialized then return true end
+    if imm.initstatus.imm then return true end
 
     if not imm.path then return false, 'Cannot determine imm path' end
     imm.nfs = require("imm.nativefs")
@@ -56,7 +72,7 @@ function imm.init()
         if not ok then print('imm: error:', err, debug.traceback()) end
     end
 
-    imm.initialized = true
+    imm.initstatus.imm = true
     return true
 end
 

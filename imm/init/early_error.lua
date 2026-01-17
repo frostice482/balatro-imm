@@ -1,6 +1,12 @@
---- @diagnostic disable
+local imm = require("imm")
 
-local errhand_orig = love.errorhandler or love.errhand
+imm.initconfig()
+if imm.config.handleEarlyError == 'ignore' then
+    if not imm.initstatus.f then return error(imm.initstatus.ferr, 0) end
+    return imm.initstatus.f()
+end
+
+local errhand_orig = love.errorhandler or love.errhand --- @diagnostic disable-line: undefined-field
 local overridden = false
 local attached = true
 
@@ -13,7 +19,7 @@ local function errHandler(err)
     if attached then
         attached = false
         local ok, nerr = pcall(initx, err)
-        nerr = nerr or ''
+        nerr = nerr or err
         err = ok and nerr or (err..'\n\nimm failed to initialize early error handler: '..nerr)
     end
     return errhand_orig(err)
@@ -21,16 +27,16 @@ end
 
 love.errorhandler = errHandler
 
-assert(func, err)
-local ok, err = pcall(func)
+if not imm.initstatus.f then return error(imm.initstatus.ferr, 0) end
+local ok, err = pcall(imm.initstatus.f)
 
 if love.errorhandler ~= errHandler then
-    errhand_orig = love.errorhandler or love.errhand
+    errhand_orig = love.errorhandler or love.errhand --- @diagnostic disable-line: undefined-field
     love.errorhandler = errHandler
     overridden = true
 end
 
-assert(ok, err)
+if not ok then return error(err, 0) end
 
 local h = create_UIBox_main_menu_buttons
 function create_UIBox_main_menu_buttons(...)
@@ -40,7 +46,3 @@ function create_UIBox_main_menu_buttons(...)
     end
     return h(...)
 end
-
-local iok, ierr = imm.init()
-if not iok then print('imm: error: ', ierr) end
-
