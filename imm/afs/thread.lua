@@ -59,7 +59,7 @@ function lib.fastcopy(src, dest, srcNfs, destNfs)
 		rh, err = C.PHYSFS_openRead(src), 'Cannot read ' .. src
 	end
     if rh == nil then goto cleanup end
-    wh, err = io.open(destNfs and dest or love.filesystem.getSaveDirectory()..'/'..dest, "w")
+    wh, err = io.open(destNfs and dest or love.filesystem.getSaveDirectory()..'/'..dest, "wb")
     if not wh then goto cleanup end
 
     repeat
