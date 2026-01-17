@@ -72,7 +72,7 @@ function get.parseHeader(content)
         version = "0"
     }
 
-    for i, line in util.strsplit(content, '\r?\n', false) do
+    for i, line in util.splitentries(content, '\r?\n', false) do
         if i ~= 1 then
             local s, e, attr = line:find('^--- *([%w_]+): *')
             if not s then
