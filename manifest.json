@@ -3,7 +3,7 @@
     "description": "Ingame mod browser",
     "version_number": "2.6.0",
     "dependencies": [
-        "Thunderstore-lovely-0.8.0"
+        "Thunderstore-lovely-0.9.0"
     ],
     "website_url": "https://github.com/frostice482/balatro-imm"
 }
