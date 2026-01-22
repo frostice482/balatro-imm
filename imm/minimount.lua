@@ -76,7 +76,14 @@ function __MINIMOUNT(name, id, dir, mountpoint, sub, appendToPath)
 		if physfs.PHYSFS_mountMemory(buf, size, nil, fsname, mountpoint, appendToPath and 1 or 0) == 0 then
 			error(string.format("%s: failed zip mounting to %s from %s (size: %d, fs: %s)", name, mountpoint, dir, size, fsname))
 		end
-		if sub and physfs.PHYSFS_setRoot(fsname, sub) == 0 then
+		if not love.filesystem.getInfo(mountpoint..'/'..sub) then
+			local items = love.filesystem.getDirectoryItems(mountpoint)
+			if #items ~= 1 then error(string.format("%s: root ambiguity on nested zip with multiple folders", name)) end
+
+			sub = items[1]..'/'..sub
+			if not love.filesystem.getInfo(mountpoint..'/'..sub) then error(string.format("%s: missing root on nested folder %s", name, items[1])) end
+		end
+		if physfs.PHYSFS_setRoot(fsname, sub) == 0 then
 			error(string.format("%s: failed zip setting root to %s from %s (size: %d, fs: %s)", name, sub, dir, size, fsname))
 		end
 		return
