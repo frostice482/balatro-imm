@@ -1,4 +1,0 @@
-local ok, err = require("imm").init()
-if not ok then print('imm: error: ', err) end
-
-]=====], "@wrapped_main")

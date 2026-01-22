@@ -1,3 +1,0 @@
-local imm = require("imm")
-imm.initstatus.wrap = true
-imm.initstatus.f, imm.initstatus.ferr = load([=====[
