@@ -30,13 +30,15 @@ function imm.parseconfig(entry)
     imm.config[key] = entry:sub(e+1)
 end
 
-function imm.initconfig()
-    if imm.initstatus.config then return end
+function imm.initmodule()
+    imm.nfs = require("imm.include.nativefs")
+    imm.json = JSON or package.preload.json and require('json') or require("imm.include.json")
+end
 
+function imm.initconfig()
     local configStr = love.filesystem.read(imm.configFile)
     if not configStr then return end
 
-    imm.initstatus.config = true
     local sutil = require('imm.lib.util.str')
     for i, entry in sutil.splitentries(configStr, '\r?\n') do
         imm.parseconfig(entry)
@@ -57,11 +59,12 @@ function imm.init()
     if imm.initstatus.imm then return true end
 
     if not imm.path then return false, 'Cannot determine imm path' end
-    imm.nfs = require("imm.nativefs")
-    imm.json = JSON or package.preload.json and require('json') or require("imm.json")
+    local ok, err = pcall(require("imm.minimount"), "imm", "imm", imm.path, "imm", "imm")
+    if not ok then return false, err end
 
-    if not imm.nfs.mount(imm.path..'/imm', 'imm') then return false, 'imm mount failed' end
+    imm.initstatus.imm = true
 
+    imm.initmodule()
     imm.initconfig()
 
     local loveload = love.load
@@ -72,7 +75,6 @@ function imm.init()
         if not ok then print('imm: error:', err, debug.traceback()) end
     end
 
-    imm.initstatus.imm = true
     return true
 end
 

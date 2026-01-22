@@ -4,15 +4,9 @@ priority = 0
 
 [[patches]]
 [patches.module]
-source = "imm/include/nativefs.lua"
+source = "imm/minimount.lua"
 before = "main.lua"
-name = "imm.nativefs"
-
-[[patches]]
-[patches.module]
-source = "imm/include/json.lua"
-before = "main.lua"
-name = "imm.json"
+name = "imm.minimount"
 
 [[patches]]
 [patches.module]
