@@ -81,6 +81,10 @@ function IUpdateCo:updateMod(installed, meta)
     end
 
     logger.fmt('log', 'Updating %s from %s to %s', meta:title(), installed.version, latest.version)
+    if not latest.url then
+        logger.fmt('warn', 'Mod %s (%s -> %s) does not have referring url, ignoring', meta:title(), installed.version, latest.version)
+        return self:statusAddIgnore()
+    end
     self.down:download(latest.url, { name = meta:title()..' '..latest.version, size = latest.size })
     self:statusAddDone()
 end
