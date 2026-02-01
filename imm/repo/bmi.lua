@@ -1,5 +1,5 @@
 local Fetch = require("imm.lib.fetch")
-local GRepo = require("imm.modrepo.generic")
+local GRepo = require("imm.repo.generic")
 local getmods = require("imm.mod.get")
 local co = require("imm.lib.co")
 local imm = require("imm")
