@@ -44,9 +44,8 @@ end
 
 --- @param func function
 function coutil.create(func, ...)
-    local obj = {...}
-    local co = coroutine.create(function() return func(unpack(obj)) end)
-    assert(coroutine.resume(co))
+    local co = coroutine.create(function(...) return assert(xpcall(func, debug.traceback, ...)) end)
+    assert(coroutine.resume(co, ...))
     return co
 end
 

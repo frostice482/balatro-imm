@@ -1,4 +1,5 @@
 --- @class photon.PackageBase
+--- @field key string
 --- @field id string
 --- @field name string
 --- @field description string
@@ -14,10 +15,11 @@
 --- @class photon.Package: photon.PackageBase
 --- @field type 'Mod'
 --- @field author string[]
---- @field dependencies string[]
---- @field conflicts string[]
 --- @field readme string
---- @field badge_colour string
+--- @field badge_colour? string
+--- @field dependencies? string[]
+--- @field conflicts? string[]
+--- @field provides? string[]
 ---
 --- @field git_owner? string
 --- @field git_repo? string

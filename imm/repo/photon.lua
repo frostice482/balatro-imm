@@ -25,34 +25,14 @@ local tagTransform = {
     ['Misc'] = 'Miscellaneous'
 }
 
---- @param parsed table<string, photon.Package>
+--- @param parsed table<string, photon.Package | photon.Modpack>
 function fetch_list:interpretRes(parsed)
-    --- @type bmi.Meta[]
-    local interpreted = {}
-    for k, entry in pairs(parsed) do
-        local repo, user = unpack(util.strsplit(k, '@', true, 2))
-        repo = repo or '?'
-        user = user or '?'
-
-        local bmi_categories = {}
-        for i, tag in ipairs(entry.tags or {}) do
-            table.insert(bmi_categories, tagTransform[tag] or tag)
-        end
-
-        --- @type bmi.Meta
-        local bmi_compat = {
-            id = entry.id,
-            categories = bmi_categories,
-            name = entry.name,
-            owner = table.concat(entry.author, ', '),
-            description = entry.description,
-            pathname = user..'@'..repo,
-            repo = string.format('https://github.com/%s/%s', user, repo)
-        }
-        table.insert(interpreted, bmi_compat)
+    local l = {}
+    for k,v in pairs(parsed) do
+        v.key = k
+        table.insert(l, v)
     end
-
-    return interpreted
+    return l
 end
 
 --- @class imm.Repo.Photon: imm.Repo.Generic
@@ -75,10 +55,46 @@ function IPhotonRepo:init(repo)
     self:clear()
 end
 
---- @param entry bmi.Meta
-function IPhotonRepo:updateList(entry)
+--- @param entry photon.Package
+function IPhotonRepo:updateListMod(entry)
+    local repo, user = unpack(util.strsplit(entry.key, '@', true, 2))
+    repo = repo or '?'
+    user = user or '?'
+
+    local bmi_categories = {}
+    for i, tag in ipairs(entry.tags or {}) do
+        table.insert(bmi_categories, tagTransform[tag] or tag)
+    end
+
+    --- @type bmi.Meta
+    local bmi_compat = {
+        id = entry.id,
+        categories = bmi_categories,
+        name = entry.name,
+        owner = table.concat(entry.author, ', '),
+        description = entry.description,
+        pathname = user..'@'..repo,
+        repo = string.format('https://github.com/%s/%s', user, repo),
+        badge_colour = entry.badge_colour,
+        provides = entry.provides
+    }
+
     local meta = self.repo:getMetaEntry(entry.name)
-    if not meta:getStack"bmi" then meta:setStack(BMI(self.repo.bmi, entry)) end
+    if not meta:getStack"bmi" then meta:setStack(BMI(self.repo.bmi, bmi_compat)) end
+end
+
+--- @param entry photon.Modpack
+function IPhotonRepo:updateListModpack(entry)
+    self.repo:getMetaEntry(entry.name):setStack(PMP(entry))
+end
+
+--- @param entry photon.Package | photon.Modpack
+function IPhotonRepo:updateList(entry)
+    if entry.type == 'Mod' then
+        return self:updateListMod(entry)
+    elseif entry.type == 'Modpack' then
+        return self:updateListModpack(entry)
+    end
 end
 
 return TSRepo
