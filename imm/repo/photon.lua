@@ -79,13 +79,13 @@ function IPhotonRepo:updateListMod(entry)
         provides = entry.provides
     }
 
-    local meta = self.repo:getMetaEntry(entry.name)
+    local meta = self.repo:getMetaEntry(entry.id)
     if not meta:getStack"bmi" then meta:setStack(BMI(self.repo.bmi, bmi_compat)) end
 end
 
 --- @param entry photon.Modpack
 function IPhotonRepo:updateListModpack(entry)
-    self.repo:getMetaEntry(entry.name):setStack(PMP(entry))
+    self.repo:getMetaEntry(entry.id):setStack(PMP(entry))
 end
 
 --- @param entry photon.Package | photon.Modpack
