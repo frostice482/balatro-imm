@@ -18,7 +18,7 @@ function fetch_blob:getCacheFileName(arg)
     return self.cacheFile:format(love.data.encode('string', 'hex', love.data.hash('md5', arg)))
 end
 
---- @alias imm.Repo.ReleasesCb fun(err?: string, res?: ghapi.Releases[])
+--- @alias imm.Repo.ReleasesCb fun(res?: ghapi.Releases[], err?: string)
 
 --- @class imm.Repo
 --- @field list imm.ModMeta[]

@@ -140,19 +140,19 @@ function IBMIRepo:getReleases(repoUrl, cb, cacheKey)
     local releasesCache = self.releasesCache
     local releasesCb = self.releasesCb
 
-    if releasesCache[cacheKey] then return cb(nil, releasesCache[cacheKey]) end
+    if releasesCache[cacheKey] then return cb(releasesCache[cacheKey], nil) end
     if releasesCb[repoUrl] then return table.insert(releasesCb[repoUrl], cb) end
 
     local prov = BMIRepo.getProvider(repoUrl)
     if not prov.provider then
-        cb(string.format('Unknown provider from given url %s', repoUrl))
+        cb(nil, string.format('Unknown provider from given url %s', repoUrl))
         return
     end
 
     local function handle(res, err)
         if res then releasesCache[cacheKey] = res end
         for i, cb in ipairs(releasesCb[repoUrl]) do
-            cb(err, res)
+            cb(res, err)
         end
         releasesCb[repoUrl] = nil
     end
@@ -167,7 +167,7 @@ end
 --- @async
 --- @param repoUrl string
 --- @param cacheKey? string
---- @return string? err, ghapi.Releases[]? releases
+--- @return ghapi.Releases[]? releases, string? err
 function IBMIRepo:getReleasesCo(repoUrl, cacheKey)
     return co.wrapCallbackStyle(function (res) self:getReleases(repoUrl, res, cacheKey) end)
 end

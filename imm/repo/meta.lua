@@ -169,7 +169,7 @@ function IMeta:getReleasesBmiCo()
     if self.bmiVersionsCache then return self.bmiVersionsCache end
     if not (self.bmi and self.bmi.repo) then return end
 
-    local err, releases = self.repo.bmi:getReleasesCo(self.bmi.repo)
+    local releases, err = self.repo.bmi:getReleasesCo(self.bmi.repo)
     if not releases then
         if err then logger.fmt('error', 'Failed getting BMI releases for %s: %s', self:id(), err) end
         return

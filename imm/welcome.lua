@@ -14,7 +14,7 @@ local function installSmodsCo(b)
     local status = b.tasks.status:new()
 
     status:update("Getting Steamodded releases")
-    local err, releases = repo.bmi:getReleasesCo('https://github.com/Steamodded/smods')
+    local releases, err = repo.bmi:getReleasesCo('https://github.com/Steamodded/smods')
     if not releases then return status:error(err or "") end
 
     --- @type ghapi.Releases?
