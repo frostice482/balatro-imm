@@ -109,17 +109,23 @@ end
 
 --- @return table?
 function IMeta:badgeColor()
-    local a = self:getAttribute('badgeColor')
-    if a and a:match('^%x%x%x%x%x%x$') then -- parse everytime & also potentially cause external crash
-        return HEX(a)
+    local textcol = self:getAttribute('badgeColor')
+    local bgcol = self:getAttribute('badgeTextColor')
+    if textcol == bgcol or textcol and textcol:lower() == "ffffff" and not bgcol then return end
+
+    if textcol and textcol:match('^%x%x%x%x%x%x$') then -- parse everytime & also potentially cause external crash
+        return HEX(textcol)
     end
 end
 
 --- @return table?
 function IMeta:badgeTextColor()
-    local a = self:getAttribute('badgeTextColor')
-    if a and a:match('^%x%x%x%x%x%x$') then -- parse everytime & also potentially cause external crash
-        return HEX(a)
+    local textcol = self:getAttribute('badgeColor')
+    local bgcol = self:getAttribute('badgeTextColor')
+    if textcol == bgcol then return end
+
+    if bgcol and bgcol:match('^%x%x%x%x%x%x$') then -- parse everytime & also potentially cause external crash
+        return HEX(bgcol)
     end
 end
 
