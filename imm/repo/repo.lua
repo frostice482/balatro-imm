@@ -1,5 +1,6 @@
 local constructor = require("imm.lib.constructor")
-local ModMeta = require("imm.repo.meta")
+local ModMeta = require("imm.meta.meta")
+local BMIMeta = require("imm.meta.bmi")
 local BMIRepo = require("imm.repo.bmi")
 local TSRepo = require("imm.repo.ts")
 local PhotonRepo = require("imm.repo.photon")
@@ -69,7 +70,7 @@ function IRepo:clearReleases()
     util.rmdir(util.dirname(self.bmi.api.releases_github.cacheFile), false)
 
     for i, v in ipairs(self.list) do
-        v:resetReleases()
+        v:clearReleases()
     end
     self.bmi:clearReleases()
 end
@@ -92,7 +93,7 @@ end
 --- @param mod imm.Mod
 function IRepo:createVirtualEntry(mod)
     local m = ModMeta(self)
-    m.bmi = {
+    m:setStack(BMIMeta(self.bmi, {
         categories = mod.info.categories,
         id = mod.mod,
         name = mod.name,
@@ -100,7 +101,7 @@ function IRepo:createVirtualEntry(mod)
         version = mod.version,
         description = mod.description,
         provides = mod.info.provides
-    }
+    }))
     return m
 end
 

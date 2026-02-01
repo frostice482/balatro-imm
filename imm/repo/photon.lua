@@ -1,3 +1,5 @@
+local BMI = require("imm.meta.bmi")
+local PMP = require("imm.meta.photonmp")
 local Fetch = require("imm.lib.fetch")
 local GRepo = require("imm.repo.generic")
 local util = require("imm.lib.util")
@@ -76,7 +78,7 @@ end
 --- @param entry bmi.Meta
 function IPhotonRepo:updateList(entry)
     local meta = self.repo:getMetaEntry(entry.name)
-    meta.bmi = meta.bmi or entry
+    if not meta:getStack"bmi" then meta:setStack(BMI(self.repo.bmi, entry)) end
 end
 
 return TSRepo

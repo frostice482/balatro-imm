@@ -1,3 +1,4 @@
+local BMI = require("imm.meta.bmi")
 local Fetch = require("imm.lib.fetch")
 local GRepo = require("imm.repo.generic")
 local getmods = require("imm.mod.get")
@@ -173,11 +174,12 @@ function IBMIRepo:getReleasesCo(repoUrl, cacheKey)
 end
 
 --- @param meta imm.ModMeta
-function IBMIRepo:addProvides(meta)
-    if not meta.bmi.provides then return end
+--- @param entry bmi.Meta
+function IBMIRepo:addProvides(meta, entry)
+    if not entry.provides then return end
 
     local listProviders = self.repo.listProviders
-    for k, provideEntry in ipairs(meta.bmi.provides) do
+    for k, provideEntry in ipairs(entry.provides) do
         local providedId = getmods.parseSmodsProvides(provideEntry)
         if providedId then
             listProviders[providedId] = listProviders[providedId] or {}
@@ -189,8 +191,8 @@ end
 --- @param entry bmi.Meta
 function IBMIRepo:updateList(entry)
     local meta = self.repo:getMetaEntry(entry.id)
-    meta.bmi = entry
-    self:addProvides(meta)
+    meta:setStack(BMI(self, entry))
+    self:addProvides(meta, entry)
 end
 
 return BMIRepo

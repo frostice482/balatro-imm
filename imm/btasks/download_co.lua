@@ -83,9 +83,9 @@ function IBTaskDownCo:downloadMissingModEntry(id, list)
     local releases = mod:getReleasesCo()
     local release, pre = mod:findModVersionToDownload(list)
 
-    if not release and self.allowNoReleaseUseCommit and mod.bmi and #releases == 0 then
+    if not release and self.allowNoReleaseUseCommit and mod:getStack"bmi" and #releases == 0 then
         logger.fmt('warn', 'Mod %s does not have any release, using source', mod:id())
-        release = { format = 'bmi', url = mod.bmi.download_url, version = 'Source' }
+        release = { format = 'bmi', url = mod:getStack"bmi".info.download_url, version = 'Source' }
     end
 
     if not release then

@@ -1,3 +1,4 @@
+local TS = require("imm.meta.ts")
 local Fetch = require("imm.lib.fetch")
 local GRepo = require("imm.repo.generic")
 local util  = require("imm.lib.util")
@@ -71,9 +72,7 @@ end
 
 --- @param entry thunderstore.Package
 function ITSRepo:updateList(entry)
-    local meta = self.repo:getMetaEntry(entry.name)
-    meta.ts = entry
-    meta.tsLatest = entry.versions[1]
+    self.repo:getMetaEntry(entry.name):setStack(TS(self, entry))
 end
 
 return TSRepo
