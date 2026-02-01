@@ -59,6 +59,7 @@ end
 --- @param options? imm.HttpsAgent.Options
 --- @param cb fun(code: number, body?: string | love.Data, headers: table<string, string>)
 function agent:request(url, options, cb)
+    if imm.config.test_offline then return cb(0, "offline", {}) end
     self.task:runTask(agent.transform(url, options or {}), function (res) cb(res[1], res[2], res[3]) end)
 end
 
@@ -66,6 +67,7 @@ end
 --- @param url string
 --- @param options? imm.HttpsAgent.Options
 function agent:requestCo(url, options)
+    if imm.config.test_offline then return 0, "offline", {} end
     local r = self.task:runTaskCo(agent.transform(url, options or {}))
     return r[1], r[2], r[3]
 end
