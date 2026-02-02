@@ -28,14 +28,37 @@
 --- @field download_suffix? string
 --- @field update_mandatory? boolean
 --- @field target_version? boolean
+---
+--- @field versionHistory? photon.Version[]
+--- @field versionHistoryLastCheck? string?
 
 --- @class photon.Modpack: photon.PackageBase
 --- @field type 'Modpack'
 --- @field author string
 --- @field updated_at string
 --- @field modCount number
---- @field mods photon.Modpack.Mod
+--- @field mods photon.Modpack.Mod[]
 
 --- @class photon.Modpack.Mod
 --- @field key string
 --- @field version string
+
+--- @class photon.Version.Success
+--- @field success boolean
+--- @field versionHistory photon.Version[]
+
+--- @class photon.Version
+--- @field tag string
+--- @field name string
+--- @field body? string
+--- @field publishedAt string
+--- @field htmlUrl string
+--- @field prerelease boolean
+--- @field draft boolean
+--- @field assets photon.Version.Assets
+
+--- @class photon.Version.Assets
+--- @field name string
+--- @field size number
+--- @field downloadUrl string
+
