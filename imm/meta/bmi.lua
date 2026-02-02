@@ -2,7 +2,6 @@ local Stack = require("imm.meta.stack")
 local V = require("imm.lib.version")
 
 --- @class imm.ModMetaStack.BMI: imm.ModMetaStack
---- @field id? string
 --- @field protected cachedGhReleases? ghapi.Releases[]
 --- @field protected cachedIntrReleases? imm.ModMeta.Release[]
 local IBMIStack = {

@@ -2,7 +2,6 @@ local Stack = require("imm.meta.stack")
 local V = require("imm.lib.version")
 
 --- @class imm.ModMetaStack.TS: imm.ModMetaStack
---- @field id? string
 local ITSStack = {
     type = 'ts',
     rank = 2,
