@@ -110,11 +110,12 @@ end
 --- @param done? fun()
 function IRepo:getLists(prog, done)
     local c = #self.repoList
-    for i,v in ipairs(self.repoList) do
-        v:getList(function (err)
+    for i,provider in ipairs(self.repoList) do
+        co.create(function()
+            local err = provider:getListCo()
             c = c - 1
-            if prog then prog(v, err) end
-            if c == 0 and done then done() end
+            if prog then prog(provider, err) end
+            if c == 0 and done then return done() end
         end)
     end
 end

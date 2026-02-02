@@ -56,13 +56,6 @@ end
 
 function IGRepo:updateList(entry) end
 
---- @param cb fun(err?: string)
-function IGRepo:getList(cb)
-    return co.create(function()
-        return cb(self:getListCo())
-    end)
-end
-
 --- @async
 --- @return string? err
 function IGRepo:getListCo()
