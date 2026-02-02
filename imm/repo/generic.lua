@@ -1,4 +1,5 @@
 local constructor = require("imm.lib.constructor")
+local SingleRequest = require("imm.lib.singlereq")
 local co = require("imm.lib.co")
 
 --- @class imm.Repo.Generic
@@ -9,7 +10,6 @@ local co = require("imm.lib.co")
 --- @field releasesCb table<string, function[]>
 local IGRepo = {
     listDone = false,
-    listBusy = false,
     name = 'Generic'
 }
 
@@ -28,6 +28,10 @@ function IGRepo:init(repo)
     self.thumbCache = {}
     self.releasesCache = {}
     self.releasesCb = {}
+
+    self.singleList = SingleRequest()
+    self.singleThumb = SingleRequest()
+    self.singleReleases = SingleRequest()
 end
 
 function IGRepo:clearReleases()
@@ -40,7 +44,6 @@ end
 
 function IGRepo:clearListCache()
     self.listDone = false
-    self.listBusy = false
     self.thumbApi:clearCacheFile()
 end
 function IGRepo:clearReleasesCache()
@@ -55,39 +58,51 @@ function IGRepo:updateList(entry) end
 
 --- @param cb fun(err?: string)
 function IGRepo:getList(cb)
-    if self.listDone then return cb(nil) end
-    if self.listBusy then
-        table.insert(self.listCb, cb)
-        return
-    end
-    self.listBusy = true
-    self.listCb = { cb }
-
-    local function handle (res, err)
-        if res then
-            self.listDone = true
-            for i, entry in pairs(res) do self:updateList(entry) end
-        end
-        self.listBusy = false
-        for i,v in ipairs(self.listCb) do v(err) end
-    end
-    self.listApi:fetch(nil, handle)
+    return co.create(function()
+        return cb(self:getListCo())
+    end)
 end
 
 --- @async
 --- @return string? err
 function IGRepo:getListCo()
-    return co.wrapCallbackStyle(function (res) self:getList(res) end)
+    if self.listDone then return end
+    return self.singleList:invoke('', self._getListCo, self)
+end
+
+--- @protected
+--- @async
+--- @return string? err
+function IGRepo:_getListCo()
+    local res, err = self.listApi:fetchCo(nil)
+    if not res then return err end
+
+    self.listDone = true
+    for i, entry in pairs(res) do self:updateList(entry) end
+end
+
+--- @protected
+function IGRepo:mapImageCacheKey(arg)
+    return arg
 end
 
 --- @async
---- @param url string
+--- @param arg any
 --- @param cacheKey? string
 --- @return love.Image? data, string? err
-function IGRepo:getImageCo(url, cacheKey)
-    cacheKey = cacheKey or url
+function IGRepo:getImageCo(arg, cacheKey)
+    cacheKey = cacheKey or self:mapImageCacheKey(arg)
     if self.thumbCache[cacheKey] ~= nil then return self.thumbCache[cacheKey] or nil end
-    local res, err = self.thumbApi:fetchCo(url)
+    return self.singleThumb:invoke(cacheKey, self._getImageCo, self, arg, cacheKey)
+end
+
+--- @protected
+--- @async
+--- @param arg any
+--- @param cacheKey string
+--- @return love.Image? data, string? err
+function IGRepo:_getImageCo(arg, cacheKey)
+    local res, err = self.thumbApi:fetchCo(arg)
 
     --- @type boolean, any?
     local ok, img = false, err
@@ -120,24 +135,18 @@ end
 --- @param cacheKey? string
 --- @return any releases, string? err
 function IGRepo:getReleasesCo(arg, cacheKey, ...)
-    local ck = self:mapReleaseCacheKey(arg, ...)
-    cacheKey = cacheKey or ck
+    cacheKey = cacheKey or self:mapReleaseCacheKey(arg, ...)
+    if self.releasesCache[cacheKey] then return self.releasesCache[cacheKey], nil end
+    return self.singleReleases:invoke(cacheKey, self._getReleasesCo, self, arg, cacheKey, ...)
+end
 
-    if self.releasesCache[cacheKey] then
-        return self.releasesCache[cacheKey], nil
-    end
-    if self.releasesCb[ck] then
-        return co.wrapCallbackStyle(function(h)
-            return table.insert(self.releasesCb[ck], h)
-        end)
-    end
-
-    self.releasesCb[ck] = {}
+--- @protected
+--- @async
+--- @param arg any
+--- @param ck string
+function IGRepo:_getReleasesCo(arg, ck, ...)
     local res, err = self:handleGetReleases(arg, ...)
-    if res then self.releasesCache[cacheKey] = res end
-    for i, cb in ipairs(self.releasesCb[ck]) do cb(res, err) end
-    self.releasesCb[ck] = nil
-
+    if res then self.releasesCache[ck] = res end
     return res, err
 end
 

@@ -71,4 +71,8 @@ function util.delay(time, func)
     })
 end
 
+function util.lenr(...)
+    return select('#', ...), {...}
+end
+
 return util

@@ -8,35 +8,16 @@ function coutil.wrapCallbackStyle(init)
     if not co then error('Not in coroutine') end
 
     local isWaiting = false
-    local earlyRet
+    local earlyRet, earlyRetC
     init(function (...)
         if not isWaiting then
             earlyRet = {...}
+            earlyRetC = select('#', ...)
         else
             assert(coroutine.resume(co, ...))
         end
     end)
-    if earlyRet then return unpack(earlyRet) end
-
-    isWaiting = true
-    return coroutine.yield()
-end
-
---- @param init fun(res: fun(...))
-function coutil.unwrap(init)
-    local co = coroutine.running()
-    if not co then error('Not in coroutine') end
-
-    local isWaiting = false
-    local earlyRet
-    init(function (...)
-        if not isWaiting then
-            earlyRet = {...}
-        else
-            assert(coroutine.resume(co, ...))
-        end
-    end)
-    if earlyRet then return unpack(earlyRet) end
+    if earlyRet then return unpack(earlyRet, 1, earlyRetC) end
 
     isWaiting = true
     return coroutine.yield()
