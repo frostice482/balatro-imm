@@ -35,6 +35,12 @@ function fetch_list:interpretRes(parsed)
     return l
 end
 
+--- @type imm.Fetch<string, photon.Version.Success>
+local fetch_releases = Fetch('https://photonmodmanager.onrender.com/api/version-history/%s', 'immcache/release/%s', {
+    resType = 'json',
+    cacheType = 'json'
+})
+
 --- @class imm.Repo.Photon: imm.Repo.Generic
 local IPhotonRepo = {
     listApi = fetch_list,
@@ -50,9 +56,14 @@ local TSRepo = GRepo:extendTo(IPhotonRepo)
 function IPhotonRepo:init(repo)
     GRepo.proto.init(self, repo)
     self.api = {
-        list = fetch_list
+        list = fetch_list,
+        releases = fetch_releases
     }
-    self:clear()
+end
+
+function IPhotonRepo:clearReleasesCache()
+    self.api.releases:clearCacheDir()
+    self:clearReleases()
 end
 
 --- @param entry photon.Package
@@ -85,7 +96,7 @@ end
 
 --- @param entry photon.Modpack
 function IPhotonRepo:updateListModpack(entry)
-    self.repo:getMetaEntry(entry.id):setStack(PMP(entry))
+    self.repo:getMetaEntry(entry.id):setStack(PMP(self, entry))
 end
 
 --- @param entry photon.Package | photon.Modpack

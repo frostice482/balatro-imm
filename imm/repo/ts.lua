@@ -67,7 +67,6 @@ function ITSRepo:init(repo)
     self.api = {
         list = fetch_list
     }
-    self:clear()
 end
 
 --- @param entry thunderstore.Package

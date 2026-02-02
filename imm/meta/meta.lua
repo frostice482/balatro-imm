@@ -150,6 +150,7 @@ function IMeta:clearReleases()
     for i,v in ipairs(self.stacksSorted) do
         v:clearReleases()
     end
+    self.cachedReleases = nil
 end
 
 --- @async

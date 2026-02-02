@@ -2,7 +2,6 @@ local BMI = require("imm.meta.bmi")
 local Fetch = require("imm.lib.fetch")
 local GRepo = require("imm.repo.generic")
 local getmods = require("imm.mod.get")
-local co = require("imm.lib.co")
 local imm = require("imm")
 
 --- @type imm.Fetch<nil, bmi.Meta[]>
@@ -25,7 +24,10 @@ function fetch_list:interpretRes(str)
 end
 
 --- @type imm.Fetch<string, ghapi.Releases>
-local fetch_gh_releases = Fetch('https://api.github.com/repos/%s/releases', 'immcache/release/%s', { resType = 'json', cacheType = 'json' })
+local fetch_gh_releases = Fetch('https://api.github.com/repos/%s/releases', 'immcache/release/bmi/%s', {
+    resType = 'json',
+    cacheType = 'json'
+})
 
 local excludeRelProps = {'id', 'upload_url', 'html_url', 'node_id', 'target_commitish', 'tarball_url', 'body', 'reactions', 'mentions_count', 'immutable', 'created_at', 'published_at', 'assets_url', 'author'}
 local excludeAssetProps = {'id', 'node_id', 'label', 'uploader', 'content_type', 'state', 'digest', 'created_at'}
@@ -81,7 +83,6 @@ end
 
 --- @class imm.Repo.BMI: imm.Repo.Generic
 --- @field releasesCache table<string, ghapi.Releases[]>
---- @field releasesCb table<string, imm.Repo.ReleasesCb[]>
 local IBMIRepo = {
     listApi = fetch_list,
     thumbApi = fetch_thumb,
@@ -120,57 +121,12 @@ function IBMIRepo:init(repo)
         releases_generic = fetch_releases_generic,
         thumbnail = fetch_thumb
     }
-    self:clear()
 end
 
-function IBMIRepo:clear()
-    GRepo.proto.clear(self)
+function IBMIRepo:clearReleasesCache()
+    self.api.releases_generic:clearCacheDir()
+    self.api.releases_github:clearCacheDir()
     self:clearReleases()
-end
-
-function IBMIRepo:clearReleases()
-    self.releasesCache = {}
-    self.releasesCb = {}
-end
-
---- @param repoUrl string
---- @param cb imm.Repo.ReleasesCb
---- @param cacheKey? string
-function IBMIRepo:getReleases(repoUrl, cb, cacheKey)
-    cacheKey = cacheKey or repoUrl
-    local releasesCache = self.releasesCache
-    local releasesCb = self.releasesCb
-
-    if releasesCache[cacheKey] then return cb(releasesCache[cacheKey], nil) end
-    if releasesCb[repoUrl] then return table.insert(releasesCb[repoUrl], cb) end
-
-    local prov = BMIRepo.getProvider(repoUrl)
-    if not prov.provider then
-        cb(nil, string.format('Unknown provider from given url %s', repoUrl))
-        return
-    end
-
-    local function handle(res, err)
-        if res then releasesCache[cacheKey] = res end
-        for i, cb in ipairs(releasesCb[repoUrl]) do
-            cb(res, err)
-        end
-        releasesCb[repoUrl] = nil
-    end
-
-    releasesCb[repoUrl] = {cb}
-
-    if prov.provider == 'github' then self.api.releases_github:fetch(prov.repo, handle)
-    else self.api.releases_generic:fetch(prov, handle)
-    end
-end
-
---- @async
---- @param repoUrl string
---- @param cacheKey? string
---- @return ghapi.Releases[]? releases, string? err
-function IBMIRepo:getReleasesCo(repoUrl, cacheKey)
-    return co.wrapCallbackStyle(function (res) self:getReleases(repoUrl, res, cacheKey) end)
 end
 
 --- @param meta imm.ModMeta
@@ -193,6 +149,27 @@ function IBMIRepo:updateList(entry)
     local meta = self.repo:getMetaEntry(entry.id)
     meta:setStack(BMI(self, entry))
     self:addProvides(meta, entry)
+end
+
+--- @protected
+function IBMIRepo:handleGetReleases(arg)
+    local prov = BMIRepo.getProvider(arg)
+    if not prov.provider then
+        return nil, string.format('Unknown provider from given url %s', arg)
+    end
+
+    if prov.provider == 'github' then
+        return self.api.releases_github:fetchCo(prov.repo)
+    else
+        return self.api.releases_generic:fetchCo(prov)
+    end
+end
+
+--- @async
+--- @param url string
+--- @return ghapi.Releases[]? releases, string? err
+function IBMIRepo:getReleasesCo(url, cacheKey)
+    return GRepo.proto.getReleasesCo(self, url, cacheKey)
 end
 
 return BMIRepo

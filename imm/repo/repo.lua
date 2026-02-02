@@ -5,7 +5,6 @@ local BMIRepo = require("imm.repo.bmi")
 local TSRepo = require("imm.repo.ts")
 local PhotonRepo = require("imm.repo.photon")
 local Fetch = require("imm.lib.fetch")
-local util = require("imm.lib.util")
 local co = require("imm.lib.co")
 
 --- @type imm.Fetch<string, love.Data>
@@ -18,8 +17,6 @@ local fetch_blob = Fetch('%s', 'immcache/blob/%s', {
 function fetch_blob:getCacheFileName(arg)
     return self.cacheFile:format(love.data.encode('string', 'hex', love.data.hash('md5', arg)))
 end
-
---- @alias imm.Repo.ReleasesCb fun(res?: ghapi.Releases[], err?: string)
 
 --- @class imm.Repo
 --- @field list imm.ModMeta[]
@@ -41,38 +38,42 @@ function IRepo:init()
     self.bmi = BMIRepo(self)
     self.ts = TSRepo(self)
     self.photon = PhotonRepo(self)
-    self:clear()
     self.repoList = { self.bmi, self.ts, self.photon }
+
+    self.list = {}
+    self.listMapped = {}
+    self.listProviders = {}
 end
 
 function IRepo:clear()
-    self:clearList(true)
-    self.bmi:clear()
-    self.ts:clear()
+    self:clearList()
+    self:clearReleases()
+    self:clearThumbnails()
 end
 
-function IRepo:clearList(justThis)
+function IRepo:clearList()
     self.list = {}
     self.listMapped = {}
     self.listProviders = {}
 
-    if justThis then return end
-
-    util.rmdir(self.ts.api.list.cacheFile, false)
-    util.rmdir(self.bmi.api.list.cacheFile, false)
-
-    self.bmi.listDone = false
-    self.ts.listDone = false
+    for i,v in ipairs(self.repoList) do
+        v:clearListCache()
+    end
 end
 
 function IRepo:clearReleases()
-    util.rmdir(util.dirname(self.bmi.api.releases_generic.cacheFile), false)
-    util.rmdir(util.dirname(self.bmi.api.releases_github.cacheFile), false)
-
+    for i,v in ipairs(self.repoList) do
+        v:clearReleasesCache()
+    end
     for i, v in ipairs(self.list) do
         v:clearReleases()
     end
-    self.bmi:clearReleases()
+end
+
+function IRepo:clearThumbnails()
+    for i,v in ipairs(self.repoList) do
+        v:clearThumbCache()
+    end
 end
 
 --- Gets mod, or looks from provided mods if doesnt exist

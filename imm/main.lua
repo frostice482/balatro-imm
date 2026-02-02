@@ -44,8 +44,9 @@ G.FUNCS.exit_overlay_menu = function()
     if not c then return exit_overlay() end
 
     if c.imm then
-        c.imm.repo.bmi.imageCache = {}
-        c.imm.repo.ts.imageCache = {}
+        for i,provider in ipairs(c.imm.repo.repoList) do
+            provider.thumbCache = {}
+        end
 
         if c.imm.hasChanges then
             return ui.overlay(G.UIDEF[funcs.restart]())

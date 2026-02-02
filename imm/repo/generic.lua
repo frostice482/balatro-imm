@@ -2,11 +2,14 @@ local constructor = require("imm.lib.constructor")
 local co = require("imm.lib.co")
 
 --- @class imm.Repo.Generic
---- @field imageCache table<string, love.Image | false>
+--- @field thumbCache table<string, love.Image | false>
 --- @field listApi imm.Fetch<any, any>
---- @field thumbApi imm.Fetch<any, any>
+--- @field thumbApi imm.Fetch<any, love.Data>
+--- @field releasesCache table<string, any[]>
+--- @field releasesCb table<string, function[]>
 local IGRepo = {
     listDone = false,
+    listBusy = false,
     name = 'Generic'
 }
 
@@ -21,13 +24,31 @@ function IGRepo:init(repo)
     if not self.listApi then self.listApi = self.repo.api.blob end
     if not self.thumbApi then self.thumbApi = self.repo.api.blob end
 
-    self.listBusy = false
     self.listCb = {}
+    self.thumbCache = {}
+    self.releasesCache = {}
+    self.releasesCb = {}
 end
 
-function IGRepo:clear()
+function IGRepo:clearReleases()
+    self.releasesCache = {}
+    self.releasesCb = {}
+end
+function IGRepo:clearThumbImages()
+    self.thumbCache = {}
+end
+
+function IGRepo:clearListCache()
     self.listDone = false
-    self.imageCache = {}
+    self.listBusy = false
+    self.thumbApi:clearCacheFile()
+end
+function IGRepo:clearReleasesCache()
+    self:clearReleases()
+end
+function IGRepo:clearThumbCache()
+    self:clearThumbImages()
+    self.thumbApi:clearCacheDir()
 end
 
 function IGRepo:updateList(entry) end
@@ -65,7 +86,7 @@ end
 --- @return love.Image? data, string? err
 function IGRepo:getImageCo(url, cacheKey)
     cacheKey = cacheKey or url
-    if self.imageCache[cacheKey] ~= nil then return self.imageCache[cacheKey] or nil end
+    if self.thumbCache[cacheKey] ~= nil then return self.thumbCache[cacheKey] or nil end
     local res, err = self.thumbApi:fetchCo(url)
 
     --- @type boolean, any?
@@ -74,12 +95,50 @@ function IGRepo:getImageCo(url, cacheKey)
         ok, img = pcall(love.graphics.newImage, res)
     end
     if not ok then
-        self.imageCache[cacheKey] = false
+        self.thumbCache[cacheKey] = false
         return nil, img
     end
 
-    self.imageCache[cacheKey] = img
+    self.thumbCache[cacheKey] = img
     return img, nil
+end
+
+--- @protected
+function IGRepo:mapReleaseCacheKey(arg, ...)
+    return arg
+end
+
+--- @protected
+--- @param arg any
+--- @return any? ret, string? err
+function IGRepo:handleGetReleases(arg, ...)
+end
+
+--- @protected
+--- @async
+--- @param arg any
+--- @param cacheKey? string
+--- @return any releases, string? err
+function IGRepo:getReleasesCo(arg, cacheKey, ...)
+    local ck = self:mapReleaseCacheKey(arg, ...)
+    cacheKey = cacheKey or ck
+
+    if self.releasesCache[cacheKey] then
+        return self.releasesCache[cacheKey], nil
+    end
+    if self.releasesCb[ck] then
+        return co.wrapCallbackStyle(function(h)
+            return table.insert(self.releasesCb[ck], h)
+        end)
+    end
+
+    self.releasesCb[ck] = {}
+    local res, err = self:handleGetReleases(arg, ...)
+    if res then self.releasesCache[cacheKey] = res end
+    for i, cb in ipairs(self.releasesCb[ck]) do cb(res, err) end
+    self.releasesCb[ck] = nil
+
+    return res, err
 end
 
 return GRepo
