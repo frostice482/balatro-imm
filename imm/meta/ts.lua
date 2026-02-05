@@ -38,7 +38,8 @@ function ITSStack:init(repo, info)
 	self.id = info.name
 	self.title = info.name
     self.author = info.owner
-	self.dependencies = latest.description
+    self.description = latest.description
+	self.dependencies = latest.dependencies
 	self.categories = info.categories
 
 	self.releases = {}
