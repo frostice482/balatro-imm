@@ -59,7 +59,7 @@ pattern = '''
 position = "at"
 payload = '''
 {n=G.UIT.C, config={align = "cm", colour = G.C.CLEAR}, nodes = {
-{n=G.UIT.C, config={id = 'text_input', align = "cm", padding = 0.05, r = 0.1, hover = true, colour = args.colour,minw = args.w, min_h = args.h, button = 'select_text_input', shadow = true}, nodes={
+{n=G.UIT.C, config={id = args.id or 'text_input', align = "cm", padding = 0.05, r = 0.1, hover = true, colour = args.colour,minw = args.w, min_h = args.h, button = 'select_text_input', shadow = true}, nodes={
 '''
 match_indent = true
 
