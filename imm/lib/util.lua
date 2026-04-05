@@ -10,8 +10,27 @@ tbl_util.assign(util, str_util)
 tbl_util.assign(util, tbl_util)
 
 function util.restart()
-    local args = util.convertCommands({arg[-2], unpack(arg)})
-    if jit.os == 'Windows' then args[1] = '"'..arg[-2]..'"' end
+    local restart_err
+
+    if SMODS and SMODS.restart_game then
+        local ok, err = pcall(SMODS.restart_game)
+        if ok then return end
+        restart_err = err
+    end
+
+    if love and love.event and love.event.quit then
+        local ok, err = pcall(love.event.quit, 'restart')
+        if ok then return end
+        restart_err = restart_err or err
+    end
+
+    local exe = arg and arg[-2]
+    if not exe then
+        error(restart_err or 'restart is not supported in this runtime')
+    end
+
+    local args = util.convertCommands({exe, unpack(arg)})
+    if jit.os == 'Windows' then args[1] = '"'..exe..'"' end
 
     local cmd = string.format(jit.os == 'Windows' and 'start /b "" %s' or '%s &', table.concat(args, ' '))
     os.execute(cmd)
