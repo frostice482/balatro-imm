@@ -54,7 +54,6 @@ The solution may vary. You can try downloading one of `https.dll` from [balamod/
 
 - [balatro-mod-index](https://github.com/skyline69/balatro-mod-index), [modified](https://github.com/frostice482/balatro-mod-index-tiny)
 - [Thunderstore](https://thunderstore.io/c/balatro/)
-- [Photon](https://photonmodmanager.onrender.com)
 
 ## Config
 
