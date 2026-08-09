@@ -25,14 +25,6 @@ If present, disables flavor text.
 
 If present, disables safety warning.
 
-### `noUpdateUnreleasedMods`
-
-If present, if a mod does not have any release, don't update it from latest commit.
-
-### `noAutoDownloadUnreleasedMods`
-
-If present, if a mod does not have any release, don't automatically download it as a dependency from latest commit.
-
 ### `httpsThreads`
 
 Specifies maximum number of HTTPS thread to create. Defaults to 6
@@ -68,7 +60,3 @@ Determines what mod to enable at the next loading.
 The entry is mod ID and version separated by `=` (includes surrounding whitespaces).
 The list is separated by `==` (includes surrounding whitespaces).
 e.g. `Steamodded=1.0.0~beta-0827c == Cryptid=0.5.12a`
-
-### `init`
-
-Internally used to mark for non-first game launch.

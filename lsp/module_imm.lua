@@ -36,12 +36,6 @@
 --- Currently only used for number of downloads at once.
 --- @field mpConcurrentTasks? string
 ---
---- If present, disables safety warning after everytime the manager is open.
---- @field disableSafetyWarning? string
----
---- If present, disables flavor text after everytime the manager is open.
---- @field disableFlavor? string
----
 --- If present, disallows updating a mod that does from latest commit if the mod does not have any release.
 --- @field noUpdateUnreleasedMods? string
 ---
@@ -50,11 +44,6 @@
 ---
 --- If present, forces using curl bindings to do HTTPS request.
 --- @field enforceCurl? string
----
---- If null, shows a popup player for the first time installation,
---- The popup is only shown when there's no other mods installed
---- @field init? string
----
 
 --- @type imm.Base
 local c

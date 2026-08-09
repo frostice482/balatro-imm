@@ -60,8 +60,6 @@ function IUIConf:renderOptions()
 			self.ses.allowModBadgeColors = not v
 		end),
 		self:renderOptBoolProp('Debug Logging', 'debug'),
-		self:renderOptBoolProp('Disable safety warning', 'disableSafetyWarning'),
-		self:renderOptBoolProp('Disable flavor text', 'disableFlavor'),
 		self:renderOptBoolProp('Don\'t update unreleased mode', 'noUpdateUnreleasedMods'),
 		self:renderOptBoolProp('Don\'t autodownload unreleased mods', 'noAutoDownloadUnreleasedMods'),
 	}

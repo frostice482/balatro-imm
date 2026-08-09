@@ -140,31 +140,6 @@ function IUISes:init(tasks)
     }
 end
 
--- NOTE: this function can be moved to tasks but kinda irrelevant idk
-
-function IUISes:selectFlavor()
-    local specials = {}
-    for i, fn in ipairs(BrowserStatic.specialFlavors) do
-        local text = fn(self)
-        if text then table.insert(specials, text) end
-    end
-
-    local flavors = BrowserStatic.flavors
-    local flavorsLen = #flavors
-    local r = math.random(1, flavorsLen + #specials)
-    if r <= flavorsLen then return flavors[r] end
-    return specials[r - flavorsLen]
-end
-
-function IUISes:generateFlavor()
-    local f, w
-    if not imm.config.disableFlavor then f = self:selectFlavor() end
-    if not imm.config.disableSafetyWarning then w = BrowserStatic.safetyWarning end
-    if f or w then
-        self.tasks.status:update(f, w, true)
-    end
-end
-
 --- @protected
 function IUISes:updateContainers()
     self.contCycle = ui.boxContainer()
