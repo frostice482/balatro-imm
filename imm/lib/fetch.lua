@@ -106,6 +106,14 @@ function IFetch:handleRes(body)
     end
 end
 
+function IFetch:clearCacheDir()
+    return util.rmdir(util.dirname(self.cacheFile), false)
+end
+
+function IFetch:clearCacheFile()
+    return util.dirname(self.cacheFile), false
+end
+
 --- @param file string
 --- @param data any
 local function writeCache(file, data)

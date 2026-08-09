@@ -3,7 +3,6 @@ local ModMeta = require("imm.modrepo.meta")
 local BMIRepo = require("imm.modrepo.bmi")
 local TSRepo = require("imm.modrepo.ts")
 local Fetch = require("imm.lib.fetch")
-local util = require("imm.lib.util")
 local co = require("imm.lib.co")
 
 --- @type imm.Fetch<string, love.Data>
@@ -16,8 +15,6 @@ local fetch_blob = Fetch('%s', 'immcache/blob/%s', {
 function fetch_blob:getCacheFileName(arg)
     return self.cacheFile:format(love.data.encode('string', 'hex', love.data.hash('md5', arg)))
 end
-
---- @alias imm.Repo.ReleasesCb fun(err?: string, res?: ghapi.Releases[])
 
 --- @class imm.Repo
 --- @field list imm.ModMeta[]
@@ -43,33 +40,34 @@ function IRepo:init()
 end
 
 function IRepo:clear()
-    self:clearList(true)
-    self.bmi:clear()
-    self.ts:clear()
+    self:clearList()
+    self:clearReleases()
+    self:clearThumbnails()
 end
 
-function IRepo:clearList(justThis)
+function IRepo:clearList()
     self.list = {}
     self.listMapped = {}
     self.listProviders = {}
 
-    if justThis then return end
-
-    util.rmdir(self.ts.api.list.cacheFile, false)
-    util.rmdir(self.bmi.api.list.cacheFile, false)
-
-    self.bmi.listDone = false
-    self.ts.listDone = false
+    for i,v in ipairs(self.repoList) do
+        v:clearListCache()
+    end
 end
 
 function IRepo:clearReleases()
-    util.rmdir(util.dirname(self.bmi.api.releases_generic.cacheFile), false)
-    util.rmdir(util.dirname(self.bmi.api.releases_github.cacheFile), false)
-
-    for i, v in ipairs(self.list) do
-        v:resetReleases()
+    for i,v in ipairs(self.repoList) do
+        v:clearReleasesCache()
     end
-    self.bmi:clearReleases()
+    for i, v in ipairs(self.list) do
+        v:clearReleases()
+    end
+end
+
+function IRepo:clearThumbnails()
+    for i,v in ipairs(self.repoList) do
+        v:clearThumbCache()
+    end
 end
 
 --- Gets mod, or looks from provided mods if doesnt exist
@@ -90,7 +88,7 @@ end
 --- @param mod imm.Mod
 function IRepo:createVirtualEntry(mod)
     local m = ModMeta(self)
-    m.bmi = {
+    m:setStack(BMIMeta(self.bmi, {
         categories = mod.info.categories,
         id = mod.mod,
         name = mod.name,
@@ -98,7 +96,7 @@ function IRepo:createVirtualEntry(mod)
         version = mod.version,
         description = mod.description,
         provides = mod.info.provides
-    }
+    }))
     return m
 end
 
@@ -106,11 +104,12 @@ end
 --- @param done? fun()
 function IRepo:getLists(prog, done)
     local c = #self.repoList
-    for i,v in ipairs(self.repoList) do
-        v:getList(function (err)
+    for i,provider in ipairs(self.repoList) do
+        co.create(function()
+            local err = provider:getListCo()
             c = c - 1
-            if prog then prog(v, err) end
-            if c == 0 and done then done() end
+            if prog then prog(provider, err) end
+            if c == 0 and done then return done() end
         end)
     end
 end

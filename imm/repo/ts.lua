@@ -1,5 +1,6 @@
+local TS = require("imm.meta.ts")
 local Fetch = require("imm.lib.fetch")
-local GRepo = require("imm.modrepo.generic")
+local GRepo = require("imm.repo.generic")
 local util  = require("imm.lib.util")
 local logger= require("imm.logger")
 
@@ -66,14 +67,11 @@ function ITSRepo:init(repo)
     self.api = {
         list = fetch_list
     }
-    self:clear()
 end
 
 --- @param entry thunderstore.Package
 function ITSRepo:updateList(entry)
-    local meta = self.repo:getMetaEntry(entry.name)
-    meta.ts = entry
-    meta.tsLatest = entry.versions[1]
+    self.repo:getMetaEntry(entry.name):setStack(TS(self, entry))
 end
 
 return TSRepo

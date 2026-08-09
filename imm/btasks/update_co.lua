@@ -75,9 +75,9 @@ function IUpdateCo:updateMod(installed, meta)
     if latest then
         if not self:getModUpdate(installed, latest) then return self:statusAddIgnore() end
     else
-        if not (self.allowNoReleaseUseCommit and meta.bmi) then return self:statusAddIgnore() end
+        if not (self.allowNoReleaseUseCommit and meta:getStack"bmi") then return self:statusAddIgnore() end
         logger.fmt('warn', 'Mod %s does not have any release, using source', meta:id())
-        latest = { format = 'bmi', url = meta.bmi.download_url, version = 'Source' }
+        latest = { format = 'bmi', url = meta:getStack"bmi".info.download_url, version = 'Source' }
     end
 
     logger.fmt('log', 'Updating %s from %s to %s', meta:title(), installed.version, latest.version)

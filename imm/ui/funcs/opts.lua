@@ -46,10 +46,7 @@ G.FUNCS[funcs.clearCache] = function(elm)
     local ts, bmi = repo.ts, repo.bmi
 
     if mode == 't' then
-        util.rmdir(util.dirname(ts.thumbApi.cacheFile), false)
-        util.rmdir(util.dirname(bmi.thumbApi.cacheFile), false)
-        ts.imageCache = {}
-        bmi.imageCache = {}
+        repo:clearThumbnails()
     elseif mode == 'r' then
         repo:clearReleases()
     elseif mode == 'l' then

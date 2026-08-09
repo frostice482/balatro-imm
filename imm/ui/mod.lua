@@ -99,7 +99,7 @@ end
 --- @protected
 --- @param func string
 function IUIModSes:renderReleasesContainer(func)
-    if not (self.mod.bmi and self.mod.bmi.repo or self.mod.ts) then return self.ses:renderText("Repo info\nunavailable", 1.25, G.C.ORANGE) end
+    if not self.mod:hasRelesaeInfo() then return self.ses:renderText("Repo info\nunavailable", 1.25, G.C.ORANGE) end
 
     return ui.C{
         func = func,
@@ -143,7 +143,8 @@ function IUIModSes:updateReleases(elm, res)
         end
     end
 
-    local bmi = self.mod.bmi
+    local bmii = self.mod:getStack"bmi"
+    local bmi = bmii and bmii.info
     if bmi and bmi.repo and bmi.download_url then
         local v = bmi.version
         local ui = self:uiVersion('Latest', {
@@ -236,6 +237,7 @@ end
 --- @param url string
 --- @param text string
 function IUIModSes:renderRepoButtonUrl(url, text)
+    if not url then return nil end
     return ui.C{
         colour = G.C.PURPLE,
         padding = 0.1,
@@ -256,17 +258,16 @@ end
 function IUIModSes:renderRepoButtons()
     --- @type balatro.UIElement.Definition[]
     local cols = {}
-    if self.mod.bmi and self.mod.bmi.repo then
-        table.insert(cols, self:renderRepoButtonUrl(self.mod.bmi.repo, 'Repo'))
+    local bmi = self.mod:getStack"bmi"
+    local ts = self.mod:getStack"ts"
+
+    if bmi then
+        table.insert(cols, self:renderRepoButtonUrl(bmi.info.repo, 'Repo'))
     end
-    if self.mod.ts and self.mod.ts.package_url then
-        table.insert(cols, self:renderRepoButtonUrl(self.mod.ts.package_url, 'Package'))
-    end
-    if self.mod.tsLatest and self.mod.tsLatest.website_url then
-        table.insert(cols, self:renderRepoButtonUrl(self.mod.tsLatest.website_url, 'Website'))
-    end
-    if self.mod.ts and self.mod.ts.donation_link then
-        table.insert(cols, self:renderRepoButtonUrl(self.mod.ts.donation_link, 'Donate'))
+    if ts then
+        table.insert(cols, self:renderRepoButtonUrl(ts.package.package_url, 'Package'))
+        table.insert(cols, self:renderRepoButtonUrl(ts.latest.website_url, 'Website'))
+        table.insert(cols, self:renderRepoButtonUrl(ts.package.donation_link, 'Donate'))
     end
     return cols
 end
