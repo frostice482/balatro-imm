@@ -1,6 +1,6 @@
 local constructor = require("imm.lib.constructor")
 local Queue = require("imm.lib.queue")
-local UITaskStatusReg = require("imm.btasks.status")
+local UITaskStatusReg = require("imm.ui.tasks")
 local TaskDownloadCo = require("imm.btasks.download_co")
 local TaskUpdateCo = require("imm.btasks.update_co")
 local lovelyUrl = require('imm.lovely_downloads')
