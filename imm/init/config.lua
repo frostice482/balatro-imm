@@ -22,23 +22,6 @@ if imm.config.nextEnable then
     updateConfig = true
 end
 
-if not imm.config.init then
-    local ctrl = require('imm.ctrl')
-    local hasOtherMod = false
-    for i, list in ipairs(ctrl:list()) do
-        if not list:isExcluded() then
-            hasOtherMod = true
-            break
-        end
-    end
-    if not hasOtherMod then
-        require("imm.welcome")
-    else
-        imm.config.init = '1'
-        updateConfig = true
-    end
-end
-
 if updateConfig then
     imm.saveconfig()
 end
