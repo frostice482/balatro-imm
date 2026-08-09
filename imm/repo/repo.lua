@@ -1,7 +1,7 @@
 local constructor = require("imm.lib.constructor")
-local ModMeta = require("imm.modrepo.meta")
-local BMIRepo = require("imm.modrepo.bmi")
-local TSRepo = require("imm.modrepo.ts")
+local ModMeta = require("imm.meta.meta")
+local BMIRepo = require("imm.repo.bmi")
+local TSRepo = require("imm.repo.ts")
 local Fetch = require("imm.lib.fetch")
 local co = require("imm.lib.co")
 
@@ -35,8 +35,8 @@ function IRepo:init()
     self.releasesCb = {}
     self.bmi = BMIRepo(self)
     self.ts = TSRepo(self)
-    self:clear()
     self.repoList = { self.bmi, self.ts }
+    self:clear()
 end
 
 function IRepo:clear()

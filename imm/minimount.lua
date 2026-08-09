@@ -51,7 +51,7 @@ local physfs = pcall(function() return ffi.C.PHYSFS_mount end) and ffi.C or ffi.
 --- @param sub? string
 --- @param appendToPath? boolean
 function __MINIMOUNT(name, id, dir, mountpoint, sub, appendToPath)
-	local file = io.open(dir, "r")
+	local file = io.open(dir, "rb")
 	if file and file:read(0) and sub then
 		local fsname = string.format('virt/mod/%s', id)
 		local temp = ffi.new('int[1]')
