@@ -130,7 +130,7 @@ end
 --- @param status imm.Task.UI.Status
 function ITaskStatusReg:add(status)
     table.insert(self.statuses, status)
-    if self.listElm then
+    if self.listElm and not self.listElm.REMOVED then
         self.listElm.UIBox:add_child(status:render(), self.listElm)
     end
 end
@@ -179,7 +179,7 @@ function ITaskStatusReg:update(suc, err, nolog)
         if not nolog then logger.err(err) end
     end
 
-    if self.listElm then self.listElm.UIBox:recalculate() end
+    if self.listElm and not self.listElm.REMOVED then self.listElm.UIBox:recalculate() end
 end
 
 function ITaskStatusReg:render()

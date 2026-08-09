@@ -437,6 +437,7 @@ end
 --- @param mod? imm.ModMeta
 function IUISes:selectMod(mod)
     self.selectedMod = mod
+    if self.uibox.REMOVED then return true end
     if mod then
         local modses = UIMod(self, mod)
         ui.changeRoot(self.contSelect, modses:render())
