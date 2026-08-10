@@ -12,6 +12,8 @@ curl -fsSL https://raw.githubusercontent.com/frostice482/balatro-imm/master/res/
 
 **Linux**: Run the command or download the [installer script](res/install.sh)
 
+Make sure `curl`, `tar`, and `unzip` commands are available
+
 ```sh
 curl -fsSL 'https://raw.githubusercontent.com/frostice482/balatro-imm/master/res/install.sh' | bash
 ```
