@@ -4,10 +4,16 @@ The ingame mod browser, manager, and modpack manager for Balatro.
 
 ## Installation
 
-- Windows: Run the command or download the [installer script](install.bat)
+**Windows**: Run the command or download the [installer script](res/install.bat)
 
 ```cmd
-curl -fsSL https://raw.githubusercontent.com/frostice482/balatro-imm/master/install.bat -o install_imm.bat && install_imm.bat
+curl -fsSL https://raw.githubusercontent.com/frostice482/balatro-imm/master/res/install.bat -o install_imm.bat && install_imm.bat
+```
+
+**Linux**: Run the command or download the [installer script](res/install.sh)
+
+```sh
+curl -fsSL 'https://raw.githubusercontent.com/frostice482/balatro-imm/master/res/install.sh' | bash
 ```
 
 ### Manual installation

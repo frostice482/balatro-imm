@@ -11,7 +11,7 @@ if not exist "%gamepath%" (
 	set gamepath=
 	echo The installer script cannot determine your Balatro install location.
 	echo Provide installation folder by dragging it here, or type in the path
-	echo or leave blank to go back
+	echo or leave blank to cancel
 
 	:select_gamepath
 	set /p gamepath=:
@@ -47,7 +47,7 @@ if errorlevel 1 (
 	set download_smods=yes
 ) else (
 	echo The mods folder is not empty. You might have Steamodded already installed.
-	choice /c yn /m "Do you want to download Steamodded^? It will be required by most mods. "
+	choice /c yn /m "Do you want to download Steamodded? It will be required by most mods. "
 	if !errorlevel! == 1 set download_smods=yes
 )
 
