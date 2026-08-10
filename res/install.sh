@@ -51,10 +51,25 @@ if [ ! "$gamefolder" ]; then
 	echo
 	prompt_search
 fi
-echo Balatro installation at "$gamefolder/$balatrosub"
+
+balatrofolder="$gamefolder/$balatrosub"
 modsfolder="$gamefolder/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods"
-echo Mods folder at "$modsfolder"
 mkdir -p "$modsfolder"
+
+echo Balatro installation at "$balatrofolder"
+echo Mods folder at "$modsfolder"
+echo
+
+if [ ! -f "$balatrofolder/version.dll" ]; then
+	echo Downloading lovely injector
+
+	swap="$PWD"
+	cd "$balatrofolder"
+	curl -fSL "https://github.com/ethangreen-dev/lovely-injector/releases/latest/download/lovely-x86_64-pc-windows-msvc.zip" -o __lovely.zip
+	unzip __lovely.zip
+	rm __lovely.zip
+	cd "$swap"
+fi
 
 smods=0
 if [ ! "$(ls "$modsfolder")" ]; then
