@@ -1,3 +1,5 @@
+## [Moved to Codeberg](https://codeberg.org/frostice482/balatro-imm)
+
 # imm
 
 The ingame mod browser, manager, and modpack manager for Balatro.
