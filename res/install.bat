@@ -77,5 +77,15 @@ cd ..
 rd /s /q __imm
 del __imm.zip
 
-echo Done. Your Balatro is now modded. Enjoy!
+echo.
+echo Done. Your Balatro is now modded.
+echo.
+echo Note:
+echo - Your mods folder will be in %appdata%\Balatro\Mods
+echo - There should be a console window (Lovely) that appears when the game starts.
+echo   If it does not appear, please make an issue.
+echo - There should be a Browse and Modpacks button in the main menu screen.
+echo   If it does not appear, please make an issue.
+echo.
+
 pause

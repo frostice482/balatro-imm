@@ -96,5 +96,17 @@ tar -xzmf __imm.tar.gz -C __imm -k
 mv "__imm/$(ls __imm | head -1)" "$modsfolder/imm"
 rm -rf __imm __imm.tar.gz
 
-echo 'Done. Your Balatro is now modded. Enjoy!'
+echo
+echo 'Done. Your Balatro is now modded.'
+echo
+echo 'Note:'
+echo "- Your mods folder will be in $modsfolder"
+echo '  I recommend making a symlink so you can access the mod folder easier:'
+echo "    ln -s \"$modsfolder\" \"where_to_put_symlink\" "
+echo '- There should be a console window (Lovely) that appears when the game starts.'
+echo '  If it does not appear, please make an issue.'
+echo '- There should be a Browse and Modpacks button in the main menu screen.'
+echo '  If it does not appear, please make an issue.'
+echo
+
 read
