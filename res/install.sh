@@ -112,7 +112,8 @@ mv "__imm/$(ls __imm | head -1)" "$modsfolder/imm"
 rm -rf __imm __imm.tar.gz
 
 echo
-echo 'Done. Your Balatro is now modded.'
+echo '!!! ONE LAST STEP: Go to Steam -> Balatro -> Settings -> Launch Options, and set it to:'
+echo '  WINEDLLOVERRIDES="version=n,b" %command%'
 echo
 echo 'Note:'
 echo "- Your mods folder will be in $modsfolder"
